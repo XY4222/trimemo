@@ -1,6 +1,6 @@
 # RFC 006: The Derived Summary Layer — Digests, Importance, and a Graph-Fed L1
 
-Status: Draft — full text written 2026-09-21; fact-audit pass 2026-09-21 (all code references re-verified against tree at main; line numbers corrected, dead-code caveat added in §C.1); awaiting review
+Status: Draft — full text written 2026-09-21; fact-audit pass 2026-09-21 (all code references re-verified against tree at main; line numbers corrected, dead-code caveat added in §C.1); design-audit pass 2026-09-22 (fixed ingest-time scoring ordering, corrected backfill write primitive to `update`, tightened B.2 timestamp semantics to `valid_from`, added metadata-merge regression test); awaiting review
 Owner: 寇豆码 (drafter, with WorkBuddy session); decider TBD
 Created: 2026-09-21
 Prior art: RFC 004 §7 (derived state category), `docs/CLOSETS.md` (purge-and-rebuild precedent), `mempalace/layers.py` (L0–L3 stack), `mempalace/knowledge_graph.py`
@@ -112,10 +112,11 @@ input, because it is correct:
   (no LLM). Local-LLM enrichment follows the existing local-first pattern
   (`llm_client.py` / `closet_llm.py`): Ollama-class runtimes by default,
   BYOK external providers only if the user configures them.
-- **R6 — Incremental only.** Backfill adds metadata keys via id-stable
-  upsert; it never deletes or rewrites drawer content. Digest
-  purge-and-rebuild applies only to the digest collection (same
-  per-source scope rule as `purge_file_closets`).
+- **R6 — Incremental only.** Backfill adds metadata keys via
+  `collection.update` (merge semantics, no re-embedding); it never
+  deletes or rewrites drawer content. Digest purge-and-rebuild applies
+  only to the digest collection (same per-source scope rule as
+  `purge_file_closets`).
 - **R7 — RFC 004 compatibility.** Digests are Layer-3 derived state in
   RFC 004's taxonomy: rebuilt locally per replica, never synced. If/when
   the op-log lands, digest rebuild is a local fold, not an op kind. Per
@@ -174,24 +175,37 @@ first key real. No reader code changes beyond what exists.
 
 ### A.2 Score (v1, heuristic, zero LLM)
 
-Computed at ingest in `_build_drawer_metadata` (`miner.py:1697`) and
-during backfill for existing drawers:
+Two-phase, because of a hard ordering fact in the ingest pipeline: in
+`process_file` the drawer batch upsert lands **before** the closet build
+(drawers ~`miner.py:1952`, closets ~`miner.py:1977`), so
+`closet_pointer_count` cannot exist when `_build_drawer_metadata`
+(`miner.py:1697`) runs.
+
+**Phase 1 — at drawer metadata build (ingest):**
 
 ```
 importance = clamp(1.0, 5.0,
       1.0
     + 0.5 · min(3, len(entities))          # entity density (metadata already carries this, miner.py:1760)
     + 0.4 · min(3, kg_edge_count)          # graph connectivity of those entities
-    + 0.3 · min(2, closet_pointer_count)   # topic salience: closet lines referencing the drawer
     + 0.2 · interaction_markers            # questions asked, decisions keywords (stoplist-bounded)
 )
+```
+
+**Phase 2 — finalize after closet build, same mine pass:** the closet
+emitter already runs after the upsert with `drawer_ids` in hand; it adds
+the missing term via a metadata-only update:
+
+```
+importance += 0.3 · min(2, closet_pointer_count)   # topic salience
 ```
 
 - `entities`: already extracted into metadata by
   `_extract_entities_for_metadata` — free at ingest.
 - `kg_edge_count`: one indexed lookup per entity in the local KG.
 - `closet_pointer_count`: counted during closet build (Workstream C
-  shares the pass).
+  shares the pass), folded in by Phase 2 — this is why the term cannot
+  be in Phase 1.
 - Recency is **not** in the score. Recency is already the secondary sort
   key in L1; baking it into importance double-counts it and re-creates
   today's recency bias through the back door.
@@ -202,10 +216,23 @@ tuning is deliberately out of scope for v1 (see Open Questions).
 ### A.3 Backfill
 
 `mempalace digest --rebuild --wing <wing>` recomputes importance for the
-wing's drawers via id-stable `collection.upsert` (same ids, merged
-metadata dicts — the same mechanism re-mining uses). Drawers older than
-the current `NORMALIZE_VERSION` are skipped, not rewritten. This honors
-R6: append/merge metadata, never touch `documents`.
+wing's drawers. **The write primitive is `collection.update(ids, metadatas=…)`,
+not `upsert`** — two verified reasons:
+
+1. **No re-embedding.** `upsert` with `documents=` hands the text back to
+   the embedding model; the base-class `update` (get + merge + upsert)
+   and the sqlite_exact override (`sqlite_exact.py:739`) both merge
+   metadata onto the **existing stored document and embedding** —
+   metadata-only cost. `scripts/backfill_authored_at.py:70` is the
+   in-tree precedent using exactly `collection.update(ids, metadatas)`.
+2. **Merge, not replace.** `update` merges per-key into existing
+   metadata (`base.py` default: `new_meta.update(...)`); a plain
+   `upsert(metadatas=…)` would silently drop every key not carried in
+   the new dict.
+
+Chunked in batches (the backfill script's pending-list pattern), drawer
+ids stable throughout. This honors R6: merge metadata, never touch
+`documents` or embeddings.
 
 ## §B. Workstream B — Graph-Fed L1
 
@@ -225,11 +252,22 @@ R6: append/merge metadata, never touch `documents`.
 
 ### B.2 Selection rule
 
-Top entities by (live triple count, last-mentioned timestamp), capped to
-the 600-char slice inside the existing `MAX_CHARS = 3200` budget. Only
-*live* triples count — `invalidate`/`supersede` history must not present
-expired facts as current (this is what `as_of` filtering already does in
-`query_entity`).
+Top entities by (live triple count, **last `valid_from`**, name), capped
+to the 600-char slice inside the existing `MAX_CHARS = 3200` budget.
+Only *live* triples count — `invalidate`/`supersede` history must not
+present expired facts as current (this is what `as_of` filtering already
+does in `query_entity`).
+
+Timestamp caveat, verified against the schema: triples carry
+`valid_from` (when the fact became true), **not** a last-mentioned
+timestamp. A entity whose every triple was asserted months ago but is
+still true ranks by that old `valid_from`, and there is no cheap "when
+was this last talked about" column to sort by. v1 accepts this: ranking
+by `valid_from` recency is a defensible proxy for freshness of the
+*fact*, and cross-referencing entity mentions against drawer
+`filed_at`/`entities` metadata is deferred with the topic-arc work
+(Open Questions). If the proxy proves misleading in the L1 quality eval,
+the fallback selection rule is pure live-triple count.
 
 ### B.3 Degradation
 
@@ -344,6 +382,10 @@ traceable to verbatim sources).
 - **Budget tests**: wake-up under 100 ms with digests present; digest
   build excluded from hook paths (assert by code path review + timing
   test).
+- **Metadata-merge regression**: after Phase-2 update and after backfill,
+  assert every drawer's pre-existing metadata keys (wing, room,
+  source_file, entities, …) are unchanged — guards the update-vs-upsert
+  primitive and the R6 merge semantics.
 
 ## Rollout
 
@@ -363,10 +405,18 @@ artifacts; nothing else references them).
 - Importance decay: should `importance` erode with content age, or does
   L1's recency secondary key suffice? (v1: secondary key suffices.)
 - Digest granularity beyond rooms: cross-room "topic arcs" (a decision
-  evolving over weeks) — valuable but requires the graph; defer.
+  evolving over weeks) — valuable but requires the graph; defer. This is
+  also the natural home for the deferred "entity last-mentioned" signal
+  (§B.2 caveat).
 - Local-LLM tier default: enable automatically when an Ollama-class
   runtime is detected, or always require opt-in? (Lean: opt-in, matching
   closet LLM posture.)
 - Searchable digests (deferred, §C.4) — what eval would suffice?
 - Interaction with RFC 004 step 2a: confirm digest rebuild subscribes to
   op-log fold events rather than wall-clock sweep when the op-log lands.
+- Backends without `update` overrides fall back to the base class's
+  get + merge + upsert — correct but not atomic. Does the Phase-2
+  closet-time importance fold need a capability token
+  (`supports_update`) for atomicity, or is the in-lock execution
+  (inside `mine_lock`) sufficient? (Lean: mine_lock suffices; the
+  authored_at backfill already lives with the same property.)
