@@ -1,6 +1,6 @@
 # RFC 006: The Derived Summary Layer — Digests, Importance, and a Graph-Fed L1
 
-Status: Draft — full text written 2026-09-21; fact-audit pass 2026-09-21 (all code references re-verified against tree at main; line numbers corrected, dead-code caveat added in §C.1); design-audit pass 2026-09-22 (fixed ingest-time scoring ordering, corrected backfill write primitive to `update`, tightened B.2 timestamp semantics to `valid_from`, added metadata-merge regression test); awaiting review
+Status: Draft — full text written 2026-09-21; fact-audit pass 2026-09-21 (all code references re-verified against tree at main; line numbers corrected, dead-code caveat added in §C.1); design-audit pass 2026-09-22 (fixed ingest-time scoring ordering, corrected backfill write primitive to `update`, tightened B.2 timestamp semantics to `valid_from`, added metadata-merge regression test); branch review 2026-09-22 (split `importance`/`digest` CLI verbs, CLOSETS.md stale fallback note refreshed, review notes added); awaiting review
 Owner: 寇豆码 (drafter, with WorkBuddy session); decider TBD
 Created: 2026-09-21
 Prior art: RFC 004 §7 (derived state category), `docs/CLOSETS.md` (purge-and-rebuild precedent), `mempalace/layers.py` (L0–L3 stack), `mempalace/knowledge_graph.py`
@@ -215,9 +215,10 @@ tuning is deliberately out of scope for v1 (see Open Questions).
 
 ### A.3 Backfill
 
-`mempalace digest --rebuild --wing <wing>` recomputes importance for the
-wing's drawers. **The write primitive is `collection.update(ids, metadatas=…)`,
-not `upsert`** — two verified reasons:
+`mempalace importance --rebuild [--wing <wing>]` recomputes importance
+for the wing's drawers. **The write primitive is
+`collection.update(ids, metadatas=…)`, not `upsert`** — two verified
+reasons:
 
 1. **No re-embedding.** `upsert` with `documents=` hands the text back to
    the embedding model; the base-class `update` (get + merge + upsert)
@@ -390,7 +391,7 @@ traceable to verbatim sources).
 ## Rollout
 
 1. A (importance) — smallest, independently valuable; L1 improves the
-   moment backfill runs. Ships first.
+   moment backfill runs (`mempalace importance --rebuild`). Ships first.
 2. B (graph-fed L1) — additive section; ships behind no flag (degrades
    to omission).
 3. C (digests) — config-gated (`"digest": {"enabled": true}` in
@@ -399,6 +400,15 @@ traceable to verbatim sources).
 
 Each step is independently shippable and revertible (delete the derived
 artifacts; nothing else references them).
+
+## Branch / Review Notes
+
+Drafted on branch `rfc-006-derived-summary-layer` (no-slash branch
+name: slash-named refs fail to persist in this environment's git setup).
+Review as two commits: `13af12d` (RFC + CLOSETS.md refresh + ignore
+entry) and `484283d` (design-audit corrections: two-phase scoring,
+update-vs-upsert primitive, B.2 timestamp semantics). The repo is a
+shallow clone at `22fd87f`; unshallow before pushing or opening a PR.
 
 ## Open Questions
 

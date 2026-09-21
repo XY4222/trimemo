@@ -90,4 +90,4 @@ Search-side closet consumption lives in `mempalace.searcher` (`mempalace/searche
 - `_closet_boosts()` — query closets alongside drawer ranking and boost the drawers they point to (signal, never a gate)
 - `_extract_drawer_ids_from_closet()` (`searcher/filters.py`) — parse `→drawer_a,drawer_b` pointers out of a closet document; kept for digest-style consumers (RFC 006), no live search caller today
 
-Note: only the project miner (`miner.py::process_file`) builds closets today. Conversation-mined wings (Claude Code JSONL, ChatGPT export, etc.) will keep using direct drawer search via the searcher fallback until the convo-closet PR lands.
+Note: only the project miner (`miner.py::process_file`) builds closets today. Conversation-mined wings (Claude Code JSONL, ChatGPT export, etc.) get no closet boost until the convo-closet work lands — search over them is direct drawer hybrid ranking, which is the same path with an empty boost set.
