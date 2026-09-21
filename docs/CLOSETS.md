@@ -44,23 +44,28 @@ Closets are stored in the `mempalace_closets` ChromaDB collection alongside `mem
 
 ## How search uses closets
 
+Closets are a **ranking signal, never a gate**. The current path:
+
 ```
-Query → search mempalace_closets (fast, small documents)
+Query → hybrid rank over mempalace_drawers (cosine + BM25, unchanged)
          ↓
-    top closet hits → parse `→drawer_id_a,drawer_id_b` pointers
+    _closet_boosts (searcher/query.py) queries mempalace_closets in the
+    same pass (lexical_search on FTS-capable backends, cosine otherwise)
          ↓
-    fetch exactly those drawers from mempalace_drawers (verbatim content)
-         ↓
-    apply max_distance filter
+    best-per-source closet hits boost the ranking of the drawers they
+    point to — a boost only: a drawer with no closet hit can still rank,
+    and a closet hit cannot promote a drawer that didn't retrieve
          ↓
     return chunk-level results (same shape as direct search)
 ```
 
-Hits carry `matched_via: "closet"` (or `"drawer"` for the fallback path) plus a `closet_preview` field showing the line that surfaced them.
+Hits carry `matched_via: "closet"` (or `"drawer"` for unboosted results) plus a `closet_preview` field showing the line that surfaced them.
 
-If no closets exist (palace created before this feature) — or all closet hits get filtered out by `max_distance` — search falls back to direct drawer search. Closets are created on next mine.
+If no closets exist (palace created before this feature) the boost is simply empty and search behaves exactly as direct drawer search. Closets are created on next mine.
 
-> **BM25 hybrid re-rank** is on the roadmap (deferred to a follow-up PR alongside generic `LLM_*` env-var support); the current closet search ranks purely by ChromaDB cosine distance against the closet text.
+> **BM25 hybrid re-rank** is on the roadmap (deferred to a follow-up PR alongside generic `LLM_*` env-var support); the lexical branch of `_closet_boosts` already uses FTS on backends that support it.
+
+The pointer parser `_extract_drawer_ids_from_closet` (`searcher/filters.py`) and its tests remain — digest-style features (RFC 006) build on the same `→drawer_id` grammar — but no live search path hydrates drawers through closet pointers today.
 
 ## Limits
 
@@ -81,8 +86,8 @@ Closet functions live in `mempalace.palace` (`mempalace/palace/collection.py` an
 - `purge_file_closets()` — delete every closet for a given source file before rebuild
 - `CLOSET_CHAR_LIMIT` / `CLOSET_EXTRACT_WINDOW` — size constants
 
-The closet-first search path lives in `mempalace.searcher` (`mempalace/searcher/`):
-- `_extract_drawer_ids_from_closet()` — parse `→drawer_a,drawer_b` pointers out of a closet document
-- `_closet_first_hits()` — query closets, parse pointers, hydrate matching drawers, return chunk-level hits or `None` to fall back
+Search-side closet consumption lives in `mempalace.searcher` (`mempalace/searcher/query.py`):
+- `_closet_boosts()` — query closets alongside drawer ranking and boost the drawers they point to (signal, never a gate)
+- `_extract_drawer_ids_from_closet()` (`searcher/filters.py`) — parse `→drawer_a,drawer_b` pointers out of a closet document; kept for digest-style consumers (RFC 006), no live search caller today
 
 Note: only the project miner (`miner.py::process_file`) builds closets today. Conversation-mined wings (Claude Code JSONL, ChatGPT export, etc.) will keep using direct drawer search via the searcher fallback until the convo-closet PR lands.

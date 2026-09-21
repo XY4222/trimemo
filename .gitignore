@@ -47,3 +47,6 @@ target/
 *.dylib
 *.exe
 
+
+# WorkBuddy session data
+.workbuddy/
