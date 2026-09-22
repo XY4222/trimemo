@@ -1,9 +1,9 @@
-# MemPalace Small-Model Benchmark Datasets
+# TriMemo Small-Model Benchmark Datasets
 
-Synthetic, hand-curated evaluation datasets for testing small (≤4B parameter) Ollama models on the four classification and extraction tasks that matter for MemPalace's local-first memory pipeline.
+Synthetic, hand-curated evaluation datasets for testing small (≤4B parameter) Ollama models on the four classification and extraction tasks that matter for TriMemo's local-first memory pipeline.
 
 - **Synthetic only.** No real-person names, no real organizations, no real PII.
-- **Public-safe.** Intended to be committed to the public MemPalace open-source repository.
+- **Public-safe.** Intended to be committed to the public TriMemo open-source repository.
 - **Generated 2026-05-10.**
 - **211 samples** total across four tasks (100 synthetic + 1 real-format-flavored sample in room_classification).
 
@@ -75,7 +75,7 @@ Rooms: `about`, `projects/invoice-parsing`, `projects/tax-prep`, `projects/cashf
 | `place` | 27 |
 | Entities per sample (min / max / avg) | 3 / 9 / 4.9 |
 
-Person-skew is intentional: real MemPalace sessions are heavily person-centric, and the entity detector's hardest job is disambiguating people (the dataset deliberately reuses some last names like "Halloran" across distinct individuals to test this).
+Person-skew is intentional: real TriMemo sessions are heavily person-centric, and the entity detector's hardest job is disambiguating people (the dataset deliberately reuses some last names like "Halloran" across distinct individuals to test this).
 
 ### `memory_extraction/` (40 samples)
 
@@ -163,6 +163,6 @@ To regenerate or extend:
 
 ## Provenance
 
-- Synthetic, generated 2026-05-10 for the MemPalace project.
+- Synthetic, generated 2026-05-10 for the TriMemo project.
 - No real-person names. Fictional personae and place/organization names invented for this benchmark.
 - Safe to commit to a public repository.

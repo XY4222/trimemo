@@ -123,7 +123,7 @@ def test_baseline_v333_misclassifies_persona_names_as_people(ai_dialogue_corpus:
     The corpus-origin feature's job is to fix this, and the post-fix test below
     asserts the fix.
     """
-    from mempalace.entity_detector import detect_entities, scan_for_detection
+    from trimemo.entity_detector import detect_entities, scan_for_detection
 
     files = scan_for_detection(str(ai_dialogue_corpus))
     detected = detect_entities(files)
@@ -161,7 +161,7 @@ def test_corpus_origin_reclassifies_personas(
 
     This is the fix. RED until the consumer wiring lands.
     """
-    from mempalace.entity_detector import detect_entities, scan_for_detection
+    from trimemo.entity_detector import detect_entities, scan_for_detection
 
     files = scan_for_detection(str(ai_dialogue_corpus))
     detected = detect_entities(files, corpus_origin=corpus_origin_for_fixture)
@@ -200,7 +200,7 @@ def test_discover_entities_threads_corpus_origin_through(
     that detect_entities does, regardless of whether candidates entered via
     prose, manifests, or git authors.
     """
-    from mempalace.project_scanner import discover_entities
+    from trimemo.project_scanner import discover_entities
 
     detected = discover_entities(
         str(ai_dialogue_corpus),
@@ -228,7 +228,7 @@ def test_discover_entities_no_origin_unchanged_shape(ai_dialogue_corpus: Path):
     Existing callers that don't pass corpus_origin must see no behavioral
     change.
     """
-    from mempalace.project_scanner import discover_entities
+    from trimemo.project_scanner import discover_entities
 
     detected = discover_entities(str(ai_dialogue_corpus))
 
@@ -260,7 +260,7 @@ def test_init_pass_zero_writes_origin_json_to_palace(ai_dialogue_corpus: Path, t
     and persist the result to ``<palace>/.mempalace/origin.json`` in the
     documented schema_version=1 wrapper.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     # no_llm=True isolates the test from any local LLM provider. With Ollama
@@ -271,9 +271,9 @@ def test_init_pass_zero_writes_origin_json_to_palace(ai_dialogue_corpus: Path, t
     args = argparse.Namespace(dir=str(ai_dialogue_corpus), yes=True, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -303,7 +303,7 @@ def test_init_pass_zero_passes_corpus_origin_to_discover_entities(
     """The Pass 0 result must reach discover_entities via the corpus_origin
     kwarg — that's what enables persona reclassification end-to-end.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     # no_llm=True isolates the test from any local LLM provider — see note
@@ -317,10 +317,10 @@ def test_init_pass_zero_passes_corpus_origin_to_discover_entities(
         return {"people": [], "projects": [], "uncertain": []}
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.project_scanner.discover_entities", side_effect=fake_discover),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.project_scanner.discover_entities", side_effect=fake_discover),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -342,7 +342,7 @@ def test_init_pass_zero_skipped_when_no_readable_files(tmp_path: Path):
     """Empty project directory → no origin.json written, init still completes
     without crashing. Aya's earlier finding: don't fail init on missing samples.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     project = tmp_path / "empty"
     project.mkdir()
@@ -352,9 +352,9 @@ def test_init_pass_zero_skipped_when_no_readable_files(tmp_path: Path):
     args = argparse.Namespace(dir=str(project), yes=True, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)  # must not raise
 
@@ -370,7 +370,7 @@ def test_init_pass_zero_uses_full_file_content_not_front_sampled(tmp_path: Path)
     the first N chars. AI signal that lives past the first 2000 chars must
     still trip detection.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     project = tmp_path / "deep_signal"
     project.mkdir()
@@ -397,9 +397,9 @@ def test_init_pass_zero_uses_full_file_content_not_front_sampled(tmp_path: Path)
     args = argparse.Namespace(dir=str(project), yes=True, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -429,7 +429,7 @@ def test_llm_refine_includes_corpus_origin_context_in_prompt(
     """
     from types import SimpleNamespace
 
-    from mempalace.llm_refine import refine_entities
+    from trimemo.llm_refine import refine_entities
 
     captured: dict = {}
 
@@ -475,7 +475,7 @@ def test_llm_refine_no_origin_keeps_v333_prompt_shape(monkeypatch):
     """
     from types import SimpleNamespace
 
-    from mempalace.llm_refine import SYSTEM_PROMPT, refine_entities
+    from trimemo.llm_refine import SYSTEM_PROMPT, refine_entities
 
     captured: dict = {}
 
@@ -505,7 +505,7 @@ def test_llm_refine_no_origin_keeps_v333_prompt_shape(monkeypatch):
     )
 
 
-# ── mempalace mine --redetect-origin flag ───────────────────────────────
+# ── trimemo mine --redetect-origin flag ───────────────────────────────
 
 
 def _mine_args(project_dir: Path, *, redetect: bool):
@@ -520,7 +520,7 @@ def _mine_args(project_dir: Path, *, redetect: bool):
         wing=None,
         no_gitignore=False,
         include_ignored=[],
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=True,
         extract="auto",
@@ -529,18 +529,18 @@ def _mine_args(project_dir: Path, *, redetect: bool):
 
 
 def test_mine_default_does_not_redetect_origin(ai_dialogue_corpus: Path, tmp_path: Path):
-    """Default `mempalace mine` (no --redetect-origin flag) must NOT run
+    """Default `trimemo mine` (no --redetect-origin flag) must NOT run
     corpus_origin detection — the flag is opt-in.
     """
-    from mempalace.cli import cmd_mine
+    from trimemo.cli import cmd_mine
 
     palace = tmp_path / "palace"
     args = _mine_args(ai_dialogue_corpus, redetect=False)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._run_pass_zero") as mock_pass_zero,
-        patch("mempalace.miner.mine"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._run_pass_zero") as mock_pass_zero,
+        patch("trimemo.miner.mine"),
     ):
         cmd_mine(args)
 
@@ -551,17 +551,17 @@ def test_mine_default_does_not_redetect_origin(ai_dialogue_corpus: Path, tmp_pat
 def test_mine_with_redetect_origin_flag_writes_origin_json(
     ai_dialogue_corpus: Path, tmp_path: Path
 ):
-    """`mempalace mine --redetect-origin` re-runs corpus_origin detection
+    """`trimemo mine --redetect-origin` re-runs corpus_origin detection
     on the project and persists the result to <palace>/.mempalace/origin.json.
     """
-    from mempalace.cli import cmd_mine
+    from trimemo.cli import cmd_mine
 
     palace = tmp_path / "palace"
     args = _mine_args(ai_dialogue_corpus, redetect=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.miner.mine"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.miner.mine"),
     ):
         cmd_mine(args)
 
@@ -577,7 +577,7 @@ def test_mine_redetect_overwrites_existing_origin_json(ai_dialogue_corpus: Path,
     overwrites it with the new detection result rather than skipping.
     Resolved as option (c): explicit user re-runs via flag.
     """
-    from mempalace.cli import cmd_mine
+    from trimemo.cli import cmd_mine
 
     palace = tmp_path / "palace"
     origin_dir = palace / ".mempalace"
@@ -599,8 +599,8 @@ def test_mine_redetect_overwrites_existing_origin_json(ai_dialogue_corpus: Path,
     args = _mine_args(ai_dialogue_corpus, redetect=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.miner.mine"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.miner.mine"),
     ):
         cmd_mine(args)
 
@@ -615,7 +615,7 @@ def test_mine_redetect_uses_full_content_not_sampled(tmp_path: Path):
     """Regression for Aya's pushback: --redetect-origin must use the same
     full-content reader as Pass 0 (not first-N-chars sampling).
     """
-    from mempalace.cli import cmd_mine
+    from trimemo.cli import cmd_mine
 
     project = tmp_path / "deep_signal"
     project.mkdir()
@@ -630,8 +630,8 @@ def test_mine_redetect_uses_full_content_not_sampled(tmp_path: Path):
     args = _mine_args(project, redetect=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.miner.mine"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.miner.mine"),
     ):
         cmd_mine(args)
 
@@ -663,10 +663,10 @@ def _init_args(project_dir: Path, *, no_llm: bool = False, **overrides):
 
 
 def test_init_default_attempts_llm_provider(ai_dialogue_corpus: Path, tmp_path: Path):
-    """``mempalace init`` (no flags) MUST try to acquire an LLM
+    """``trimemo init`` (no flags) MUST try to acquire an LLM
     provider. This is the default-flip — opt-in becomes opt-out.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
@@ -678,36 +678,36 @@ def test_init_default_attempts_llm_provider(ai_dialogue_corpus: Path, tmp_path: 
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider) as mock_get,
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider) as mock_get,
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
     (
         mock_get.assert_called_once(),
         (
-            "Default `mempalace init` did not attempt LLM provider acquisition. "
+            "Default `trimemo init` did not attempt LLM provider acquisition. "
             "--llm is now ON by default."
         ),
     )
 
 
 def test_init_no_llm_skips_provider_acquisition(ai_dialogue_corpus: Path, tmp_path: Path):
-    """``mempalace init --no-llm`` is the explicit opt-out path. No
+    """``trimemo init --no-llm`` is the explicit opt-out path. No
     provider acquisition attempt; init runs in heuristics-only mode.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider") as mock_get,
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider") as mock_get,
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -724,7 +724,7 @@ def test_init_graceful_fallback_when_provider_unavailable(
     check_available returns False, init prints a one-line message and
     proceeds without an LLM provider.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
@@ -733,10 +733,10 @@ def test_init_graceful_fallback_when_provider_unavailable(
     fake_provider.check_available.return_value = (False, "Ollama not reachable at localhost:11434")
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)  # MUST NOT raise SystemExit
 
@@ -754,17 +754,17 @@ def test_init_graceful_fallback_on_provider_construction_error(
     """When get_provider raises (e.g. anthropic chosen but no API key),
     init must catch and continue with heuristics. Not crash.
     """
-    from mempalace.cli import cmd_init
-    from mempalace.llm_client import LLMError
+    from trimemo.cli import cmd_init
+    from trimemo.llm_client import LLMError
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", side_effect=LLMError("no api key")),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", side_effect=LLMError("no api key")),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)  # MUST NOT raise
 
@@ -776,11 +776,11 @@ def test_init_graceful_fallback_on_provider_construction_error(
 
 
 def test_init_legacy_llm_flag_compatible(ai_dialogue_corpus: Path, tmp_path: Path):
-    """Backwards compatibility: `mempalace init --llm` still works as
+    """Backwards compatibility: `trimemo init --llm` still works as
     before (LLM enabled). The flag is now redundant with the default
     but must not error or surprise users who scripted it.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, llm=True)
@@ -790,10 +790,10 @@ def test_init_legacy_llm_flag_compatible(ai_dialogue_corpus: Path, tmp_path: Pat
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider) as mock_get,
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider) as mock_get,
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -804,7 +804,7 @@ def test_init_legacy_llm_flag_compatible(ai_dialogue_corpus: Path, tmp_path: Pat
 
 
 def test_end_to_end_init_with_llm_separates_personas(ai_dialogue_corpus: Path, tmp_path: Path):
-    """End-to-end through `mempalace init` on the DEFAULT path (LLM enabled).
+    """End-to-end through `trimemo init` on the DEFAULT path (LLM enabled).
     Confirms the whole chain works without trusting per-stage mocks:
 
       cmd_init -> _run_pass_zero -> Tier 1 + Tier 2 -> origin.json
@@ -820,8 +820,8 @@ def test_end_to_end_init_with_llm_separates_personas(ai_dialogue_corpus: Path, t
     testing the LLM, we're testing the wiring that flows the LLM's
     persona names into entity classification end-to-end.
     """
-    from mempalace.cli import cmd_init
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import cmd_init
+    from trimemo.corpus_origin import CorpusOriginResult
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)  # default = LLM ON
@@ -844,14 +844,14 @@ def test_end_to_end_init_with_llm_separates_personas(ai_dialogue_corpus: Path, t
     )
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
         patch(
-            "mempalace.cli.detect_origin_llm",
+            "trimemo.cli.detect_origin_llm",
             return_value=fake_llm_origin_result,
         ),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -893,15 +893,15 @@ def test_no_llm_path_matches_v333_classification(ai_dialogue_corpus: Path, tmp_p
     would on plain v3.3.3. Users who want persona reclassification must
     have an LLM provider configured (default behavior).
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, no_llm=True)  # explicit opt-out
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -929,22 +929,22 @@ def test_no_llm_path_matches_v333_classification(ai_dialogue_corpus: Path, tmp_p
 
 
 def test_re_init_idempotent(ai_dialogue_corpus: Path, tmp_path: Path):
-    """Running `mempalace init` twice on the same project produces the
+    """Running `trimemo init` twice on the same project produces the
     same result. origin.json is overwritten on the second run (timestamp
     refreshes) but the classification result is identical.
 
     Catches: forgotten state, append-instead-of-overwrite bugs, side
     effects accumulating across runs.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
         first = json.loads((palace / ".mempalace" / "origin.json").read_text())
@@ -978,7 +978,7 @@ def test_persona_user_name_collision_user_kept_in_people(
     place in the people bucket — they don't get reclassified as an agent.
     The corpus-origin wiring must protect the human from disappearing.
     """
-    from mempalace.entity_detector import detect_entities
+    from trimemo.entity_detector import detect_entities
 
     project = tmp_path / "collision_corpus"
     project.mkdir()
@@ -1008,7 +1008,7 @@ def test_persona_user_name_collision_user_kept_in_people(
         },
     }
 
-    from mempalace.entity_detector import scan_for_detection
+    from trimemo.entity_detector import scan_for_detection
 
     files = scan_for_detection(str(project))
     # Apply corpus-origin with the malformed origin.
@@ -1034,7 +1034,7 @@ def test_persona_user_name_collision_user_kept_in_people(
     Existing callers that don't pass corpus_origin must see no behavioral
     change.
     """
-    from mempalace.project_scanner import discover_entities
+    from trimemo.project_scanner import discover_entities
 
     detected = discover_entities(str(ai_dialogue_corpus))
 
@@ -1071,13 +1071,13 @@ def test_integration_cmd_init_runs_pass_zero_to_pass_four_in_order(
     mine a fully-set-up directory. This test pins the order so any
     future re-shuffle is caught.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, no_llm=True)
     call_log: list = []
 
-    real_run_pass_zero = __import__("mempalace.cli", fromlist=["_run_pass_zero"])._run_pass_zero
+    real_run_pass_zero = __import__("trimemo.cli", fromlist=["_run_pass_zero"])._run_pass_zero
 
     def trace_pass_zero(*a, **kw):
         call_log.append("pass_zero")
@@ -1098,12 +1098,12 @@ def test_integration_cmd_init_runs_pass_zero_to_pass_four_in_order(
         call_log.append("mine_prompt")
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli._run_pass_zero", side_effect=trace_pass_zero),
-        patch("mempalace.project_scanner.discover_entities", side_effect=trace_discover),
-        patch("mempalace.room_detector_local.detect_rooms_local", side_effect=trace_rooms),
-        patch("mempalace.cli._ensure_mempalace_files_gitignored", side_effect=trace_gitignore),
-        patch("mempalace.cli._maybe_run_mine_after_init", side_effect=trace_mine_prompt),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli._run_pass_zero", side_effect=trace_pass_zero),
+        patch("trimemo.project_scanner.discover_entities", side_effect=trace_discover),
+        patch("trimemo.room_detector_local.detect_rooms_local", side_effect=trace_rooms),
+        patch("trimemo.cli._ensure_mempalace_files_gitignored", side_effect=trace_gitignore),
+        patch("trimemo.cli._maybe_run_mine_after_init", side_effect=trace_mine_prompt),
     ):
         cmd_init(args)
 
@@ -1135,7 +1135,7 @@ def test_integration_topics_and_agent_personas_coexist(
     Catches the most-likely merge regression: dropping develop's topics
     list while applying corpus-origin's _apply_corpus_origin.
     """
-    from mempalace.entity_detector import detect_entities, scan_for_detection
+    from trimemo.entity_detector import detect_entities, scan_for_detection
 
     files = scan_for_detection(str(ai_dialogue_corpus))
     detected = detect_entities(files, corpus_origin=corpus_origin_for_fixture)
@@ -1162,8 +1162,8 @@ def test_integration_entities_json_includes_topics_excludes_personas(
     This is the contract downstream tools (miner, palace_graph cross-wing
     tunnels) depend on.
     """
-    from mempalace.cli import cmd_init
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import cmd_init
+    from trimemo.corpus_origin import CorpusOriginResult
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
@@ -1183,11 +1183,11 @@ def test_integration_entities_json_includes_topics_excludes_personas(
     )
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli.detect_origin_llm", return_value=fake_origin),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli.detect_origin_llm", return_value=fake_origin),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -1218,8 +1218,8 @@ def test_integration_add_to_known_entities_called_with_wing(
     corpus-origin path through cmd_init must respect this — calling it
     without ``wing=`` would silently break tunnel computation later.
     """
-    from mempalace.cli import cmd_init
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import cmd_init
+    from trimemo.corpus_origin import CorpusOriginResult
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
@@ -1238,12 +1238,12 @@ def test_integration_add_to_known_entities_called_with_wing(
     )
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli.detect_origin_llm", return_value=fake_origin),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
-        patch("mempalace.miner.add_to_known_entities") as mock_add,
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli.detect_origin_llm", return_value=fake_origin),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
+        patch("trimemo.miner.add_to_known_entities") as mock_add,
     ):
         cmd_init(args)
 
@@ -1270,7 +1270,7 @@ def test_integration_llm_refine_corpus_origin_preamble_does_not_break_topic_labe
     """
     from types import SimpleNamespace
 
-    from mempalace.llm_refine import VALID_LABELS, refine_entities
+    from trimemo.llm_refine import VALID_LABELS, refine_entities
 
     # TOPIC is preserved as a valid label
     assert "TOPIC" in VALID_LABELS, "develop's TOPIC label was dropped during corpus-origin merge"
@@ -1321,11 +1321,11 @@ def test_integration_llm_refine_corpus_origin_preamble_does_not_break_topic_labe
 # must use feature names ("corpus_origin", "corpus-origin detection")
 # instead.
 #
-# This test asserts nothing in `mempalace/` or `tests/` contains those
+# This test asserts nothing in `trimemo/` or `tests/` contains those
 # markers. If a future commit re-introduces "Phase 1" or "Igor's review §"
 # anywhere, this test goes RED and blocks the merge.
 #
-# Pre-existing exception: the `mempalace/sources/` and `mempalace/backends/`
+# Pre-existing exception: the `trimemo/sources/` and `trimemo/backends/`
 # packages cite RFC 002 sections (e.g. "§5.5") as legitimate spec
 # references. Those are allowed.
 # ─────────────────────────────────────────────────────────────────────────
@@ -1347,10 +1347,10 @@ def test_no_internal_coordination_jargon_in_source_or_tests():
     # Allowlist: pre-existing RFC/spec references in source-adapter and
     # backends packages are NOT internal phase markers.
     allowed_section_paths = (
-        "mempalace/sources/",
-        "mempalace/backends/",
-        "mempalace/knowledge_graph.py",
-        "mempalace/i18n/",
+        "trimemo/sources/",
+        "trimemo/backends/",
+        "trimemo/knowledge_graph.py",
+        "trimemo/i18n/",
         "tests/test_sources.py",
         "tests/test_i18n_lang_case.py",
     )
@@ -1359,7 +1359,7 @@ def test_no_internal_coordination_jargon_in_source_or_tests():
     SELF = Path(__file__).resolve()
 
     leaks: list = []
-    for pattern_dir in ("mempalace", "tests"):
+    for pattern_dir in ("trimemo", "tests"):
         for path in (repo_root / pattern_dir).rglob("*.py"):
             if path.resolve() == SELF:
                 continue
@@ -1438,8 +1438,8 @@ def test_merge_tier_fields_heuristic_yes_llm_no_keeps_heuristic_bool():
     """
     from unittest.mock import MagicMock
 
-    from mempalace.cli import _run_pass_zero
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import _run_pass_zero
+    from trimemo.corpus_origin import CorpusOriginResult
 
     # Mock the LLM provider so detect_origin_llm returns a CONTRADICTING result.
     fake_provider = MagicMock()
@@ -1468,7 +1468,7 @@ def test_merge_tier_fields_heuristic_yes_llm_no_keeps_heuristic_bool():
             (project_dir / f"log{i}.md").write_text(sample)
         palace_dir = Path(tmp_dir) / "palace"
 
-        with patch("mempalace.cli.detect_origin_llm", return_value=llm_wrong_result):
+        with patch("trimemo.cli.detect_origin_llm", return_value=llm_wrong_result):
             wrapped = _run_pass_zero(
                 project_dir=str(project_dir),
                 palace_dir=str(palace_dir),
@@ -1486,7 +1486,7 @@ def test_merge_tier_fields_heuristic_yes_llm_no_keeps_heuristic_bool():
     # heuristic. Compare to detect_origin_heuristic on the same samples
     # so this stays correct regardless of what the heuristic computes
     # for these samples (avoids brittleness vs. a hardcoded sentinel).
-    from mempalace.corpus_origin import detect_origin_heuristic
+    from trimemo.corpus_origin import detect_origin_heuristic
 
     expected_confidence = detect_origin_heuristic(_ai_dialogue_samples()).confidence
     assert res["confidence"] == expected_confidence, (
@@ -1513,8 +1513,8 @@ def test_merge_tier_fields_heuristic_no_no_personas_leak():
     """
     from unittest.mock import MagicMock, patch
 
-    from mempalace.cli import _run_pass_zero
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import _run_pass_zero
+    from trimemo.corpus_origin import CorpusOriginResult
 
     fake_provider = MagicMock()
 
@@ -1536,7 +1536,7 @@ def test_merge_tier_fields_heuristic_no_no_personas_leak():
             (project_dir / f"diary{i}.md").write_text(sample)
         palace_dir = Path(tmp_dir) / "palace"
 
-        with patch("mempalace.cli.detect_origin_llm", return_value=llm_agreeing_result):
+        with patch("trimemo.cli.detect_origin_llm", return_value=llm_agreeing_result):
             wrapped = _run_pass_zero(
                 project_dir=str(project_dir),
                 palace_dir=str(palace_dir),
@@ -1568,8 +1568,8 @@ def test_merge_tier_fields_heuristic_yes_llm_yes_combines_evidence():
     """
     from unittest.mock import MagicMock, patch
 
-    from mempalace.cli import _run_pass_zero
-    from mempalace.corpus_origin import CorpusOriginResult
+    from trimemo.cli import _run_pass_zero
+    from trimemo.corpus_origin import CorpusOriginResult
 
     fake_provider = MagicMock()
 
@@ -1591,7 +1591,7 @@ def test_merge_tier_fields_heuristic_yes_llm_yes_combines_evidence():
             (project_dir / f"log{i}.md").write_text(sample)
         palace_dir = Path(tmp_dir) / "palace"
 
-        with patch("mempalace.cli.detect_origin_llm", return_value=llm_agreeing_result):
+        with patch("trimemo.cli.detect_origin_llm", return_value=llm_agreeing_result):
             wrapped = _run_pass_zero(
                 project_dir=str(project_dir),
                 palace_dir=str(palace_dir),
@@ -1644,8 +1644,8 @@ def test_merge_tier_fields_confidence_matches_heuristic_call():
     """
     from unittest.mock import MagicMock, patch
 
-    from mempalace.cli import _run_pass_zero
-    from mempalace.corpus_origin import CorpusOriginResult, detect_origin_heuristic
+    from trimemo.cli import _run_pass_zero
+    from trimemo.corpus_origin import CorpusOriginResult, detect_origin_heuristic
 
     samples = _ai_dialogue_samples()
     expected_confidence = detect_origin_heuristic(samples).confidence
@@ -1670,7 +1670,7 @@ def test_merge_tier_fields_confidence_matches_heuristic_call():
             (project_dir / f"log{i}.md").write_text(sample)
         palace_dir = Path(tmp_dir) / "palace"
 
-        with patch("mempalace.cli.detect_origin_llm", return_value=llm_distinct_result):
+        with patch("trimemo.cli.detect_origin_llm", return_value=llm_distinct_result):
             wrapped = _run_pass_zero(
                 project_dir=str(project_dir),
                 palace_dir=str(palace_dir),
@@ -1691,7 +1691,7 @@ def test_merge_tier_fields_no_llm_provider_returns_heuristic_only():
     path), behavior is identical to today — heuristic-only result, no
     merge logic fires. This pins the v3.3.4 contract.
     """
-    from mempalace.cli import _run_pass_zero
+    from trimemo.cli import _run_pass_zero
 
     import tempfile
 
@@ -1721,9 +1721,9 @@ def test_merge_tier_fields_no_llm_provider_returns_heuristic_only():
 # ─────────────────────────────────────────────────────────────────────────
 # External-API privacy warning (issue #24).
 #
-# When mempalace init resolves an LLM provider whose endpoint will send
+# When trimemo init resolves an LLM provider whose endpoint will send
 # user content off the local machine/network, init MUST print a clear
-# warning naming the provider, stating that MemPalace doesn't control
+# warning naming the provider, stating that TriMemo doesn't control
 # how the provider logs/retains/uses the data, and pointing at --no-llm.
 # Local providers (Ollama on localhost, LM Studio on LAN, etc.) MUST NOT
 # trigger the warning.
@@ -1737,7 +1737,7 @@ def test_init_prints_privacy_warning_when_provider_is_external(
     is_external_service is True, output must contain the privacy
     warning text including the EXTERNAL marker.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)  # default = LLM ON
@@ -1748,10 +1748,10 @@ def test_init_prints_privacy_warning_when_provider_is_external(
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -1762,7 +1762,7 @@ def test_init_prints_privacy_warning_when_provider_is_external(
     assert "--no-llm" in out, (
         f"Privacy warning must point users at --no-llm to opt out. Got: {out!r}"
     )
-    # The warning should also tell users MemPalace isn't responsible
+    # The warning should also tell users TriMemo isn't responsible
     # for downstream provider behavior.
     assert (
         "does not control" in out.lower()
@@ -1770,7 +1770,7 @@ def test_init_prints_privacy_warning_when_provider_is_external(
         or "logs" in out.lower()
         or "retains" in out.lower()
     ), (
-        f"Privacy warning must clarify MemPalace doesn't control how the "
+        f"Privacy warning must clarify TriMemo doesn't control how the "
         f"provider handles the data. Got: {out!r}"
     )
 
@@ -1782,7 +1782,7 @@ def test_init_no_privacy_warning_when_provider_is_local(
     on localhost, LM Studio on LAN), the privacy warning MUST NOT fire —
     nothing is leaving the user's machine/network.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)  # default = LLM ON
@@ -1793,10 +1793,10 @@ def test_init_no_privacy_warning_when_provider_is_local(
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -1810,16 +1810,16 @@ def test_init_no_privacy_warning_with_no_llm_flag(ai_dialogue_corpus: Path, tmp_
     """With --no-llm, no provider is acquired at all, so the privacy
     warning has nothing to fire on. Output must not contain it.
     """
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, no_llm=True)
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider") as mock_get,
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider") as mock_get,
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
     ):
         cmd_init(args)
 
@@ -1859,17 +1859,17 @@ def test_init_blocks_with_consent_prompt_when_api_key_from_env(
     """When provider is external AND api_key_source=='env' AND
     --accept-external-llm is NOT set, cmd_init MUST call input() to
     block on user consent. No bypass = blocking prompt."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
     fake_provider = _external_env_provider()
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input", return_value="y") as mock_input,
     ):
         cmd_init(args)
@@ -1883,17 +1883,17 @@ def test_init_blocks_with_consent_prompt_when_api_key_from_env(
 def test_init_consent_prompt_y_proceeds_with_llm(ai_dialogue_corpus: Path, tmp_path: Path, capsys):
     """If user types 'y' at the consent prompt, init proceeds with the
     LLM — provider.classify() is invoked during Pass 0 / refinement."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
     fake_provider = _external_env_provider()
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input", return_value="y"),
     ):
         cmd_init(args)
@@ -1909,17 +1909,17 @@ def test_init_consent_prompt_n_falls_back_to_heuristic(
 ):
     """If user types 'n' (or anything not 'y'), init drops the LLM and
     falls back to heuristics-only — provider.classify() must NOT run."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
     fake_provider = _external_env_provider()
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input", return_value="n"),
     ):
         cmd_init(args)
@@ -1936,7 +1936,7 @@ def test_init_no_consent_prompt_when_api_key_from_flag(
     """Explicit --llm-api-key means user already opted in. The consent
     prompt MUST NOT fire when api_key_source == 'flag', even if the
     endpoint is external."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, llm_api_key="sk-explicit")
@@ -1947,10 +1947,10 @@ def test_init_no_consent_prompt_when_api_key_from_flag(
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input") as mock_input,
     ):
         cmd_init(args)
@@ -1967,17 +1967,17 @@ def test_init_accept_external_llm_flag_bypasses_consent_prompt(
     """--accept-external-llm is the non-interactive bypass for CI. With
     the flag set, the consent prompt MUST NOT fire even when the
     api_key came from env-fallback."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus, accept_external_llm=True)
     fake_provider = _external_env_provider()
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input") as mock_input,
     ):
         cmd_init(args)
@@ -1997,7 +1997,7 @@ def test_init_no_consent_prompt_when_endpoint_is_local(
     """Stray env-fallback api_key on a LOCAL endpoint (e.g. LM Studio
     on localhost with OPENAI_API_KEY in shell env) must NOT trigger the
     prompt. Nothing leaves the machine — no consent needed."""
-    from mempalace.cli import cmd_init
+    from trimemo.cli import cmd_init
 
     palace = tmp_path / "palace"
     args = _init_args(ai_dialogue_corpus)
@@ -2008,10 +2008,10 @@ def test_init_no_consent_prompt_when_endpoint_is_local(
     fake_provider.classify.return_value = MagicMock(text='{"classifications": []}')
 
     with (
-        patch("mempalace.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
-        patch("mempalace.cli.get_provider", return_value=fake_provider),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli.MempalaceConfig", return_value=_stub_cfg(palace)),
+        patch("trimemo.cli.get_provider", return_value=fake_provider),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.input") as mock_input,
     ):
         cmd_init(args)

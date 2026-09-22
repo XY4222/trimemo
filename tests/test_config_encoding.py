@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mempalace.miner import load_config
-from mempalace.room_detector_local import save_config
+from trimemo.miner import load_config
+from trimemo.room_detector_local import save_config
 
 
 CJK_DESCRIPTION = "Files from 20-專案/"
@@ -69,8 +69,8 @@ def test_load_config_does_not_depend_on_platform_encoding(tmp_path):
 
 def test_save_then_load_config_round_trips_cjk(tmp_path):
     # save_config writes the file that load_config later reads. Both ends have
-    # to agree on UTF-8, or `mempalace init` on a CJK project produces a config
-    # that the next `mempalace mine` cannot open.
+    # to agree on UTF-8, or `trimemo init` on a CJK project produces a config
+    # that the next `trimemo mine` cannot open.
     project_dir = tmp_path / "proj"
     project_dir.mkdir(parents=True, exist_ok=True)
 

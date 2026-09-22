@@ -15,7 +15,7 @@ An agent searching "who built the auth?" hits the closet first (fast scan of sho
 
 ### When are closets created?
 
-Closets are created during `mempalace mine`. For each file mined:
+Closets are created during `trimemo mine`. For each file mined:
 1. Content is chunked into drawers (verbatim, ~800 chars each)
 2. Topics, entities, and quotes are extracted from the content
 3. A closet is created with pointer lines to those drawers
@@ -40,7 +40,7 @@ There are no stale topics: each re-mine is a clean rebuild for that source file.
 
 ### Do closets survive palace rebuilds?
 
-Closets are stored in the `mempalace_closets` ChromaDB collection alongside `mempalace_drawers`. If you delete and rebuild the palace, closets are recreated during the next `mempalace mine`.
+Closets are stored in the `mempalace_closets` ChromaDB collection alongside `mempalace_drawers`. If you delete and rebuild the palace, closets are recreated during the next `trimemo mine`.
 
 ## How search uses closets
 
@@ -79,14 +79,14 @@ The pointer parser `_extract_drawer_ids_from_closet` (`searcher/filters.py`) and
 
 ## For developers
 
-Closet functions live in `mempalace.palace` (`mempalace/palace/collection.py` and `mempalace/palace/closets.py`):
+Closet functions live in `mempalace.palace` (`trimemo/palace/collection.py` and `trimemo/palace/closets.py`):
 - `get_closets_collection()` — get the closets ChromaDB collection
 - `build_closet_lines()` — extract topics/entities/quotes into pointer lines
 - `upsert_closet_lines()` — write lines to closets respecting the char limit (overwrites existing IDs; does not append — call `purge_file_closets` first when re-mining)
 - `purge_file_closets()` — delete every closet for a given source file before rebuild
 - `CLOSET_CHAR_LIMIT` / `CLOSET_EXTRACT_WINDOW` — size constants
 
-Search-side closet consumption lives in `mempalace.searcher` (`mempalace/searcher/query.py`):
+Search-side closet consumption lives in `mempalace.searcher` (`trimemo/searcher/query.py`):
 - `_closet_boosts()` — query closets alongside drawer ranking and boost the drawers they point to (signal, never a gate)
 - `_extract_drawer_ids_from_closet()` (`searcher/filters.py`) — parse `→drawer_a,drawer_b` pointers out of a closet document; kept for digest-style consumers (RFC 006), no live search caller today
 

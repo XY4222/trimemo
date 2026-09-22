@@ -10,7 +10,7 @@ import { createAgent, createHost, tick } from './host.mjs'
 
 let dir
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'mempalace-dsh-'))
+  dir = await mkdtemp(path.join(tmpdir(), 'trimemo-dsh-'))
 })
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true })
@@ -84,7 +84,7 @@ test('a turn files the transcript through the dsh stop hook without making the t
 
   await settle(host)
   const [call] = hookCalls(host)
-  assert.deepEqual(call.argv, ['/usr/local/bin/mempalace', 'hook', 'run', '--hook', 'stop', '--harness', 'dsh'])
+  assert.deepEqual(call.argv, ['/usr/local/bin/trimemo', 'hook', 'run', '--hook', 'stop', '--harness', 'dsh'])
   const file = path.join(dir, transcriptFileName('sess/1'))
   assert.deepEqual(JSON.parse(call.stdio.stdin.data), {
     session_id: 'sess/1',

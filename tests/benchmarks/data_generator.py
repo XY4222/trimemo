@@ -1,5 +1,5 @@
 """
-Deterministic data factory for MemPalace scale benchmarks.
+Deterministic data factory for TriMemo scale benchmarks.
 
 Generates realistic project files, conversations, and KG triples at
 configurable scale levels. All randomness uses seeded RNG for reproducibility.

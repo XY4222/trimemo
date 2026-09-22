@@ -1,6 +1,6 @@
 # Gemini CLI
 
-MemPalace works natively with [Gemini CLI](https://github.com/google/gemini-cli), which handles the MCP server and save hooks automatically.
+TriMemo works natively with [Gemini CLI](https://github.com/google/gemini-cli), which handles the MCP server and save hooks automatically.
 
 ## Prerequisites
 
@@ -15,9 +15,9 @@ virtual environment for you:
 ```bash
 # Clone the repository
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 
-# Create the venv and install MemPalace + dependencies
+# Create the venv and install TriMemo + dependencies
 uv sync
 ```
 
@@ -32,7 +32,7 @@ python3 -m venv .venv
 ## Initialize the Palace
 
 ```bash
-uv run python -m mempalace init .
+uv run python -m trimemo init .
 ```
 
 ### Identity and Project Configuration (Optional)
@@ -40,16 +40,16 @@ uv run python -m mempalace init .
 You can optionally create or edit:
 
 - **`~/.mempalace/identity.txt`** — plain text describing your role and focus
-- **`./mempalace.yaml`** — per-project MemPalace configuration created by `mempalace init`
+- **`./mempalace.yaml`** — per-project TriMemo configuration created by `trimemo init`
 - **`./entities.json`** — per-project entity mappings used by AAAK compression
 
 ## Connect to Gemini CLI
 
-Register MemPalace as an MCP server:
+Register TriMemo as an MCP server:
 
 ```bash
-gemini mcp add --scope user mempalace \
-  -- /absolute/path/to/mempalace/.venv/bin/python -m mempalace.mcp_server
+gemini mcp add --scope user trimemo \
+  -- /absolute/path/to/trimemo/.venv/bin/python -m mempalace.mcp_server
 ```
 
 ::: warning
@@ -71,7 +71,7 @@ Add a `PreCompress` hook to `~/.gemini/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "/absolute/path/to/mempalace/hooks/mempal_precompact_hook.sh"
+            "command": "/absolute/path/to/trimemo/hooks/mempal_precompact_hook.sh"
           }
         ]
       }
@@ -88,7 +88,7 @@ chmod +x hooks/*.sh
 ## Usage
 
 Once connected, Gemini CLI will automatically:
-- Start the MemPalace server on launch
+- Start the TriMemo server on launch
 - Use `mempalace_search` to find relevant past discussions
 - Use the `PreCompress` hook to save memories before context compression
 
@@ -96,11 +96,11 @@ Once connected, Gemini CLI will automatically:
 
 Mine existing code or docs:
 ```bash
-uv run python -m mempalace mine /path/to/your/project
+uv run python -m trimemo mine /path/to/your/project
 ```
 
 ### Verification
 
 In a Gemini CLI session:
-- `/mcp list` — verify `mempalace` is `CONNECTED`
+- `/mcp list` — verify `trimemo` is `CONNECTED`
 - `/hooks panel` — verify the `PreCompress` hook is active

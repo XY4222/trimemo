@@ -17,8 +17,8 @@ import os
 from unittest.mock import MagicMock, patch
 
 with patch.dict("sys.modules", {"chromadb": MagicMock()}):
-    from mempalace import hallways as hallways_mod
-    from mempalace.config import MempalaceConfig
+    from trimemo import hallways as hallways_mod
+    from trimemo.config import MempalaceConfig
 
 
 # =============================================================================

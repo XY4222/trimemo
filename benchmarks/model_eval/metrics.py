@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 # This is a local copy of the same logic that lives in
 # `mempalace.local_model.strip_thinking_tokens`. We duplicate it here so
 # the harness can land on develop independently of the model-router PR.
-# When that PR merges, replace this with: from mempalace.local_model
+# When that PR merges, replace this with: from trimemo.local_model
 # import strip_thinking_tokens
 
 _THINK_BLOCK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)

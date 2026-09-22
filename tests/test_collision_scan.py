@@ -19,7 +19,7 @@ from typing import Optional
 
 import pytest
 
-from mempalace.collision_scan import CollisionError, assert_no_collisions
+from trimemo.collision_scan import CollisionError, assert_no_collisions
 
 
 class _MockGet:

@@ -1,4 +1,4 @@
-"""Tests for format_miner (mempalace 3.3.6, integrated in PR #1555).
+"""Tests for format_miner (trimemo 3.3.6, integrated in PR #1555).
 
 Covers all 14 fringe cases in the format-coverage spec plus orchestrator
 behavior. MarkItDown is mocked at the seam for most tests; a few guarded
@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 
 
-from mempalace.format_miner import (  # noqa: E402
+from trimemo.format_miner import (  # noqa: E402
     DEFAULT_MAX_FILE_SIZE,
     SUPPORTED_FORMATS,
     ExtractionStatus,
@@ -137,7 +137,7 @@ def test_fringe_too_large_respects_caller_max(tmp_path: Path):
     f.write_bytes(b"%PDF-1.4\n" + b"\x00" * 2048)
     # When the cap is generous, size alone won't trigger SKIP_TOO_LARGE.
     # (MarkItDown will be invoked; we mock it so the test doesn't require it.)
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="dummy text"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="dummy text"):
         text, status = extract_text(f, max_file_size=1024 * 1024)
     assert status == ExtractionStatus.OK
     assert text == "dummy text"
@@ -152,7 +152,7 @@ def test_fringe_missing_markitdown(tmp_path: Path):
     f = tmp_path / "doc.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         side_effect=ImportError("No module named 'markitdown'"),
     ):
         text, status = extract_text(f)
@@ -173,7 +173,7 @@ def test_fringe_encrypted_pdf(tmp_path: Path):
         pass
 
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         side_effect=_PasswordError("File has not been decrypted"),
     ):
         text, status = extract_text(f)
@@ -190,7 +190,7 @@ def test_fringe_permission_denied(tmp_path: Path):
     f = tmp_path / "denied.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         side_effect=PermissionError("Permission denied"),
     ):
         text, status = extract_text(f)
@@ -230,7 +230,7 @@ def test_fringe_icloud_skip_extraction(tmp_path: Path):
     # return SKIP_CLOUD_ONLY.
     f = tmp_path / "doc.pdf.icloud"
     f.write_bytes(b"placeholder")
-    with patch("mempalace.format_miner._extract_via_markitdown") as mocked:
+    with patch("trimemo.format_miner._extract_via_markitdown") as mocked:
         text, status = extract_text(f)
     assert text is None
     assert status == ExtractionStatus.SKIP_CLOUD_ONLY
@@ -274,7 +274,7 @@ def test_extract_text_accepts_pathlib_path(tmp_path: Path):
     """Accept Path objects without coercing to str (Windows-safe)."""
     f = tmp_path / "doc.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="content"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="content"):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
 
@@ -283,7 +283,7 @@ def test_extract_text_accepts_string_path(tmp_path: Path):
     """Accept str paths for callers that pre-stringify."""
     f = tmp_path / "doc.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="content"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="content"):
         text, status = extract_text(str(f))
     assert status == ExtractionStatus.OK
 
@@ -292,7 +292,7 @@ def test_supported_format_check_case_insensitive(tmp_path: Path):
     """Windows often shows uppercase extensions; we still recognize them."""
     f = tmp_path / "doc.PDF"
     f.write_bytes(b"%PDF-1.4\nstub")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="content"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="content"):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
 
@@ -306,7 +306,7 @@ def test_fringe_markitdown_generic_crash(tmp_path: Path):
     f = tmp_path / "malformed.pdf"
     f.write_bytes(b"%PDF-1.4\nmalformed")
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         side_effect=RuntimeError("internal converter explosion"),
     ):
         text, status = extract_text(f)
@@ -318,7 +318,7 @@ def test_fringe_markitdown_returns_none(tmp_path: Path):
     """MarkItDown can return None for some inputs; treat as extraction error."""
     f = tmp_path / "weird.pdf"
     f.write_bytes(b"%PDF-1.4\nweird")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value=None):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value=None):
         text, status = extract_text(f)
     assert text is None
     assert status == ExtractionStatus.SKIP_EXTRACTION_ERROR
@@ -333,7 +333,7 @@ def test_fringe_network_timeout(tmp_path: Path):
     f = tmp_path / "remote.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         side_effect=TimeoutError("operation timed out"),
     ):
         text, status = extract_text(f)
@@ -349,7 +349,7 @@ def test_fringe_network_timeout(tmp_path: Path):
 def test_happy_path_pdf(tmp_path: Path):
     f = tmp_path / "research.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="# Research\n\nbody"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="# Research\n\nbody"):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
     assert text == "# Research\n\nbody"
@@ -358,7 +358,7 @@ def test_happy_path_pdf(tmp_path: Path):
 def test_happy_path_docx(tmp_path: Path):
     f = tmp_path / "notes.docx"
     f.write_bytes(b"PK\x03\x04docx-stub")
-    with patch("mempalace.format_miner._extract_via_markitdown", return_value="# Notes\n\nbody"):
+    with patch("trimemo.format_miner._extract_via_markitdown", return_value="# Notes\n\nbody"):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
     assert text.startswith("# Notes")
@@ -372,7 +372,7 @@ def test_happy_path_rtf(tmp_path: Path):
     """
     f = tmp_path / "memo.rtf"
     f.write_bytes(b"{\\rtf1\\ansi memo}")
-    with patch("mempalace.format_miner._extract_via_striprtf", return_value="memo body"):
+    with patch("trimemo.format_miner._extract_via_striprtf", return_value="memo body"):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
     assert text == "memo body"
@@ -393,8 +393,8 @@ def test_rtf_routes_to_striprtf_not_markitdown(tmp_path: Path):
     f = tmp_path / "memo.rtf"
     f.write_bytes(b"{\\rtf1\\ansi memo}")
     with (
-        patch("mempalace.format_miner._extract_via_markitdown") as mock_md,
-        patch("mempalace.format_miner._extract_via_striprtf", return_value="memo body") as mock_rtf,
+        patch("trimemo.format_miner._extract_via_markitdown") as mock_md,
+        patch("trimemo.format_miner._extract_via_striprtf", return_value="memo body") as mock_rtf,
     ):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
@@ -408,8 +408,8 @@ def test_non_rtf_does_not_touch_striprtf(tmp_path: Path):
     f = tmp_path / "doc.pdf"
     f.write_bytes(b"%PDF-1.4\nstub")
     with (
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="pdf text") as mock_md,
-        patch("mempalace.format_miner._extract_via_striprtf") as mock_rtf,
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="pdf text") as mock_md,
+        patch("trimemo.format_miner._extract_via_striprtf") as mock_rtf,
     ):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
@@ -423,7 +423,7 @@ def test_fringe_missing_striprtf(tmp_path: Path):
     f = tmp_path / "memo.rtf"
     f.write_bytes(b"{\\rtf1\\ansi memo}")
     with patch(
-        "mempalace.format_miner._extract_via_striprtf",
+        "trimemo.format_miner._extract_via_striprtf",
         side_effect=ImportError("No module named 'striprtf'"),
     ):
         text, status = extract_text(f)
@@ -436,7 +436,7 @@ def test_fringe_striprtf_crash(tmp_path: Path):
     f = tmp_path / "broken.rtf"
     f.write_bytes(b"{\\rtf1\\ansi broken}")
     with patch(
-        "mempalace.format_miner._extract_via_striprtf",
+        "trimemo.format_miner._extract_via_striprtf",
         side_effect=RuntimeError("rtf parse explosion"),
     ):
         text, status = extract_text(f)
@@ -448,7 +448,7 @@ def test_fringe_striprtf_returns_none(tmp_path: Path):
     """striprtf returning None → SKIP_EXTRACTION_ERROR (same shape as MarkItDown)."""
     f = tmp_path / "weird.rtf"
     f.write_bytes(b"{\\rtf1\\ansi weird}")
-    with patch("mempalace.format_miner._extract_via_striprtf", return_value=None):
+    with patch("trimemo.format_miner._extract_via_striprtf", return_value=None):
         text, status = extract_text(f)
     assert text is None
     assert status == ExtractionStatus.SKIP_EXTRACTION_ERROR
@@ -462,7 +462,7 @@ def test_fringe_striprtf_empty_output(tmp_path: Path):
     """
     f = tmp_path / "blank-after-strip.rtf"
     f.write_bytes(b"{\\rtf1\\ansi}")
-    with patch("mempalace.format_miner._extract_via_striprtf", return_value=""):
+    with patch("trimemo.format_miner._extract_via_striprtf", return_value=""):
         text, status = extract_text(f)
     assert text is None
     assert status == ExtractionStatus.SKIP_EXTRACTION_ERROR
@@ -473,8 +473,8 @@ def test_rtf_uppercase_extension_also_routes_to_striprtf(tmp_path: Path):
     f = tmp_path / "memo.RTF"
     f.write_bytes(b"{\\rtf1\\ansi memo}")
     with (
-        patch("mempalace.format_miner._extract_via_markitdown") as mock_md,
-        patch("mempalace.format_miner._extract_via_striprtf", return_value="memo body") as mock_rtf,
+        patch("trimemo.format_miner._extract_via_markitdown") as mock_md,
+        patch("trimemo.format_miner._extract_via_striprtf", return_value="memo body") as mock_rtf,
     ):
         text, status = extract_text(f)
     assert status == ExtractionStatus.OK
@@ -486,7 +486,7 @@ def test_happy_path_xlsx(tmp_path: Path):
     f = tmp_path / "spreadsheet.xlsx"
     f.write_bytes(b"PK\x03\x04xlsx-stub")
     with patch(
-        "mempalace.format_miner._extract_via_markitdown",
+        "trimemo.format_miner._extract_via_markitdown",
         return_value="| col1 | col2 |\n|---|---|\n| a | b |",
     ):
         text, status = extract_text(f)
@@ -585,7 +585,7 @@ def test_extract_via_striprtf_live(tmp_path: Path):
     body that mocked tests bypass.
     """
     pytest.importorskip("striprtf.striprtf")
-    from mempalace.format_miner import _extract_via_striprtf
+    from trimemo.format_miner import _extract_via_striprtf
 
     rtf = (
         b"{\\rtf1\\ansi\\ansicpg1252\n{\\fonttbl\\f0\\fnil Helvetica;}\n"
@@ -610,7 +610,7 @@ def test_extract_via_markitdown_live_pdf(tmp_path: Path):
         from markitdown import MarkItDown  # noqa: F401
     except ImportError:
         pytest.skip("real Microsoft markitdown not installed (needs Python 3.10+)")
-    from mempalace.format_miner import _extract_via_markitdown
+    from trimemo.format_miner import _extract_via_markitdown
 
     # Minimal valid PDF that contains the literal text "hello pdf"
     pdf_bytes = (
@@ -668,9 +668,9 @@ def _mine_formats_mocks(tmp_path: Path):
         yield
 
     with (
-        patch("mempalace.format_miner.get_collection", return_value=collection) as p_coll,
-        patch("mempalace.format_miner.mine_lock", side_effect=_fake_lock) as p_lock,
-        patch("mempalace.format_miner.file_already_mined", return_value=False) as p_mined,
+        patch("trimemo.format_miner.get_collection", return_value=collection) as p_coll,
+        patch("trimemo.format_miner.mine_lock", side_effect=_fake_lock) as p_lock,
+        patch("trimemo.format_miner.file_already_mined", return_value=False) as p_mined,
     ):
         yield {
             "collection": collection,
@@ -684,13 +684,13 @@ def _mine_formats_mocks(tmp_path: Path):
 def test_mine_formats_walks_directory(_mine_formats_mocks):
     """mine_formats must use scan_formats to discover supported files."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     (tmp / "doc.pdf").write_bytes(b"pdf")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[]) as p_scan,
-        patch("mempalace.format_miner._extract_via_markitdown"),
+        patch("trimemo.format_miner.scan_formats", return_value=[]) as p_scan,
+        patch("trimemo.format_miner._extract_via_markitdown"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     p_scan.assert_called_once()
@@ -699,15 +699,15 @@ def test_mine_formats_walks_directory(_mine_formats_mocks):
 def test_mine_formats_skips_already_mined_files(_mine_formats_mocks):
     """If file_already_mined returns True, extract_text should not be called."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     _mine_formats_mocks["file_already_mined"].return_value = True
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown") as p_md,
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown") as p_md,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     p_md.assert_not_called()
@@ -721,15 +721,15 @@ def test_mine_formats_skips_extraction_failures(_mine_formats_mocks):
     from a content drawer.
     """
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "bad.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
         patch(
-            "mempalace.format_miner._extract_via_markitdown",
+            "trimemo.format_miner._extract_via_markitdown",
             side_effect=RuntimeError("converter blew up"),
         ),
     ):
@@ -746,15 +746,15 @@ def test_mine_formats_skips_extraction_failures(_mine_formats_mocks):
 def test_mine_formats_files_drawers_for_ok_extractions(_mine_formats_mocks):
     """When extract_text returns OK + text, mine_formats chunks and upserts drawers."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "good.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     long_text = "This is a sufficiently long extracted text. " * 30
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value=long_text),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value=long_text),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     # upsert should have been called at least once
@@ -764,15 +764,15 @@ def test_mine_formats_files_drawers_for_ok_extractions(_mine_formats_mocks):
 def test_mine_formats_dry_run_does_not_open_collection(_mine_formats_mocks):
     """dry_run=True must not call get_collection or upsert any drawers."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     _mine_formats_mocks["get_collection"].reset_mock()
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="some text"),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="some text"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), dry_run=True)
     _mine_formats_mocks["get_collection"].assert_not_called()
@@ -782,7 +782,7 @@ def test_mine_formats_dry_run_does_not_open_collection(_mine_formats_mocks):
 def test_mine_formats_respects_limit(_mine_formats_mocks):
     """limit=N should restrict processing to the first N files."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     files = []
@@ -791,9 +791,9 @@ def test_mine_formats_respects_limit(_mine_formats_mocks):
         p.write_bytes(b"%PDF-1.4 stub")
         files.append(p)
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=files),
+        patch("trimemo.format_miner.scan_formats", return_value=files),
         patch(
-            "mempalace.format_miner._extract_via_markitdown", return_value="long text " * 50
+            "trimemo.format_miner._extract_via_markitdown", return_value="long text " * 50
         ) as p_md,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), limit=2)
@@ -804,7 +804,7 @@ def test_mine_formats_respects_limit(_mine_formats_mocks):
 def test_mine_formats_limit_skips_already_mined(_mine_formats_mocks):
     """--limit N counts only new work, not already-mined skips (#1535)."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     files = []
@@ -822,9 +822,9 @@ def test_mine_formats_limit_skips_already_mined(_mine_formats_mocks):
 
     _mine_formats_mocks["file_already_mined"].side_effect = fake_already_mined
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=files),
+        patch("trimemo.format_miner.scan_formats", return_value=files),
         patch(
-            "mempalace.format_miner._extract_via_markitdown", return_value="long text " * 50
+            "trimemo.format_miner._extract_via_markitdown", return_value="long text " * 50
         ) as p_md,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), limit=1)
@@ -834,7 +834,7 @@ def test_mine_formats_limit_skips_already_mined(_mine_formats_mocks):
 def test_mine_formats_wing_defaults_from_directory_name(_mine_formats_mocks):
     """When wing=None, the directory's basename becomes the wing."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     target_dir = tmp / "my_research_corpus"
@@ -842,8 +842,8 @@ def test_mine_formats_wing_defaults_from_directory_name(_mine_formats_mocks):
     f = target_dir / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long text " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long text " * 50),
     ):
         mine_formats(format_dir=str(target_dir), palace_path=str(tmp / "palace"))
     # Inspect the metadata passed to upsert — the wing should derive from the dir name
@@ -856,14 +856,14 @@ def test_mine_formats_wing_defaults_from_directory_name(_mine_formats_mocks):
 def test_mine_formats_wing_override(_mine_formats_mocks):
     """Explicit wing= param overrides the directory-name default."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long text " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long text " * 50),
     ):
         mine_formats(
             format_dir=str(tmp),
@@ -880,14 +880,14 @@ def test_mine_formats_ingest_mode_metadata_is_extract(_mine_formats_mocks):
     """Drawers from mine_formats must carry ingest_mode='extract' so they're
     distinguishable from project / convo drawers in the palace."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long text " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long text " * 50),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     call_args = _mine_formats_mocks["collection"].upsert.call_args
@@ -921,14 +921,14 @@ def test_mine_formats_uses_check_mtime_true(_mine_formats_mocks):
     """mine_formats must call file_already_mined with check_mtime=True so
     updated documents get re-mined (matches miner.py semantics)."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     # Inspect every file_already_mined call — they must all use check_mtime=True
@@ -944,14 +944,14 @@ def test_mine_formats_records_source_mtime_in_drawer_metadata(_mine_formats_mock
     """Each drawer must carry source_mtime so file_already_mined(check_mtime=True)
     can detect updates on re-mine."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     upsert_calls = _mine_formats_mocks["collection"].upsert.call_args_list
@@ -971,14 +971,14 @@ def test_mine_formats_records_source_mtime_in_drawer_metadata(_mine_formats_mock
 def test_mine_formats_records_hall_in_drawer_metadata(_mine_formats_mocks):
     """Each drawer must carry a 'hall' tag — matches miner.py drawer quality."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
     f.write_bytes(b"%PDF-1.4 stub")
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     upsert_calls = _mine_formats_mocks["collection"].upsert.call_args_list
@@ -997,7 +997,7 @@ def test_mine_formats_records_hall_in_drawer_metadata(_mine_formats_mocks):
 def test_mine_formats_continues_after_per_file_error(_mine_formats_mocks):
     """One bad file must not crash the whole mine — the loop continues."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     bad = tmp / "broken.pdf"
@@ -1015,13 +1015,13 @@ def test_mine_formats_continues_after_per_file_error(_mine_formats_mocks):
         return [{"content": "good chunk content here " * 5, "chunk_index": 0}]
 
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[bad, good]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="text"),
+        patch("trimemo.format_miner.scan_formats", return_value=[bad, good]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="text"),
         # Patch the module-level binding in format_miner (hoisted in the
         # PR #1555 polish work — Gemini #3). The old patch target
         # ``mempalace.miner.chunk_text`` no longer works because
         # format_miner now binds chunk_text at its own module scope.
-        patch("mempalace.format_miner.chunk_text", side_effect=chunk_text_first_fails),
+        patch("trimemo.format_miner.chunk_text", side_effect=chunk_text_first_fails),
     ):
         # Must not raise
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
@@ -1052,7 +1052,7 @@ def test_mine_formats_calls_load_config_for_rooms(_mine_formats_mocks):
     rooms list — same as miner.py:1154. Without this, drawers fall back to
     a single 'documents' room."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
@@ -1062,9 +1062,9 @@ def test_mine_formats_calls_load_config_for_rooms(_mine_formats_mocks):
         "rooms": [{"name": "documents", "keywords": ["documents"]}],
     }
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config) as p_cfg,
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config) as p_cfg,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     p_cfg.assert_called_once()
@@ -1075,7 +1075,7 @@ def test_mine_formats_calls_detect_room_per_file(_mine_formats_mocks):
     for each file — same as miner.py:904. Hardcoding room='documents' is the
     bug; this test fails until detect_room is wired in."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
@@ -1085,10 +1085,10 @@ def test_mine_formats_calls_detect_room_per_file(_mine_formats_mocks):
         "rooms": [{"name": "documents", "keywords": ["documents"]}],
     }
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="family") as p_room,
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="family") as p_room,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     p_room.assert_called_once()
@@ -1103,7 +1103,7 @@ def test_mine_formats_uses_detected_room_in_drawer_metadata(_mine_formats_mocks)
     returned, NOT the hardcoded 'documents'. This is the visible bug from
     the 2026-05-19 mine: every drawer landed in room='documents'."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
@@ -1113,10 +1113,10 @@ def test_mine_formats_uses_detected_room_in_drawer_metadata(_mine_formats_mocks)
         "rooms": [{"name": "family", "keywords": ["family"]}],
     }
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="family"),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="family"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"))
     upsert_calls = _mine_formats_mocks["collection"].upsert.call_args_list
@@ -1141,7 +1141,7 @@ def test_mine_formats_calls_compute_topic_tunnels_after_loop(_mine_formats_mocks
     Without this, cross-wing topic tunnels never materialize for format-mined
     wings (audit confirmed 0 tunnels in the 2026-05-19 v6 mine)."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
@@ -1151,11 +1151,11 @@ def test_mine_formats_calls_compute_topic_tunnels_after_loop(_mine_formats_mocks
         "rooms": [{"name": "documents", "keywords": ["documents"]}],
     }
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
-        patch("mempalace.format_miner._compute_topic_tunnels_for_wing", return_value=0) as p_tun,
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner._compute_topic_tunnels_for_wing", return_value=0) as p_tun,
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_aya")
     p_tun.assert_called_once()
@@ -1168,7 +1168,7 @@ def test_mine_formats_tunnel_failure_does_not_crash_mine(_mine_formats_mocks):
     complete (summary still prints, no exception propagates). Mirrors the
     try/except wrap at miner.py:1244-1249."""
     from unittest.mock import patch
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = _mine_formats_mocks["tmp_path"]
     f = tmp / "doc.pdf"
@@ -1178,12 +1178,12 @@ def test_mine_formats_tunnel_failure_does_not_crash_mine(_mine_formats_mocks):
         "rooms": [{"name": "documents", "keywords": ["documents"]}],
     }
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
         patch(
-            "mempalace.format_miner._compute_topic_tunnels_for_wing",
+            "trimemo.format_miner._compute_topic_tunnels_for_wing",
             side_effect=RuntimeError("simulated tunnel-compute failure"),
         ),
     ):
@@ -1207,7 +1207,7 @@ def test_extract_text_missing_format_dep_returns_distinct_status(tmp_path: Path,
     name so the real markitdown package doesn't have to be import-
     resolvable for the catch to fire.
     """
-    from mempalace import format_miner
+    from trimemo import format_miner
 
     # Build a fake exception class with the right __name__ so the
     # type-name catch in extract_text recognises it without requiring
@@ -1233,10 +1233,10 @@ def test_extract_text_missing_format_dep_returns_distinct_status(tmp_path: Path,
 
 
 def test_pyproject_extract_extra_pulls_markitdown_format_subdeps():
-    """The ``mempalace[extract]`` extra must include MarkItDown's per-format
+    """The ``trimemo[extract]`` extra must include MarkItDown's per-format
     sub-extras (``pdf``, ``docx``, ``pptx``, ``xlsx``) — without them, real
     PDF/DOCX/etc files hit ``MissingDependencyException`` at runtime even
-    after ``pip install mempalace[extract]``. Per PR #1555 review (Igor).
+    after ``pip install trimemo[extract]``. Per PR #1555 review (Igor).
 
     ``.rtf`` is covered by the separate ``striprtf`` dependency and ``.epub``
     ships in base MarkItDown (``EpubConverter`` uses ``beautifulsoup4``
@@ -1310,8 +1310,8 @@ def test_mine_formats_passes_extract_mode_format_to_file_already_mined(monkeypat
     pre-lock check in ``mine_formats`` and the post-lock recheck in
     ``_file_chunks_locked`` — must pass the kwarg.
     """
-    from mempalace import format_miner
-    from mempalace.format_miner import mine_formats
+    from trimemo import format_miner
+    from trimemo.format_miner import mine_formats
 
     calls: list = []
 
@@ -1338,10 +1338,10 @@ def test_mine_formats_passes_extract_mode_format_to_file_already_mined(monkeypat
     }
 
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 50),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 50),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_test")
 
@@ -1361,8 +1361,8 @@ def test_mine_formats_does_not_write_sentinel_for_skip_no_markitdown(monkeypatch
 
     Per PR #1555 review (Copilot #14).
     """
-    from mempalace import format_miner
-    from mempalace.format_miner import mine_formats
+    from trimemo import format_miner
+    from trimemo.format_miner import mine_formats
 
     register_calls: list = []
 
@@ -1383,13 +1383,13 @@ def test_mine_formats_does_not_write_sentinel_for_skip_no_markitdown(monkeypatch
 
     # Force the extract path to raise ImportError so we hit SKIP_NO_MARKITDOWN.
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
         patch(
-            "mempalace.format_miner._extract_via_markitdown",
+            "trimemo.format_miner._extract_via_markitdown",
             side_effect=ImportError("no markitdown"),
         ),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_test")
 
@@ -1407,8 +1407,8 @@ def test_mine_formats_does_not_write_sentinel_for_skip_missing_format_deps(
     (raised when markitdown is installed but a per-format sub-extra like
     ``markitdown[pdf]`` is missing).
     """
-    from mempalace import format_miner
-    from mempalace.format_miner import mine_formats
+    from trimemo import format_miner
+    from trimemo.format_miner import mine_formats
 
     register_calls: list = []
 
@@ -1433,13 +1433,13 @@ def test_mine_formats_does_not_write_sentinel_for_skip_missing_format_deps(
     _FakeMissingDep.__name__ = "MissingDependencyException"
 
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
         patch(
-            "mempalace.format_miner._extract_via_markitdown",
+            "trimemo.format_miner._extract_via_markitdown",
             side_effect=_FakeMissingDep("install markitdown[pdf]"),
         ),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_test")
 
@@ -1461,7 +1461,7 @@ def test_mine_formats_catches_unexpected_exception_and_prints_summary(
 
     Per PR #1555 review (Gemini #5).
     """
-    from mempalace.format_miner import mine_formats
+    from trimemo.format_miner import mine_formats
 
     tmp = tmp_path / "src"
     tmp.mkdir()
@@ -1481,8 +1481,8 @@ def test_mine_formats_catches_unexpected_exception_and_prints_summary(
         raise RuntimeError("simulated outer-loop explosion")
 
     with (
-        patch("mempalace.format_miner.scan_formats", side_effect=angry_enumerate),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.scan_formats", side_effect=angry_enumerate),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
     ):
         # Must NOT raise — outer except Exception should catch.
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_test")
@@ -1497,8 +1497,8 @@ def test_mine_formats_threads_chunk_size_from_user_config(monkeypatch, tmp_path:
 
     Per PR #1555 review (Gemini #3).
     """
-    from mempalace import format_miner
-    from mempalace.format_miner import mine_formats
+    from trimemo import format_miner
+    from trimemo.format_miner import mine_formats
 
     chunk_calls: list = []
 
@@ -1534,11 +1534,11 @@ def test_mine_formats_threads_chunk_size_from_user_config(monkeypatch, tmp_path:
     monkeypatch.setattr(format_miner, "MempalaceConfig", _FakeMempalaceConfig)
 
     with (
-        patch("mempalace.format_miner.scan_formats", return_value=[f]),
-        patch("mempalace.format_miner._extract_via_markitdown", return_value="long " * 200),
-        patch("mempalace.format_miner.load_config", return_value=fake_config),
-        patch("mempalace.format_miner.detect_room", return_value="documents"),
-        patch("mempalace.format_miner.file_already_mined", return_value=False),
+        patch("trimemo.format_miner.scan_formats", return_value=[f]),
+        patch("trimemo.format_miner._extract_via_markitdown", return_value="long " * 200),
+        patch("trimemo.format_miner.load_config", return_value=fake_config),
+        patch("trimemo.format_miner.detect_room", return_value="documents"),
+        patch("trimemo.format_miner.file_already_mined", return_value=False),
     ):
         mine_formats(format_dir=str(tmp), palace_path=str(tmp / "palace"), wing="wing_test")
 

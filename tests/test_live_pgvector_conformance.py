@@ -18,14 +18,14 @@ import pytest
 
 from _backend_conformance import assert_partition_isolation
 
-from mempalace.backends import (
+from trimemo.backends import (
     BackendError,
     BackendMismatchError,
     CollectionNotInitializedError,
     DimensionMismatchError,
     PalaceRef,
 )
-from mempalace.backends.pgvector import PgVectorBackend
+from trimemo.backends.pgvector import PgVectorBackend
 
 LIVE_DSN = os.environ.get("MEMPALACE_PGVECTOR_LIVE_DSN")
 
@@ -178,7 +178,7 @@ def test_live_marker_rejects_target_change(live, tmp_path):
 
 
 def test_live_marker_backend_mismatch(live, tmp_path):
-    from mempalace.palace import resolve_backend_name
+    from trimemo.palace import resolve_backend_name
 
     _backend, make, _ns = live
     col = make(tmp_path)

@@ -1,7 +1,7 @@
 """
 ChromaDB stress tests — find the breaking point.
 
-Tests the raw ChromaDB patterns used by mempalace to determine:
+Tests the raw ChromaDB patterns used by trimemo to determine:
   - At what collection size does col.get(include=["metadatas"]) become dangerous?
   - How does query latency degrade as collection grows?
   - How much faster is batched insertion vs sequential?

@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from mempalace.config import MempalaceConfig
-from mempalace.write_routing import (
+from trimemo.config import MempalaceConfig
+from trimemo.write_routing import (
     RoutingPolicyCandidate,
     WriteRoutingError,
     WriteRoutingPolicy,

@@ -9,7 +9,7 @@ onMounted(() => {
   if (typeof document === 'undefined') return
 
   // Hide VitePress chrome while the landing component is live, restore on leave.
-  document.body.classList.add('mempalace-active')
+  document.body.classList.add('trimemo-active')
 
   /* ---------- Waitlist submission ---------- */
   ;(function initWaitlist(){
@@ -397,7 +397,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (typeof document === 'undefined') return
-  document.body.classList.remove('mempalace-active')
+  document.body.classList.remove('trimemo-active')
   while (cleanups.length) {
     const fn = cleanups.pop()
     try { fn() } catch (_) { /* swallow — teardown best-effort */ }

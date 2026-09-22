@@ -1,13 +1,13 @@
 ---
 name: help
-description: Show MemPalace help — available commands, usage tips, and getting started guidance.
+description: Show TriMemo help — available commands, usage tips, and getting started guidance.
 allowed-tools: Bash, Read
 ---
 
-# MemPalace Help
+# TriMemo Help
 
 Run the following command and follow the returned instructions step by step:
 
 ```bash
-mempalace instructions help
+trimemo instructions help
 ```

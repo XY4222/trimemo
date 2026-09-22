@@ -4,7 +4,7 @@ import sqlite3
 import tempfile
 
 import pytest
-from mempalace.config import (
+from trimemo.config import (
     MempalaceConfig,
     _default_config_dir,
     connect_sqlite_read,
@@ -236,7 +236,7 @@ def test_embedding_threads_invalid_falls_back_to_auto(tmp_path, monkeypatch):
 
 
 def test_embeddinggemma_batch_size_defaults_to_module_constant(monkeypatch):
-    from mempalace.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
+    from trimemo.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
 
     monkeypatch.delenv("MEMPALACE_EMBEDDINGGEMMA_BATCH_SIZE", raising=False)
     cfg = MempalaceConfig(config_dir=tempfile.mkdtemp())
@@ -260,7 +260,7 @@ def test_embeddinggemma_batch_size_env_overrides_config(tmp_path, monkeypatch):
 
 
 def test_embeddinggemma_batch_size_non_positive_falls_back_to_default(tmp_path, monkeypatch):
-    from mempalace.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
+    from trimemo.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
 
     monkeypatch.setenv("MEMPALACE_EMBEDDINGGEMMA_BATCH_SIZE", "0")
     cfg = MempalaceConfig(config_dir=str(tmp_path))
@@ -268,7 +268,7 @@ def test_embeddinggemma_batch_size_non_positive_falls_back_to_default(tmp_path, 
 
 
 def test_embeddinggemma_batch_size_invalid_falls_back_to_default(tmp_path, monkeypatch):
-    from mempalace.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
+    from trimemo.embedding import _EMBEDDINGGEMMA_BATCH_SIZE
 
     monkeypatch.setenv("MEMPALACE_EMBEDDINGGEMMA_BATCH_SIZE", "not-a-number")
     cfg = MempalaceConfig(config_dir=str(tmp_path))
@@ -398,12 +398,12 @@ def test_env_path_expanduser():
     # assert "~" is absent from the final string because Windows 8.3 short
     # paths (e.g. C:\Users\RUNNER~1\...) legitimately contain tildes — the
     # equality check is authoritative.
-    raw = os.path.join("~", "mempalace-test")
+    raw = os.path.join("~", "trimemo-test")
     os.environ["MEMPALACE_PALACE_PATH"] = raw
     try:
         cfg = MempalaceConfig(config_dir=tempfile.mkdtemp())
         assert cfg.palace_path == os.path.abspath(os.path.expanduser(raw))
-        assert cfg.palace_path.endswith("mempalace-test")
+        assert cfg.palace_path.endswith("trimemo-test")
     finally:
         del os.environ["MEMPALACE_PALACE_PATH"]
 
@@ -411,7 +411,7 @@ def test_env_path_expanduser():
 def test_env_path_abspath_collapses_traversal():
     # Build a raw path with a .. segment using the platform separator so
     # the assertion is portable (Windows uses \, POSIX uses /).
-    raw = os.path.join(tempfile.gettempdir(), "palace", "..", "mempalace-test")
+    raw = os.path.join(tempfile.gettempdir(), "palace", "..", "trimemo-test")
     expected = os.path.abspath(os.path.expanduser(raw))
     os.environ["MEMPALACE_PALACE_PATH"] = raw
     try:
@@ -429,7 +429,7 @@ def test_env_path_legacy_alias_normalized():
     # string because Windows 8.3 short paths (e.g. C:\Users\RUNNER~1\...)
     # legitimately contain tildes — the equality check below is authoritative.
     os.environ.pop("MEMPALACE_PALACE_PATH", None)
-    raw = os.path.join("~", "legacy-alias", "..", "mempalace-test")
+    raw = os.path.join("~", "legacy-alias", "..", "trimemo-test")
     os.environ["MEMPAL_PALACE_PATH"] = raw
     try:
         cfg = MempalaceConfig(config_dir=tempfile.mkdtemp())
@@ -876,7 +876,7 @@ def test_convo_min_chunk_fallback_is_always_safe_int(tmp_path):
     """Regression for #1024 review: the convo_miner fallback expression
     must yield a usable int for ANY config — never a str/bool/negative
     that would crash the length gate or chunk_exchanges."""
-    from mempalace.convo_miner import MIN_CHUNK_SIZE
+    from trimemo.convo_miner import MIN_CHUNK_SIZE
 
     for bad in ("not-a-number", -10, True, {}, []):
         cfg = _write_config(tmp_path, min_chunk_size=bad)
@@ -904,7 +904,7 @@ def test_min_chunk_size_explicit_handles_json_infinity(tmp_path):
 def test_chunk_text_rejects_non_positive_chunk_size():
     """Direct callers (tests, library users) that pass ``chunk_size <= 0``
     must hit a clear ValueError, not loop forever."""
-    from mempalace.miner import chunk_text
+    from trimemo.miner import chunk_text
 
     with pytest.raises(ValueError, match="chunk_size"):
         chunk_text("some content", "src.txt", chunk_size=0)
@@ -915,7 +915,7 @@ def test_chunk_text_rejects_non_positive_chunk_size():
 def test_chunk_text_rejects_overlap_above_half_size():
     """#2056: chunk_overlap > chunk_size // 2 can loop forever on short-line
     content, so chunk_text now rejects it fast (not only overlap >= size)."""
-    from mempalace.miner import chunk_text
+    from trimemo.miner import chunk_text
 
     # overlap >= chunk_size (the original #1024 guard) stays rejected.
     with pytest.raises(ValueError, match="chunk_overlap"):
@@ -934,7 +934,7 @@ def test_chunk_text_overlap_boundary_at_half_size():
     accepted and terminates; overlap == half + 1 is rejected because it can
     loop forever on content whose lines are about half the chunk size (#2056).
     """
-    from mempalace.miner import chunk_text
+    from trimemo.miner import chunk_text
 
     worst = ("x" * 10 + "\n") * 40  # 11-char lines = 20 // 2 + 1
     # overlap == chunk_size // 2 -> safe, returns a list (does not hang).
@@ -949,7 +949,7 @@ def test_chunk_text_overlap_boundary_at_half_size():
 
 
 def test_chunk_text_rejects_negative_overlap():
-    from mempalace.miner import chunk_text
+    from trimemo.miner import chunk_text
 
     with pytest.raises(ValueError, match="chunk_overlap"):
         chunk_text("some content", "src.txt", chunk_overlap=-1)
@@ -961,8 +961,8 @@ def test_miner_constants_alias_config_defaults():
     canonical ``DEFAULT_CHUNK_*`` constants in ``mempalace.config``.
     Pinned by this test so a future drift would surface as a unit failure.
     """
-    from mempalace.miner import CHUNK_SIZE, CHUNK_OVERLAP, MIN_CHUNK_SIZE
-    from mempalace.config import (
+    from trimemo.miner import CHUNK_SIZE, CHUNK_OVERLAP, MIN_CHUNK_SIZE
+    from trimemo.config import (
         DEFAULT_CHUNK_SIZE,
         DEFAULT_CHUNK_OVERLAP,
         DEFAULT_MIN_CHUNK_SIZE,
@@ -1304,10 +1304,10 @@ def test_default_config_dir_uses_xdg_when_set(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
-    assert _default_config_dir() == xdg / "mempalace"
+    assert _default_config_dir() == xdg / "trimemo"
 
     cfg = MempalaceConfig()
-    assert cfg.palace_path == str(xdg / "mempalace" / "palace")
+    assert cfg.palace_path == str(xdg / "trimemo" / "palace")
 
 
 def test_default_config_dir_falls_back_to_dot_config(monkeypatch, tmp_path):
@@ -1317,7 +1317,7 @@ def test_default_config_dir_falls_back_to_dot_config(monkeypatch, tmp_path):
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
-    assert _default_config_dir() == fake_home / ".config" / "mempalace"
+    assert _default_config_dir() == fake_home / ".config" / "trimemo"
 
 
 def test_legacy_mempalace_dir_respected_for_backcompat(monkeypatch, tmp_path):
@@ -1350,7 +1350,7 @@ def test_empty_legacy_dir_does_not_hijack_xdg(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
-    assert _default_config_dir() == xdg / "mempalace"
+    assert _default_config_dir() == xdg / "trimemo"
 
 
 def test_bare_palace_dir_does_not_trigger_legacy(monkeypatch, tmp_path):
@@ -1369,7 +1369,7 @@ def test_bare_palace_dir_does_not_trigger_legacy(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
-    assert _default_config_dir() == xdg / "mempalace"
+    assert _default_config_dir() == xdg / "trimemo"
 
 
 def test_palace_with_chromadb_triggers_legacy(monkeypatch, tmp_path):
@@ -1420,10 +1420,10 @@ def test_empty_xdg_config_home_falls_back_to_dot_config(monkeypatch, tmp_path):
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
     monkeypatch.setenv("XDG_CONFIG_HOME", "")
-    assert _default_config_dir() == fake_home / ".config" / "mempalace"
+    assert _default_config_dir() == fake_home / ".config" / "trimemo"
 
     monkeypatch.setenv("XDG_CONFIG_HOME", "   ")
-    assert _default_config_dir() == fake_home / ".config" / "mempalace"
+    assert _default_config_dir() == fake_home / ".config" / "trimemo"
 
 
 def test_relative_xdg_config_home_is_ignored(monkeypatch, tmp_path):
@@ -1433,7 +1433,7 @@ def test_relative_xdg_config_home_is_ignored(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", "relative/path")
     monkeypatch.delenv("MEMPALACE_CONFIG_DIR", raising=False)
 
-    assert _default_config_dir() == fake_home / ".config" / "mempalace"
+    assert _default_config_dir() == fake_home / ".config" / "trimemo"
 
 
 def test_init_writes_xdg_aware_palace_path(tmp_path):

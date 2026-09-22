@@ -8,7 +8,7 @@ fake client so the advisory-lock flow is tested without a live Postgres.
 
 import pytest
 
-from mempalace.backends.base import (
+from trimemo.backends.base import (
     BaseCollection,
     MaintenanceResult,
     PalaceRef,
@@ -44,10 +44,10 @@ def test_default_collection_rejects_all_kinds():
 
 
 def test_backend_maintenance_kinds_declared():
-    from mempalace.backends.chroma import ChromaBackend
-    from mempalace.backends.pgvector import PgVectorBackend
-    from mempalace.backends.qdrant import QdrantBackend
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.chroma import ChromaBackend
+    from trimemo.backends.pgvector import PgVectorBackend
+    from trimemo.backends.qdrant import QdrantBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     assert SQLiteExactBackend.maintenance_kinds == frozenset({"analyze", "compact"})
     assert PgVectorBackend.maintenance_kinds == frozenset({"analyze", "reindex"})
@@ -62,7 +62,7 @@ def test_backend_maintenance_kinds_declared():
 
 
 def _sqlite_collection(tmp_path, rows=20):
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     col = SQLiteExactBackend().get_collection(
         palace=PalaceRef(id=str(tmp_path), local_path=str(tmp_path)),
@@ -157,7 +157,7 @@ class _FakeBackend:
 
 
 def _pg_collection(client):
-    from mempalace.backends.pgvector import PgVectorCollection, _PgVectorConfig
+    from trimemo.backends.pgvector import PgVectorCollection, _PgVectorConfig
 
     return PgVectorCollection(
         backend=_FakeBackend(),
@@ -229,7 +229,7 @@ def test_pgvector_maintenance_noop_when_table_missing():
 def test_hnsw_index_name_never_collides_with_table_name():
     # A naive [:63] truncation would return a 63-char table name verbatim,
     # colliding in pg_class. _pg_identifier hashes the overflow instead.
-    from mempalace.backends.pgvector import _hnsw_index_name
+    from trimemo.backends.pgvector import _hnsw_index_name
 
     for table in ("t", "mp_drawers", "x" * 63, "y" * 200):
         name = _hnsw_index_name(table)
@@ -238,7 +238,7 @@ def test_hnsw_index_name_never_collides_with_table_name():
 
 
 def test_pgvector_advisory_key_is_signed_int4_and_stable():
-    from mempalace.backends.pgvector import _MAINTENANCE_LOCK_CLASSID, _advisory_objid
+    from trimemo.backends.pgvector import _MAINTENANCE_LOCK_CLASSID, _advisory_objid
 
     for table in ("a", "mempalace_drawers_xyz", "x" * 80):
         objid = _advisory_objid(table)
@@ -253,7 +253,7 @@ def test_pgvector_advisory_key_is_signed_int4_and_stable():
 
 
 def test_embeddingcollection_delegates_maintenance():
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
 
     class _Inner(BaseCollection):
         def add(self, **k): ...

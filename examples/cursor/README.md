@@ -1,6 +1,6 @@
 # Cursor IDE Hooks — Example `hooks.json` Files
 
-Sample configurations for wiring the MemPalace Cursor hooks into the
+Sample configurations for wiring the TriMemo Cursor hooks into the
 Cursor IDE. These are **examples only** — they are intentionally not
 placed at the repo root (`/.cursor/hooks.json`) because Cursor
 auto-loads project-level hooks from any trusted workspace, and the
@@ -23,7 +23,7 @@ Three hooks wired:
   session into the palace and write a diary entry. `loop_limit: 1` is
   defense-in-depth on top of our own loop-count check.
 - **`preCompact`** — calls `mempal_precompact_hook_cursor.sh`. Runs
-  `mempalace mine` synchronously on the transcript before compaction
+  `trimemo mine` synchronously on the transcript before compaction
   summarises it, then drops a marker so the next `stop` forces a save
   followup.
 
@@ -72,13 +72,13 @@ existing `hooks.json` without clobbering unrelated hooks. See
 
 Cursor automatically loads `.cursor/hooks.json` from any trusted
 workspace. Placing a real `hooks.json` at the repo root would arm
-MemPalace's hooks on every contributor's machine the moment they open
+TriMemo's hooks on every contributor's machine the moment they open
 the repo in Cursor — which would modify their conversation behaviour
 without consent and write to `~/.mempalace/hook_state/` without
 asking. Editor configuration is sacred; opt-in only.
 
-If you actually want MemPalace's hooks armed when working on the
-MemPalace repo itself, run:
+If you actually want TriMemo's hooks armed when working on the
+TriMemo repo itself, run:
 
 ```bash
 hooks/cursor/install.sh --scope project --target .
@@ -90,7 +90,7 @@ listed in `.gitignore` paths Cursor users typically already exclude.
 
 ## Related: the Cursor plugin
 
-The hooks here are **only one half** of MemPalace's Cursor integration. The other half is the [`.cursor-plugin/`](../../.cursor-plugin/) folder at the repo root, which packages MemPalace's MCP server, five slash commands, and the model-invocable `mempalace` skill as a regular Cursor plugin you can drop into `~/.cursor/plugins/local/mempalace`.
+The hooks here are **only one half** of TriMemo's Cursor integration. The other half is the [`.cursor-plugin/`](../../.cursor-plugin/) folder at the repo root, which packages TriMemo's MCP server, five slash commands, and the model-invocable `trimemo` skill as a regular Cursor plugin you can drop into `~/.cursor/plugins/local/trimemo`.
 
 The two install paths are orthogonal — install whichever you want, in any order:
 

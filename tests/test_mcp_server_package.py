@@ -25,7 +25,7 @@ FRAGMENTS = (
 
 
 def test_mcp_server_is_a_package():
-    import mempalace.mcp_server as mcp
+    import trimemo.mcp_server as mcp
 
     assert hasattr(mcp, "__path__")
     assert callable(mcp.main)
@@ -37,13 +37,13 @@ def test_mcp_server_is_a_package():
 @pytest.mark.parametrize("name", FRAGMENTS)
 def test_fragments_refuse_direct_import(name):
     with pytest.raises(ImportError, match="implementation fragment"):
-        importlib.import_module(f"mempalace.mcp_server.{name}")
+        importlib.import_module(f"trimemo.mcp_server.{name}")
 
 
 def test_python_m_mcp_server_still_runs():
     """``python -m mempalace.mcp_server`` must still be a valid entry."""
     proc = subprocess.run(
-        [sys.executable, "-m", "mempalace.mcp_server"],
+        [sys.executable, "-m", "trimemo.mcp_server"],
         input=b"",
         capture_output=True,
         timeout=60,
@@ -54,17 +54,17 @@ def test_python_m_mcp_server_still_runs():
 
 
 def test_fragment_files_exist():
-    pkg = REPO_ROOT / "mempalace" / "mcp_server"
+    pkg = REPO_ROOT / "trimemo" / "mcp_server"
     missing = [name for name in FRAGMENTS if not (pkg / f"{name}.py").is_file()]
     assert missing == []
-    assert not (REPO_ROOT / "mempalace" / "mcp_server.py").exists()
+    assert not (REPO_ROOT / "trimemo" / "mcp_server.py").exists()
 
 
 def test_stdio_protection_preserves_handles_across_reload():
     """Reloading mempalace.mcp_server must not clobber _REAL_STDOUT or leak fds."""
     code = (
         "import importlib, sys, os\n"
-        "import mempalace.mcp_server as mcp\n"
+        "import trimemo.mcp_server as mcp\n"
         "orig_stdout = mcp._REAL_STDOUT\n"
         "orig_fd = mcp._REAL_STDOUT_FD\n"
         "# Reload while redirected\n"

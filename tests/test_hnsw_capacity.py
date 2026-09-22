@@ -16,13 +16,13 @@ import time
 
 import pytest
 
-from mempalace.backends.chroma import (
+from trimemo.backends.chroma import (
     _hnsw_element_count,
     _vector_segment_id,
     hnsw_capacity_status,
     reset_hnsw_capacity_cache,
 )
-from mempalace.searcher import _bm25_only_via_sqlite
+from trimemo.searcher import _bm25_only_via_sqlite
 
 
 COLLECTION = "mempalace_drawers"
@@ -256,7 +256,7 @@ def test_capacity_status_does_not_flag_unflushed_with_large_sqlite(tmp_path):
 
 def test_mcp_probe_does_not_disable_vectors_for_unflushed_metadata(tmp_path, monkeypatch):
     """The MCP preflight must not route all searches to BM25 on this signal."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     seg = "seg-mcp-noflush"
     _seed_chroma_db(str(tmp_path), sqlite_count=10_000, segment_id=seg)
@@ -594,7 +594,7 @@ def test_repair_status_reports_diverged(tmp_path, capsys):
     """The status command prints DIVERGED and recommends the from-sqlite
     rebuild (not a re-mine), since a diverged index means the rows are
     intact in sqlite but the HNSW segment is out of sync (#1843)."""
-    from mempalace.repair import status as repair_status
+    from trimemo.repair import status as repair_status
 
     seg = "seg-status"
     _seed_chroma_db(str(tmp_path), sqlite_count=20_000, segment_id=seg)
@@ -602,13 +602,13 @@ def test_repair_status_reports_diverged(tmp_path, capsys):
     out = repair_status(palace_path=str(tmp_path))
     captured = capsys.readouterr().out
     assert "DIVERGED" in captured
-    assert "mempalace repair --mode from-sqlite --archive-existing" in captured
+    assert "trimemo repair --mode from-sqlite --archive-existing" in captured
     assert "Do not re-mine" in captured
     assert out["drawers"]["diverged"] is True
 
 
 def test_repair_status_quiet_on_healthy_palace(tmp_path, capsys):
-    from mempalace.repair import status as repair_status
+    from trimemo.repair import status as repair_status
 
     seg = "seg-status-ok"
     _seed_chroma_db(str(tmp_path), sqlite_count=500, segment_id=seg)
@@ -625,7 +625,7 @@ def test_repair_status_quiet_on_healthy_palace(tmp_path, capsys):
 def test_tool_status_via_sqlite_returns_breakdown(palace_with_drawers, monkeypatch):
     """When _vector_disabled is set, tool_status reads counts from sqlite
     instead of opening a chromadb client."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     # _config.palace_path is a read-only property; swap the whole object
     # for a tiny stand-in so we don't have to monkey with the real
@@ -665,7 +665,7 @@ def test_capacity_status_flags_small_gap_with_explicit_low_sync_threshold(tmp_pa
 
 def test_capacity_status_flags_stale_below_floor_divergence(tmp_path):
     """A persistent below-floor sqlite>HNSW gap must not be treated as fresh lag."""
-    from mempalace.backends import chroma
+    from trimemo.backends import chroma
 
     seg = "seg-1816-stale-below-floor"
     _seed_chroma_db(str(tmp_path), sqlite_count=1768, segment_id=seg)
@@ -719,7 +719,7 @@ class TestCapacityProbeCache:
     @pytest.fixture
     def probe_runs(self, monkeypatch):
         """Record every call that reaches the uncached probe."""
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         calls: list[tuple[str, str]] = []
         real = chroma_mod._hnsw_capacity_status_uncached
@@ -850,7 +850,7 @@ class TestCapacityProbeCache:
 
     def test_write_during_the_probe_is_not_cached(self, tmp_path, monkeypatch):
         """A verdict that pins to neither disk state must not be reused."""
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         self._balanced_palace(tmp_path)
         db_path = os.path.join(str(tmp_path), "chroma.sqlite3")
@@ -878,7 +878,7 @@ class TestCapacityProbeCache:
 
     def test_verdict_is_not_reused_past_the_age_ceiling(self, tmp_path, probe_runs, monkeypatch):
         """Backstop for filesystems whose timestamps are too coarse to notice."""
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         self._balanced_palace(tmp_path)
         clock = [1_000.0]
@@ -915,7 +915,7 @@ class TestCapacityProbeCache:
         reachable only through an existing cache entry, so a cold cache always
         probes no matter what the clock reads.
         """
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         self._balanced_palace(tmp_path)
         monkeypatch.setattr(chroma_mod.time, "monotonic", lambda: 0.5)
@@ -991,7 +991,7 @@ class TestCapacityProbeCache:
         threshold comparison is, so asserting on it alone would pass with an
         off-by-one bound.
         """
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         peak = 0
         for i in range(chroma_mod._CAPACITY_CACHE_MAX_ENTRIES + 5):
@@ -1058,7 +1058,7 @@ class TestCapacityProbeCache:
         the writer from ``_read_sync_threshold``, which the probe calls strictly
         after the pickle read and strictly before it returns.
         """
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         seg = "seg-race"
         _seed_chroma_db(str(tmp_path), sqlite_count=20_000, segment_id=seg)
@@ -1087,7 +1087,7 @@ class TestCapacityProbeCache:
 
     def test_locked_database_verdict_is_not_cached(self, tmp_path, probe_runs):
         """A probe that could not read sqlite must not pin a false 'unknown'."""
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         self._balanced_palace(tmp_path)
 
@@ -1119,7 +1119,7 @@ class TestCapacityProbeCache:
         ``tool_reconnect`` clears the cache to force a fresh read; a probe that
         started earlier must not repopulate the very entry the reset dropped.
         """
-        from mempalace.backends import chroma as chroma_mod
+        from trimemo.backends import chroma as chroma_mod
 
         self._balanced_palace(tmp_path)
         real = chroma_mod._hnsw_capacity_status_uncached

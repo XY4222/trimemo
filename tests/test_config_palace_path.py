@@ -3,7 +3,7 @@
 import json
 import os
 import tempfile
-from mempalace.config import MempalaceConfig
+from trimemo.config import MempalaceConfig
 
 
 def test_palace_path_expands_tilde_from_config_file():
@@ -13,7 +13,7 @@ def test_palace_path_expands_tilde_from_config_file():
     result = cfg.palace_path
     assert not result.startswith("~"), (
         f"palace_path returned unexpanded tilde: {result!r}. "
-        "This causes mempalace mine to create a literal '~' directory "
+        "This causes trimemo mine to create a literal '~' directory "
         "relative to CWD instead of writing to the home directory."
     )
     assert result == os.path.expanduser("~/.mempalace/palace")
@@ -22,10 +22,10 @@ def test_palace_path_expands_tilde_from_config_file():
 def test_palace_path_expands_tilde_nested():
     """Nested tilde paths (e.g. ~/custom/palace) are also expanded."""
     cfg = MempalaceConfig()
-    cfg._file_config["palace_path"] = "~/custom/mempalace"
+    cfg._file_config["palace_path"] = "~/custom/trimemo"
     result = cfg.palace_path
     assert not result.startswith("~")
-    assert result == os.path.expanduser("~/custom/mempalace")
+    assert result == os.path.expanduser("~/custom/trimemo")
 
 
 def test_palace_path_absolute_unchanged():
@@ -38,10 +38,10 @@ def test_palace_path_absolute_unchanged():
 def test_init_persists_constructor_override_not_default():
     """init() must persist the resolved palace_path, not the hardcoded default.
 
-    `mempalace --palace <custom> init` passes palace_path via the constructor
+    `trimemo --palace <custom> init` passes palace_path via the constructor
     (mirrored from cli.py's env-var write for cmd_init). The persisted
     config.json must record that custom path so a later invocation with no
-    --palace flag (e.g. `mempalace status`) still finds it.
+    --palace flag (e.g. `trimemo status`) still finds it.
     """
     config_dir = tempfile.mkdtemp()
     custom_palace = os.path.join(tempfile.mkdtemp(), "custom-palace")

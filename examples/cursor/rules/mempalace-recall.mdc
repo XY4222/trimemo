@@ -1,9 +1,9 @@
 ---
-description: When the user asks about past work, prior decisions, people, projects, or events that may be filed in MemPalace, call mempalace_search (or mempalace_kg_query for relational or time-bound facts) before answering from model memory. Return stored content verbatim; never guess when the palace might know.
+description: When the user asks about past work, prior decisions, people, projects, or events that may be filed in TriMemo, call mempalace_search (or mempalace_kg_query for relational or time-bound facts) before answering from model memory. Return stored content verbatim; never guess when the palace might know.
 alwaysApply: false
 ---
 
-# MemPalace recall
+# TriMemo recall
 
 Before answering anything that may already be in the user's memory
 palace — past work, prior decisions, a person, a project, or "what did

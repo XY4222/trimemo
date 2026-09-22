@@ -16,7 +16,7 @@ from _mcp_server_helpers import (
 class TestSearchTool:
     def test_search_basic(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT authentication tokens")
         assert "results" in result
@@ -27,14 +27,14 @@ class TestSearchTool:
 
     def test_search_with_wing_filter(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="planning", wing="notes")
         assert all(r["wing"] == "notes" for r in result["results"])
 
     def test_search_with_room_filter(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="database", room="backend")
         assert all(r["room"] == "backend" for r in result["results"])
@@ -43,7 +43,7 @@ class TestSearchTool:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="authentication module", source_file="auth.py")
         assert result["results"]
@@ -56,7 +56,7 @@ class TestSearchTool:
         # Unlike wing/room, a source_file is a path — '/' must NOT be rejected
         # as a path-traversal attempt the way sanitize_name() would.
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="authentication", source_file="/abs/path/to/auth.py")
         assert "error" not in result
@@ -65,7 +65,7 @@ class TestSearchTool:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT authentication", source_file="   ")
         assert "results" in result
@@ -77,7 +77,7 @@ class TestSearchTool:
         # A null byte in a metadata where-value can crash chromadb add/upsert
         # (#1235 lineage); reject it cleanly the way sanitize_name does.
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT", source_file="bad\x00null")
         assert "error" in result
@@ -86,7 +86,7 @@ class TestSearchTool:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT", source_file="x" * 5000)
         assert "error" in result
@@ -98,7 +98,7 @@ class TestSearchTool:
         # string type does not coerce) must yield a clean validation error,
         # not an unhandled AttributeError from .strip().
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT", source_file=42)
         assert "error" in result
@@ -109,7 +109,7 @@ class TestSearchTool:
         # A lone UTF-16 surrogate can crash chromadb (#1235); reject it for
         # parity with sanitize_name rather than letting it reach the backend.
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="JWT", source_file="bad\udc80surrogate")
         assert "error" in result
@@ -119,7 +119,7 @@ class TestSearchTool:
     ):
         # Exactly _MAX_SOURCE_FILE_LENGTH is allowed (the cap is a strict '>').
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import _MAX_SOURCE_FILE_LENGTH, tool_search
+        from trimemo.mcp_server import _MAX_SOURCE_FILE_LENGTH, tool_search
 
         result = tool_search(query="JWT", source_file="x" * _MAX_SOURCE_FILE_LENGTH)
         assert "error" not in result
@@ -129,7 +129,7 @@ class TestSearchTool:
     ):
         """Old min_similarity param still works via backwards-compat shim."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         # Old name should work
         result = tool_search(query="JWT", min_similarity=1.5)
@@ -143,7 +143,7 @@ class TestSearchTool:
     def test_search_passes_candidate_strategy(self, monkeypatch, config, kg):
         """MCP callers can opt into backend BM25/vector union candidate gathering."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         seen = {}
 
@@ -160,7 +160,7 @@ class TestSearchTool:
 
     def test_search_preserves_default_max_distance(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         seen = {}
 
@@ -177,7 +177,7 @@ class TestSearchTool:
 
     def test_search_cli_compatible_reuses_hub_collection(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         collection = object()
         seen = {}
@@ -201,8 +201,8 @@ class TestSearchTool:
         self, monkeypatch, config, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import embedding, mcp_server, palace
-        from mempalace.backends.base import EmbedderIdentity
+        from trimemo import embedding, mcp_server, palace
+        from trimemo.backends.base import EmbedderIdentity
 
         collection = MagicMock()
         collection.effective_embedder_identity.return_value = None
@@ -222,7 +222,7 @@ class TestSearchTool:
 
     def test_search_cli_compatible_repeats_unknown_embedder_warning(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import embedding, mcp_server, palace
+        from trimemo import embedding, mcp_server, palace
 
         collection = MagicMock()
         collection.effective_embedder_identity.return_value = None
@@ -251,7 +251,7 @@ class TestSearchTool:
         for result in results:
             assert result["cli_output"] == "output\n"
             assert "no recorded embedder identity" in result["cli_error_output"]
-            assert "mempalace palace set-embedder" in result["cli_error_output"]
+            assert "trimemo palace set-embedder" in result["cli_error_output"]
 
     def test_search_cli_compatible_serializes_output_capture(self, monkeypatch, config, kg):
         import threading
@@ -259,7 +259,7 @@ class TestSearchTool:
         from concurrent.futures import ThreadPoolExecutor
 
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server, palace
+        from trimemo import mcp_server, palace
 
         monkeypatch.setattr(mcp_server, "_refresh_vector_disabled_flag", lambda: None)
         monkeypatch.setattr(mcp_server, "_vector_disabled", False)
@@ -300,7 +300,7 @@ class TestSearchTool:
 
     def test_search_cli_compatible_rejects_source_file(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", lambda: pytest.fail())
         result = mcp_server.tool_search(query="needle", source_file="notes.md", cli_compatible=True)
@@ -320,7 +320,7 @@ class TestSearchTool:
         self, monkeypatch, config, kg, arguments, control
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", lambda: pytest.fail())
         result = mcp_server.tool_search(query="needle", cli_compatible=True, **arguments)
@@ -329,7 +329,7 @@ class TestSearchTool:
 
     def test_search_cli_compatible_returns_stderr(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_refresh_vector_disabled_flag", lambda: None)
         monkeypatch.setattr(mcp_server, "_vector_disabled", False)
@@ -351,7 +351,7 @@ class TestSearchTool:
 
     def test_search_rejects_invalid_candidate_strategy(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "search_memories", lambda *a, **kw: pytest.fail())
 
@@ -362,7 +362,7 @@ class TestSearchTool:
 
     def test_list_rooms_rejects_invalid_wing(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", lambda: pytest.fail())
 
@@ -371,7 +371,7 @@ class TestSearchTool:
 
     def test_search_rejects_invalid_room(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "search_memories", lambda: pytest.fail())
 
@@ -381,7 +381,7 @@ class TestSearchTool:
     def test_search_retries_once_on_hnsw_flush_transient(self, monkeypatch, config, kg):
         """Issue #1315: post-bulk-mine 'Error finding id' is retried once."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         calls = {"n": 0}
         reset_calls = {"n": 0}
@@ -411,7 +411,7 @@ class TestSearchTool:
     def test_search_retry_preserves_collection_name(self, monkeypatch, config, kg):
         """Retry path must query the same configured collection both times."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server,
@@ -445,7 +445,7 @@ class TestSearchTool:
     def test_search_does_not_retry_on_non_transient_error(self, monkeypatch, config, kg):
         """Validation / unrelated errors must not trigger the retry path."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         calls = {"n": 0}
 
@@ -464,7 +464,7 @@ class TestSearchTool:
     def test_search_returns_second_error_if_retry_also_fails(self, monkeypatch, config, kg):
         """If the transient persists past the retry, surface the second error."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         calls = {"n": 0}
 
@@ -485,7 +485,7 @@ class TestSearchTool:
     def test_search_retries_once_on_stale_index_error(self, monkeypatch, config, kg):
         """Stale-index errors should trigger one cache-reset retry."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         calls = {"n": 0}
         reset_calls = {"n": 0}
@@ -512,7 +512,7 @@ class TestSearchTool:
 
     def test_list_drawers_rejects_invalid_wing(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", lambda: pytest.fail())
 
@@ -521,7 +521,7 @@ class TestSearchTool:
 
     def test_find_tunnels_rejects_invalid_wing(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", lambda: pytest.fail())
 
@@ -530,7 +530,7 @@ class TestSearchTool:
 
     def test_wal_redacts_sensitive_fields(self, monkeypatch, config, kg, tmp_path):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import wal
+        from trimemo import wal
 
         wal_file = tmp_path / "write_log.jsonl"
         monkeypatch.setattr(wal, "_WAL_FILE", wal_file)
@@ -560,7 +560,7 @@ class TestSearchDateFilters:
 
     def test_search_since_inclusive(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(self.BROAD, limit=10, since="2026-01-03")
         assert "error" not in result
@@ -571,7 +571,7 @@ class TestSearchDateFilters:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(self.BROAD, limit=10, wing="project", before="2026-01-03")
         got = {(r["wing"], r["created_at"][:10]) for r in result["results"]}
@@ -581,7 +581,7 @@ class TestSearchDateFilters:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search("anything", since="next tuesday")
         assert set(result) == {"error"}
@@ -591,7 +591,7 @@ class TestSearchDateFilters:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search("anything", since="2026-01-04", before="2026-01-01")
         assert set(result) == {"error"}
@@ -601,14 +601,14 @@ class TestSearchDateFilters:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(self.BROAD, since="2026-01-02", before="2026-01-04")
         assert result["filters"]["since"] == "2026-01-02"
         assert result["filters"]["before"] == "2026-01-04"
 
     def test_search_schema_declares_window_properties(self):
-        from mempalace.mcp_server import TOOLS
+        from trimemo.mcp_server import TOOLS
 
         schema = TOOLS["mempalace_search"]["input_schema"]
         assert "since" in schema["properties"]
@@ -618,7 +618,7 @@ class TestSearchDateFilters:
 
 
 def test_2288_grouped_graph_stats_count_distinct_room_instances(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(
         mcp_server,

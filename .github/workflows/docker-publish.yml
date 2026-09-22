@@ -41,7 +41,7 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: mempalace:smoke
+          tags: trimemo:smoke
           # Read the publish job's cache too (its amd64 layers are identical),
           # but write to a private scope so an amd64-only export never lands on
           # top of that job's multi-arch one. Same split as `scope=gpu` below.
@@ -53,7 +53,7 @@ jobs:
       # Reaches Chroma's S3 once to fetch the ~80 MB embedding model, so it is
       # network-dependent; that download is itself part of a user's first run.
       - name: Smoke test
-        run: ./scripts/docker-smoke.sh mempalace:smoke
+        run: ./scripts/docker-smoke.sh trimemo:smoke
 
   build:
     runs-on: ubuntu-latest

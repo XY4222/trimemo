@@ -1,6 +1,6 @@
-"""Regression tests for issue #185 — gitignore protection on `mempalace init`.
+"""Regression tests for issue #185 — gitignore protection on `trimemo init`.
 
-Issue #185 reports that `mempalace init <dir>` writes `mempalace.yaml` and
+Issue #185 reports that `trimemo init <dir>` writes `mempalace.yaml` and
 `entities.json` into the project root, where they could be committed by
 accident. The fix adds `_ensure_mempalace_files_gitignored()` which appends
 the two filenames to `.gitignore` when `<dir>` is a git repository.
@@ -9,7 +9,7 @@ the two filenames to `.gitignore` when `<dir>` is a git repository.
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from mempalace.cli import _ensure_mempalace_files_gitignored
+from trimemo.cli import _ensure_mempalace_files_gitignored
 
 
 def _git_init(path: Path) -> None:

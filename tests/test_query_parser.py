@@ -1,9 +1,9 @@
 """
-test_query_parser.py — Unit tests for MemPalace Query and Command Parser.
+test_query_parser.py — Unit tests for TriMemo Query and Command Parser.
 """
 
 import pytest
-from mempalace.query_parser import (
+from trimemo.query_parser import (
     QueryParseError,
     parse_coordinate_input,
     parse_exec_input,
@@ -351,12 +351,12 @@ class TestPalaceExecParser:
 class TestPalaceCoordinateParser:
     def test_task_create(self):
         cmd = (
-            "TASK CREATE project:mempalace from:agent1 to:agent2 "
+            "TASK CREATE project:trimemo from:agent1 to:agent2 "
             'goal:"Fix memory leak" branch:fix/leak base:a1b2c3d4 done:"All tests pass"'
         )
         target, params = parse_coordinate_input(cmd)
         assert target == "task_create"
-        assert params["project"] == "mempalace"
+        assert params["project"] == "trimemo"
         assert params["from_agent"] == "agent1"
         assert params["to_agent"] == "agent2"
         assert params["goal"] == "Fix memory leak"
@@ -365,30 +365,30 @@ class TestPalaceCoordinateParser:
         assert params["done"] == "All tests pass"
 
     def test_event_append_list_wait_ack(self):
-        cmd = 'EVENT APPEND type:task.request stream:project/mempalace room:delegation from:agent1 to:agent2 body:"hello"'
+        cmd = 'EVENT APPEND type:task.request stream:project/trimemo room:delegation from:agent1 to:agent2 body:"hello"'
         target, params = parse_coordinate_input(cmd)
         assert target == "event_append"
         assert params["type"] == "task.request"
-        assert params["stream"] == "project/mempalace"
+        assert params["stream"] == "project/trimemo"
         assert params["room"] == "delegation"
         assert params["from_agent"] == "agent1"
         assert params["to_agent"] == "agent2"
         assert params["body"] == "hello"
 
         target, params = parse_coordinate_input(
-            "EVENT LIST stream:project/mempalace to:agent1 since_id:evt_100 limit:20"
+            "EVENT LIST stream:project/trimemo to:agent1 since_id:evt_100 limit:20"
         )
         assert target == "event_list"
-        assert params["stream"] == "project/mempalace"
+        assert params["stream"] == "project/trimemo"
         assert params["to_agent"] == "agent1"
         assert params["since_event_id"] == "evt_100"
         assert params["limit"] == 20
 
         target, params = parse_coordinate_input(
-            "EVENT WAIT stream:project/mempalace correlation:task_1 timeout:5000"
+            "EVENT WAIT stream:project/trimemo correlation:task_1 timeout:5000"
         )
         assert target == "event_wait"
-        assert params["stream"] == "project/mempalace"
+        assert params["stream"] == "project/trimemo"
         assert params["correlation_id"] == "task_1"
         assert params["timeout_ms"] == 5000
 
@@ -415,10 +415,10 @@ class TestPalaceCoordinateParser:
         assert params["artifact_id"] == "art_999"
 
         target, params = parse_coordinate_input(
-            'PATCH SUBMIT stream:project/mempalace from:agent1 diff:"diff content"'
+            'PATCH SUBMIT stream:project/trimemo from:agent1 diff:"diff content"'
         )
         assert target == "patch_submit"
-        assert params["stream"] == "project/mempalace"
+        assert params["stream"] == "project/trimemo"
         assert params["from_agent"] == "agent1"
         assert params["content"] == "diff content"
 
@@ -560,7 +560,7 @@ class TestPalaceCoordinateParser:
         assert params["preview"] is True
 
     def test_bare_flags_do_not_pollute_keyword_values(self):
-        from mempalace.query_parser import parse_exec_input
+        from trimemo.query_parser import parse_exec_input
 
         target, params = parse_exec_input("UPDATE drw_1 CONTENT HEAD")
         assert target == "update_drawer"

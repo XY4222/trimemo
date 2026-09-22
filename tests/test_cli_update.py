@@ -3,8 +3,8 @@
 import json
 import sys
 
-from mempalace.cli import main
-from mempalace.version import __version__
+from trimemo.cli import main
+from trimemo.version import __version__
 
 
 def test_update_configure_requires_explicit_consent_and_persists_it(tmp_path, monkeypatch, capsys):
@@ -14,7 +14,7 @@ def test_update_configure_requires_explicit_consent_and_persists_it(tmp_path, mo
         sys,
         "argv",
         [
-            "mempalace",
+            "trimemo",
             "update",
             "configure",
             "--enable",
@@ -42,7 +42,7 @@ def test_update_configure_requires_explicit_consent_and_persists_it(tmp_path, mo
 def test_update_plan_does_not_execute_commands(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    monkeypatch.setattr(sys, "argv", ["mempalace", "update", "plan"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "update", "plan"])
 
     main()
 

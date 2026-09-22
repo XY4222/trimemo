@@ -34,12 +34,12 @@ import time
 import pytest
 import yaml
 
-from mempalace.miner import (
+from trimemo.miner import (
     _extract_entities_for_metadata,
     _load_known_entities,
     mine,
 )
-from mempalace.palace import (
+from trimemo.palace import (
     CLOSET_CHAR_LIMIT,
     build_closet_lines,
     get_closets_collection,
@@ -48,13 +48,13 @@ from mempalace.palace import (
     purge_file_closets,
     upsert_closet_lines,
 )
-from mempalace.palace_graph import (
+from trimemo.palace_graph import (
     create_tunnel,
     delete_tunnel,
     follow_tunnels,
     list_tunnels,
 )
-from mempalace.searcher import (
+from trimemo.searcher import (
     _bm25_scores,
     _expand_with_neighbors,
     _extract_drawer_ids_from_closet,
@@ -72,7 +72,7 @@ def _lock_worker(target: str, name: str, hold_seconds: float, log_path: str) -> 
     can verify the sections did not overlap in time."""
     import time as _time
 
-    from mempalace.palace import mine_lock as _mine_lock
+    from trimemo.palace import mine_lock as _mine_lock
 
     with _mine_lock(target):
         t_enter = _time.time()
@@ -665,7 +665,7 @@ class TestEntityMetadata:
         # Point the registry at a temp file we control, exercise the cache.
         registry = tmp_path / "known_entities.json"
         registry.write_text(json.dumps({"people": ["Zelda"]}))
-        from mempalace import miner
+        from trimemo import miner
 
         monkeypatch.setattr(miner, "_ENTITY_REGISTRY_PATH", str(registry))
         miner._ENTITY_REGISTRY_CACHE["mtime"] = None
@@ -770,7 +770,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         result = ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         assert result["days_updated"] >= 1
@@ -784,7 +784,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         result = ingest_diaries(str(diary_dir), str(palace_dir))
@@ -806,7 +806,7 @@ class TestDiaryIngest:
         diary_file.write_text(original)
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         diary_file.write_text(edited)
@@ -841,7 +841,7 @@ class TestDiaryIngest:
         diary_file.write_text(text, encoding="utf-8")
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import _state_file_for, ingest_diaries
+        from trimemo.diary_ingest import _state_file_for, ingest_diaries
 
         # Simulate a legacy state file: only size + entry_count, no content_hash.
         state_file = _state_file_for(str(palace_dir), diary_dir.resolve())
@@ -880,7 +880,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import _state_file_for, ingest_diaries
+        from trimemo.diary_ingest import _state_file_for, ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
 
@@ -916,7 +916,7 @@ class TestDiaryIngest:
 
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import _diary_drawer_id_entry, ingest_diaries
+        from trimemo.diary_ingest import _diary_drawer_id_entry, ingest_diaries
 
         ingest_diaries(str(personal_dir), str(palace_dir), wing="personal", force=True)
         ingest_diaries(str(work_dir), str(palace_dir), wing="work", force=True)
@@ -953,7 +953,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         count = get_collection(str(palace_dir)).count()
@@ -978,7 +978,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         col = get_collection(str(palace_dir))
@@ -1007,7 +1007,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         initial = get_collection(str(palace_dir)).count()
@@ -1035,7 +1035,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import _state_file_for, _split_entries, ingest_diaries
+        from trimemo.diary_ingest import _state_file_for, _split_entries, ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
 
@@ -1068,7 +1068,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         col = get_collection(str(palace_dir))
@@ -1102,7 +1102,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         col = get_collection(str(palace_dir))
@@ -1133,7 +1133,7 @@ class TestDiaryIngest:
         )
         palace_dir = tmp_path / "palace"
 
-        from mempalace.diary_ingest import ingest_diaries
+        from trimemo.diary_ingest import ingest_diaries
 
         ingest_diaries(str(diary_dir), str(palace_dir), force=True)
         col = get_collection(str(palace_dir))
@@ -1155,7 +1155,7 @@ class TestDiaryIngest:
         The fixture mixes normal entries with one oversized entry so
         the failed batch exercises both the single-entry-per-drawer
         branch and the per-entry character-chunk fallback."""
-        from mempalace import diary_ingest
+        from trimemo import diary_ingest
 
         diary_dir = tmp_path / "diaries"
         diary_dir.mkdir()
@@ -1225,7 +1225,7 @@ class TestTunnels:
     real tunnels."""
 
     def setup_method(self):
-        import mempalace.palace_graph as pg
+        import trimemo.palace_graph as pg
 
         self._pg = pg
         self._orig_get = pg._get_tunnel_file
@@ -1334,7 +1334,7 @@ class TestTunnels:
         without atomic rename) must not leak into subsequent reads — the
         file should be treated as empty and a fresh create_tunnel should
         persist cleanly."""
-        import mempalace.palace_graph as pg
+        import trimemo.palace_graph as pg
 
         # Simulate a crash that left a truncated file behind.
         with open(pg._get_tunnel_file(), "w") as f:
@@ -1350,7 +1350,7 @@ class TestTunnels:
     def test_atomic_write_leaves_no_stray_tmp_file(self):
         """Regression: _save_tunnels uses write-then-os.replace. After a
         successful create, there must be no leftover ``tunnels.json.tmp``."""
-        import mempalace.palace_graph as pg
+        import trimemo.palace_graph as pg
 
         create_tunnel("wing_a", "r1", "wing_b", "r2")
         assert os.path.exists(pg._get_tunnel_file())

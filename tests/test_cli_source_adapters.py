@@ -9,8 +9,8 @@ import time
 
 import pytest
 
-from mempalace import cli
-from mempalace.sources import (
+from trimemo import cli
+from trimemo.sources import (
     AdapterSchema,
     BaseSourceAdapter,
     DrawerRecord,
@@ -132,7 +132,7 @@ class _InvalidResultAdapter(BaseSourceAdapter):
 
 def _hold_palace_lock(palace_path, ready_flag, release_flag):
     """Hold a writer lease in a separate process for contention coverage."""
-    from mempalace.palace import mine_palace_lock
+    from trimemo.palace import mine_palace_lock
 
     with mine_palace_lock(palace_path):
         open(ready_flag, "w").close()
@@ -163,7 +163,7 @@ def _mine_args(*, source=None, mode=None, dry_run=False, palace=None):
         source=source,
         mode=mode,
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=dry_run,
         no_gitignore=False,
@@ -177,7 +177,7 @@ def _mine_args(*, source=None, mode=None, dry_run=False, palace=None):
 
 
 def test_cmd_mine_source_dispatches_registered_adapter_through_palace_context(monkeypatch):
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     collection = _FakeCollection()
     register("fixture", _FixtureAdapter)
@@ -231,7 +231,7 @@ def test_cmd_mine_source_reports_real_contention_without_traceback(tmp_path, cap
 
         assert excinfo.value.code == 1
         error = capsys.readouterr().err
-        assert error.startswith(f"mempalace: palace {palace_path} is held by PID ")
+        assert error.startswith(f"trimemo: palace {palace_path} is held by PID ")
         assert "Traceback" not in error
     finally:
         open(release, "w").close()
@@ -242,7 +242,7 @@ def test_cmd_mine_source_reports_real_contention_without_traceback(tmp_path, cap
 
 
 def test_mine_source_dry_run_prevents_direct_collection_and_kg_mutations(monkeypatch):
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     register("direct-mutation", _DirectMutationAdapter)
     monkeypatch.setattr(cli, "MempalaceConfig", _FakeConfig)
@@ -273,7 +273,7 @@ def test_mine_source_dry_run_prevents_direct_collection_and_kg_mutations(monkeyp
 
 
 def test_mine_source_dry_run_never_opens_existing_collection(monkeypatch):
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     register("read-aware", _ReadAwareAdapter)
     monkeypatch.setattr(cli, "MempalaceConfig", _FakeConfig)
@@ -296,7 +296,7 @@ def test_mine_source_dry_run_never_opens_existing_collection(monkeypatch):
 
 
 def test_dry_run_collection_proxy_returns_backend_result_types():
-    from mempalace.backends import GetResult, QueryResult
+    from trimemo.backends import GetResult, QueryResult
 
     collection = cli._DryRunCollectionProxy()
 
@@ -353,8 +353,8 @@ def test_mine_source_dry_run_fresh_palace_creates_no_backend_artifacts(tmp_path,
 
 def test_mine_source_dry_run_preserves_initialized_sqlite_exact_artifacts(tmp_path, monkeypatch):
     """Dry runs must not open or alter an existing sqlite_exact backend."""
-    from mempalace.backends.base import PalaceRef
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.base import PalaceRef
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     register("fixture", _FixtureAdapter)
     palace = tmp_path / "sqlite-palace"
@@ -396,7 +396,7 @@ def test_mine_source_rejects_incremental_adapter_before_ingest():
 
 
 def test_mine_source_accepts_non_incremental_metadata(monkeypatch, recwarn):
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     register("metadata", _MetadataAdapter)
     monkeypatch.setattr(cli, "MempalaceConfig", _FakeConfig)
@@ -429,7 +429,7 @@ def test_mine_source_rejects_unsupported_adapter_results():
 
 
 def test_mine_source_holds_writer_lease_before_opening_handles(monkeypatch):
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     collection = _FakeCollection()
     active = False
@@ -466,7 +466,7 @@ def test_mine_source_holds_writer_lease_before_opening_handles(monkeypatch):
 )
 def test_mine_source_refuses_held_writer_lease_before_opening_handles(tmp_path, monkeypatch):
     """A competing writer prevents adapter ingest and all handle creation."""
-    from mempalace import knowledge_graph, palace
+    from trimemo import knowledge_graph, palace
 
     home = tmp_path / "home"
     home.mkdir()
@@ -524,14 +524,14 @@ def test_cmd_mine_without_mode_preserves_projects_legacy_path(monkeypatch):
     from unittest.mock import patch
 
     monkeypatch.setattr(cli, "MempalaceConfig", _FakeConfig)
-    with patch("mempalace.miner.mine") as mine:
+    with patch("trimemo.miner.mine") as mine:
         cli.cmd_mine(_mine_args())
 
     mine.assert_called_once_with(
         project_dir="/source",
         palace_path="/fake/palace",
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         respect_gitignore=True,
@@ -544,7 +544,7 @@ def test_mine_parser_rejects_explicit_source_and_mode(monkeypatch, capsys):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["mempalace", "mine", "/source", "--source", "fixture", "--mode", "projects"],
+        ["trimemo", "mine", "/source", "--source", "fixture", "--mode", "projects"],
     )
 
     with pytest.raises(SystemExit) as excinfo:

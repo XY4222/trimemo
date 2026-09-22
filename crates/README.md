@@ -1,4 +1,4 @@
-# MemPalace native exact-vector engine
+# TriMemo native exact-vector engine
 
 The optional Rust accelerator shares `sqlite_exact.sqlite3` with the Python
 `sqlite_exact` backend. No database migration is needed. Python still handles
@@ -7,16 +7,16 @@ float buffer and performs cosine scans. Wing names are interned; rooms remain
 strings. The implementation does not guarantee 64-byte alignment or particular
 SIMD instructions.
 
-- `mempalace-core`: safe little-endian SQLite decoding, collection-scoped loading,
+- `trimemo-core`: safe little-endian SQLite decoding, collection-scoped loading,
   deterministic top-k ranking, and Rayon parallel scans.
-- `mempalace-py`: PyO3 bindings that release the GIL while loading and scanning.
-- `mempalace-cli`: standalone executable for vector search, stats, and benchmarks.
+- `trimemo-py`: PyO3 bindings that release the GIL while loading and scanning.
+- `trimemo-cli`: standalone executable for vector search, stats, and benchmarks.
   It needs no Python, but platform runtime libraries may be required; the Linux
   GNU build is not a static executable suitable for a scratch container.
 
 ## Install without a Rust compiler
 
-Install MemPalace normally. From the matching GitHub release, download the
+Install TriMemo normally. From the matching GitHub release, download the
 `mempalace_native_core` wheel for your OS and CPU, then install the downloaded
 wheel with `python -m pip install <wheel-file>`. Release builds attach wheels and
 executables directly to the release; manual workflow runs retain Actions
@@ -31,9 +31,9 @@ for returned embeddings also use Python and may consume its larger vector cache.
 ## Build and test from source
 
 ```sh
-python -m pip install ./crates/mempalace-py
-cargo test -p mempalace-core -p mempalace-cli --locked
-cargo build --release --locked --bin mempalace-native
+python -m pip install ./crates/trimemo-py
+cargo test -p trimemo-core -p trimemo-cli --locked
+cargo build --release --locked --bin trimemo-native
 ```
 
 Run the Python backend suites with `MEMPALACE_REQUIRE_NATIVE=1` to require the
@@ -43,10 +43,10 @@ on Linux, Windows, and macOS.
 ## Use the executable
 
 ```sh
-mempalace-native stats --db /path/to/sqlite_exact.sqlite3
-mempalace-native bench --db /path/to/sqlite_exact.sqlite3
-mempalace-native search --db /path/to/sqlite_exact.sqlite3 --vector '[1,0]' -k 5
-mempalace-native search --db /path/to/sqlite_exact.sqlite3 --vector - < query.json
+trimemo-native stats --db /path/to/sqlite_exact.sqlite3
+trimemo-native bench --db /path/to/sqlite_exact.sqlite3
+trimemo-native search --db /path/to/sqlite_exact.sqlite3 --vector '[1,0]' -k 5
+trimemo-native search --db /path/to/sqlite_exact.sqlite3 --vector - < query.json
 ```
 
 Supply a JSON float array with the collection's embedding dimension, produced by
@@ -57,5 +57,5 @@ is `mempalace_drawers`; use `--collection` to select another explicitly.
 ## Performance
 
 No benchmark figures are published for this revision. Earlier measurements predate the correctness hardening and have been withdrawn. To measure the engine on your own data, run
-`mempalace-native bench --db /path/to/sqlite_exact.sqlite3`. Correctness tests use synthetic
+`trimemo-native bench --db /path/to/sqlite_exact.sqlite3`. Correctness tests use synthetic
 data.

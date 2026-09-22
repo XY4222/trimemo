@@ -5,12 +5,12 @@ separators, so a path-encoded project dir like `-home-user-proj` derives the
 wing `home_user_proj` instead of `_home_user_proj`. Palaces mined before that
 change filed drawers under the old, separator-padded name. New mining and diary
 writes land on the new name, so the two no longer meet — the history is
-**split**, not lost. `mempalace migrate-wings` re-unites them.
+**split**, not lost. `trimemo migrate-wings` re-unites them.
 
 ## Symptom
 
 After upgrading, a project that used to surface its memories returns less than
-expected, and `mempalace status` shows two wings for one project — e.g. both
+expected, and `trimemo status` shows two wings for one project — e.g. both
 `_home_user_proj` (old drawers) and `home_user_proj` (newly mined). MCP writes
 to the padded wing may also have been rejected, since `sanitize_name` does not
 accept a leading underscore.
@@ -20,8 +20,8 @@ accept a leading underscore.
 Preview first — this never modifies anything:
 
 ```bash
-mempalace migrate-wings --dry-run
-mempalace migrate-wings --dry-run --palace /path/to/palace
+trimemo migrate-wings --dry-run
+trimemo migrate-wings --dry-run --palace /path/to/palace
 ```
 
 The plan lists each rename and flags collisions that will **merge** into an
@@ -35,8 +35,8 @@ existing wing:
 Apply it:
 
 ```bash
-mempalace migrate-wings           # prompts for confirmation
-mempalace migrate-wings --yes     # no prompt
+trimemo migrate-wings           # prompts for confirmation
+trimemo migrate-wings --yes     # no prompt
 ```
 
 ## What it does

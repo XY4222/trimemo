@@ -3,8 +3,8 @@ from __future__ import annotations
 import chromadb
 import pytest
 
-from mempalace.backends.base import PalaceRef
-from mempalace.backends.chroma import (
+from trimemo.backends.base import PalaceRef
+from trimemo.backends.chroma import (
     ChromaBackend,
     ChromaCollection,
     _caller_vector_schema,

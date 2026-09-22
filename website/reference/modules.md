@@ -1,13 +1,13 @@
 # Module Map
 
-Complete source file reference for the MemPalace codebase.
+Complete source file reference for the TriMemo codebase.
 
 ## Project Structure
 
 ```
-mempalace/
+trimemo/
 ├── README.md                  ← project documentation
-├── mempalace/                 ← core package
+├── trimemo/                 ← core package
 │   ├── cli/                   ← CLI package (commands, parser)
 │   ├── mcp_server/            ← MCP server package (tools, protocol, HTTP)
 │   ├── knowledge_graph.py     ← temporal entity graph
@@ -109,7 +109,7 @@ Manages entity name → code mappings for AAAK dialect.
 
 ### `room_detector_local.py` — Room Detection
 
-Detects rooms from folder structure during `mempalace init`.
+Detects rooms from folder structure during `trimemo init`.
 
 ## Utility Modules
 
@@ -123,7 +123,7 @@ Splits concatenated transcripts into per-session files based on session boundary
 
 ### `onboarding.py` — Guided Setup
 
-Interactive setup wizard for `mempalace init`. Generates AAAK bootstrap and wing config.
+Interactive setup wizard for `trimemo init`. Generates AAAK bootstrap and wing config.
 
 ### `spellcheck.py` — Spell Checking
 

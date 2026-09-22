@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Smoke-test a built MemPalace image and the shipped Compose files.
+# Smoke-test a built TriMemo image and the shipped Compose files.
 #
-#   scripts/docker-smoke.sh [IMAGE]        # default image: mempalace:smoke
+#   scripts/docker-smoke.sh [IMAGE]        # default image: trimemo:smoke
 #
 # CI builds the container images but, until this existed, never ran one and
 # never parsed a Compose file — so two defects that break the very first
@@ -20,8 +20,8 @@
 
 set -euo pipefail
 
-IMAGE="${1:-mempalace:smoke}"
-VOLUME="mempalace-smoke-$$"
+IMAGE="${1:-trimemo:smoke}"
+VOLUME="trimemo-smoke-$$"
 WORKDIR="$(mktemp -d)"
 
 # The image runs as uid 1000, which will not match the host user on Linux, and
@@ -149,7 +149,7 @@ def result(rid, what):
 
 
 name = result(1, "initialize")["serverInfo"]["name"]
-if name != "mempalace":
+if name != "trimemo":
     sys.exit(f"FAIL: initialize reported serverInfo.name={name!r}")
 print(f"  initialize ok (server: {name})")
 

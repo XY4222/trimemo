@@ -2,7 +2,7 @@ import json
 import stat
 from unittest.mock import patch
 
-from mempalace.normalize import (
+from trimemo.normalize import (
     _SLACK_PROVENANCE_FOOTER,
     _extract_content,
     _format_tool_result,
@@ -1641,16 +1641,16 @@ def test_continue_json_integration_via_normalize(tmp_path):
     """Continue.dev JSON is detected and parsed via the top-level normalize()."""
     data = {
         "history": [
-            {"role": "user", "content": "What is MemPalace?"},
+            {"role": "user", "content": "What is TriMemo?"},
             {"role": "assistant", "content": "A memory system for AI."},
         ],
-        "title": "MemPalace overview",
+        "title": "TriMemo overview",
         "sessionId": "session-001",
     }
     f = tmp_path / "session.json"
     f.write_text(json.dumps(data))
     result = normalize(str(f))
-    assert "> What is MemPalace?" in result
+    assert "> What is TriMemo?" in result
     assert "A memory system for AI." in result
 
 
@@ -1672,7 +1672,7 @@ def test_try_normalize_json_valid_but_unknown_schema():
 
 def test_messages_to_transcript_basic():
     msgs = [("user", "Q"), ("assistant", "A")]
-    with patch("mempalace.normalize.spellcheck_user_text", side_effect=lambda x: x, create=True):
+    with patch("trimemo.normalize.spellcheck_user_text", side_effect=lambda x: x, create=True):
         result = _messages_to_transcript(msgs, spellcheck=False)
     assert "> Q" in result
     assert "A" in result
@@ -1907,7 +1907,7 @@ def test_normalize_rejects_large_file(tmp_path):
         st_mode = stat.S_IFREG | 0o644
         st_size = 600 * 1024 * 1024
 
-    with patch("mempalace.normalize.os.fstat", return_value=_HugeStat()):
+    with patch("trimemo.normalize.os.fstat", return_value=_HugeStat()):
         try:
             normalize(str(big))
             assert False, "Should have raised IOError"

@@ -15,8 +15,8 @@ import random
 import time
 import psutil
 
-from mempalace.backends import get_backend
-from mempalace.backends.base import PalaceRef
+from trimemo.backends import get_backend
+from trimemo.backends.base import PalaceRef
 
 
 def run_soak_test():

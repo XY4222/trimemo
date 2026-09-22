@@ -1,10 +1,10 @@
-"""Tests for virtual line numbering (mempalace 3.3.6, integrated in PR #1555).
+"""Tests for virtual line numbering (trimemo 3.3.6, integrated in PR #1555).
 
 Run with:
     pytest tests/test_line_numbers.py -v
 """
 
-from mempalace.searcher import (  # noqa: E402
+from trimemo.searcher import (  # noqa: E402
     extract_line_range,
     render_with_line_numbers,
 )

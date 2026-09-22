@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/mempalace_logo.png" alt="MemPalace" width="240">
+<img src="assets/mempalace_logo.png" alt="TriMemo" width="240">
 
-# MemPalace
+# TriMemo
 
 Local-first AI memory. Verbatim storage, pluggable backend, 96.6% R@5 raw on LongMemEval — zero API calls.
 
@@ -13,8 +13,8 @@ Local-first AI memory. Verbatim storage, pluggable backend, 96.6% R@5 raw on Lon
 
 </div>
 
-> [!CAUTION]
-> **Beware of impostor sites.** MemPalace has no other official websites. The **only** official sources are this **[GitHub repository](https://github.com/MemPalace/mempalace)**, the **[PyPI package](https://pypi.org/project/mempalace/)**, and the docs at **[mempalaceofficial.com](https://mempalaceofficial.com)**. Any other domain (including `.tech`, `.net`, or other `.com` variants) is an impostor and may distribute malware. Details and timeline: [docs/HISTORY.md](docs/HISTORY.md).
+> [!NOTE]
+> **Fork notice.** This is **TriMemo** (三忆), a fork of [MemPalace](https://github.com/MemPalace/mempalace) maintained at **[XY4222/trimemo](https://github.com/XY4222/trimemo)**. It is not affiliated with the upstream project and is not published to PyPI under this name.
 
 > [!IMPORTANT]
 > **Claude Code sessions expire in 30 days without auto-save hooks wired.** [Read this →](https://github.com/MemPalace/mempalace/discussions/1388)
@@ -25,14 +25,14 @@ Local-first AI memory. Verbatim storage, pluggable backend, 96.6% R@5 raw on Lon
 
 ## What it is
 
-MemPalace stores your conversation history as verbatim text and retrieves
+TriMemo stores your conversation history as verbatim text and retrieves
 it with semantic search. It does not summarize, extract, or paraphrase.
 The index is structured — people and projects become *wings*, topics
 become *rooms*, and original content lives in *drawers* — so searches
 can be scoped rather than run against a flat corpus.
 
 The retrieval layer is pluggable. The current default is ChromaDB; the
-interface is defined in [`mempalace/backends/base.py`](mempalace/backends/base.py)
+interface is defined in [`trimemo/backends/base.py`](trimemo/backends/base.py)
 and alternative backends can be dropped in without touching the rest of
 the system.
 
@@ -47,19 +47,19 @@ Architecture, concepts, and mining flows:
 
 ### Agent-guided setup
 
-Install the MemPalace skills first, then ask your coding agent to set up
-MemPalace. The setup skill detects your system, installs the Python package,
+Install the TriMemo skills first, then ask your coding agent to set up
+TriMemo. The setup skill detects your system, installs the Python package,
 configures MCP, and asks whether you want a private local palace, a shared-brain
 hub, or a client connected to an existing hub:
 
 ```bash
-npx skills add MemPalace/mempalace
+npx skills add TriMemo/trimemo
 ```
 
-The repository exposes three skills: `mempalace` for guided installation and
-operations, `mempalace-recall` for search-before-answer recall, and
-`mempalace-task` for logstream delegation. Installing a skill does not by
-itself install the MemPalace CLI or MCP server; the setup skill guides the
+The repository exposes three skills: `trimemo` for guided installation and
+operations, `trimemo-recall` for search-before-answer recall, and
+`trimemo-task` for logstream delegation. Installing a skill does not by
+itself install the TriMemo CLI or MCP server; the setup skill guides the
 agent through those system changes and verifies the live connection.
 
 During guided setup the agent can offer weekly stable-release checks. They are
@@ -72,28 +72,28 @@ upgrade plan. Setup records whether the runtime came from `uv tool`, `pipx`, or
 
 ### Direct CLI setup
 
-MemPalace ships a CLI, so install it in an isolated environment to avoid
-PEP 668 errors on Debian/Ubuntu/Homebrew Pythons and to keep mempalace's
+TriMemo ships a CLI, so install it in an isolated environment to avoid
+PEP 668 errors on Debian/Ubuntu/Homebrew Pythons and to keep trimemo's
 deps (`chromadb`, `numpy`, `grpcio`, …) from conflicting with anything
 else in your global site-packages.
 
 We recommend [`uv`](https://docs.astral.sh/uv/) — `uv tool install` puts
-the `mempalace` CLI in an isolated environment on your PATH:
+the `trimemo` CLI in an isolated environment on your PATH:
 
 ```bash
-uv tool install mempalace
-mempalace init ~/projects/myapp
+uv tool install trimemo
+trimemo init ~/projects/myapp
 ```
 
 [`pipx`](https://pipx.pypa.io/) works the same way if you prefer it:
-`pipx install mempalace`.
+`pipx install trimemo`.
 
 Prefer plain `pip` only inside an activated virtualenv where you
-explicitly want `import mempalace` available:
+explicitly want `import trimemo` available:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install mempalace
+pip install trimemo
 ```
 
 ### Android / Termux
@@ -112,7 +112,7 @@ without a local Python toolchain. Multi-arch (amd64 + arm64), so it runs
 natively on Apple Silicon:
 
 ```bash
-docker pull ghcr.io/mempalace/mempalace:latest
+docker pull ghcr.io/trimemo/trimemo:latest
 ```
 
 Everything persists under `/data` — palace, config, and the cached embedding
@@ -120,14 +120,14 @@ model — so mount a volume there and reuse it across runs:
 
 ```bash
 # MCP server over stdio — note the `-i` flag (JSON-RPC needs stdin)
-docker run -i --rm -v mempalace-data:/data ghcr.io/mempalace/mempalace
+docker run -i --rm -v trimemo-data:/data ghcr.io/trimemo/trimemo
 
 # Run any CLI command instead. The container only sees what you mount, so
 # mount the directory you want to mine — read-only is enough, mining never
 # writes to the source.
-docker run --rm -v mempalace-data:/data -v /path/to/project:/work:ro \
-  ghcr.io/mempalace/mempalace mine /work
-docker run --rm -v mempalace-data:/data ghcr.io/mempalace/mempalace search "why GraphQL"
+docker run --rm -v trimemo-data:/data -v /path/to/project:/work:ro \
+  ghcr.io/trimemo/trimemo mine /work
+docker run --rm -v trimemo-data:/data ghcr.io/trimemo/trimemo search "why GraphQL"
 ```
 
 The first command that needs embeddings downloads the model into `/data`
@@ -142,13 +142,13 @@ transcripts otherwise:
 ```json
 {
   "mcpServers": {
-    "mempalace": {
+    "trimemo": {
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "-v", "mempalace-data:/data",
+        "-v", "trimemo-data:/data",
         "-v", "/absolute/path/to/.claude/projects:/transcripts:ro",
-        "ghcr.io/mempalace/mempalace"
+        "ghcr.io/trimemo/trimemo"
       ]
     }
   }
@@ -173,9 +173,9 @@ image yourself instead of pulling — required for the GPU variant, which is not
 published:
 
 ```bash
-docker build -t mempalace .                                  # CPU
-docker build --build-arg EXTRAS="extract,spellcheck" -t mempalace .
-docker build -f Dockerfile.gpu -t mempalace:gpu .            # CUDA; run with --gpus all
+docker build -t trimemo .                                  # CPU
+docker build --build-arg EXTRAS="extract,spellcheck" -t trimemo .
+docker build -f Dockerfile.gpu -t trimemo:gpu .            # CUDA; run with --gpus all
 ```
 
 The GPU image is x86_64-only: `onnxruntime-gpu` publishes no aarch64 Linux
@@ -188,7 +188,7 @@ version.
 
 ## Storage backends
 
-ChromaDB is the default and needs no configuration. MemPalace also ships a
+ChromaDB is the default and needs no configuration. TriMemo also ships a
 pluggable backend contract, exercised across deliberately different substrates
 so the contract is never accidentally shaped around one vendor. Every
 non-default backend is opt-in.
@@ -198,29 +198,29 @@ non-default backend is opt-in.
 | `chroma` _(default)_ | Local (embedded) | bundled | – | ✓ | – |
 | `sqlite_exact` | Local (exact NumPy) | bundled | – | ✓ | – |
 | `rust_exact` | Local (native vectors) | wheel / compiled | – | ✓ | – |
-| `milvus` | Local (Lite) · Server opt-in | `mempalace[milvus]` | ✓ | ✓ | `MEMPALACE_MILVUS_URI` |
+| `milvus` | Local (Lite) · Server opt-in | `trimemo[milvus]` | ✓ | ✓ | `MEMPALACE_MILVUS_URI` |
 | `qdrant` | Server (REST) | bundled | ✓ | ✓ | `MEMPALACE_QDRANT_URL` |
-| `pgvector` | Server (Postgres) | `mempalace[pgvector]` | ✓ | ✓ | `MEMPALACE_PGVECTOR_DSN` |
+| `pgvector` | Server (Postgres) | `trimemo[pgvector]` | ✓ | ✓ | `MEMPALACE_PGVECTOR_DSN` |
 
 Select with `--backend <name>`, `MEMPALACE_BACKEND=<name>`, or
 `"backend": "<name>"` in `config.json`. `rust_exact` uses the exact same `sqlite_exact.sqlite3` file on disk as `sqlite_exact` with zero data migration. See [native installation and vector CLI usage](crates/README.md) for the separately distributed wheel and executables.
 
 ### Native vector search
 
-`rust_exact` and the standalone `mempalace-native` CLI scan the same `sqlite_exact` database with a native Rust engine. The `rust_exact` adapter falls back to the Python backend for complex filters, requests for returned embeddings, and installs without the native extension; the `mempalace-native` executable is Rust-only and has no Python fallback. No benchmark figures are published for this release; `mempalace-native bench --db <sqlite_exact.sqlite3>` measures it on your own data. See [`crates/`](crates/) for the core workspace, PyO3 bindings, and native CLI.
+`rust_exact` and the standalone `trimemo-native` CLI scan the same `sqlite_exact` database with a native Rust engine. The `rust_exact` adapter falls back to the Python backend for complex filters, requests for returned embeddings, and installs without the native extension; the `trimemo-native` executable is Rust-only and has no Python fallback. No benchmark figures are published for this release; `trimemo-native bench --db <sqlite_exact.sqlite3>` measures it on your own data. See [`crates/`](crates/) for the core workspace, PyO3 bindings, and native CLI.
 
 ## Quickstart
 
 ```bash
 # Mine content into the palace
-mempalace mine ~/projects/myapp                    # project files
-mempalace mine ~/.claude/projects/ --mode convos   # Claude Code sessions (scope with --wing per project)
+trimemo mine ~/projects/myapp                    # project files
+trimemo mine ~/.claude/projects/ --mode convos   # Claude Code sessions (scope with --wing per project)
 
 # Search
-mempalace search "why did we switch to GraphQL"
+trimemo search "why did we switch to GraphQL"
 
 # Load context for a new session
-mempalace wake-up
+trimemo wake-up
 ```
 
 For Claude Code, Gemini CLI, [Antigravity](https://mempalaceofficial.com/guide/antigravity.html),
@@ -275,7 +275,7 @@ own research page for their published numbers.
 
 ```bash
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 # see benchmarks/README.md for dataset download commands
 uv run python benchmarks/longmemeval_bench.py /path/to/longmemeval_s_cleaned.json
@@ -285,7 +285,7 @@ uv run python benchmarks/longmemeval_bench.py /path/to/longmemeval_s_cleaned.jso
 
 ## Knowledge graph
 
-MemPalace includes a temporal entity-relationship graph with validity
+TriMemo includes a temporal entity-relationship graph with validity
 windows — add, query, invalidate, timeline — backed by local SQLite.
 Usage and tool reference:
 [mempalaceofficial.com/concepts/knowledge-graph](https://mempalaceofficial.com/concepts/knowledge-graph.html).
@@ -319,10 +319,10 @@ periodically and before context compression:
 If you are installing under time pressure, start with the
 [Claude Code retention setup checklist](https://mempalaceofficial.com/guide/claude-code-retention.html):
 wire the hooks, back up existing JSONL transcripts, and backfill them with
-`mempalace mine ~/.claude/projects/ --mode convos`.
+`trimemo mine ~/.claude/projects/ --mode convos`.
 
 For per-message recall on top of the file-level chunks the hooks produce,
-run `mempalace sweep <transcript-dir>` periodically — it stores one
+run `trimemo sweep <transcript-dir>` periodically — it stores one
 verbatim drawer per user/assistant message, idempotent and resume-safe.
 
 ---
@@ -331,8 +331,8 @@ verbatim drawer per user/assistant message, idempotent and resume-safe.
 
 - Python 3.9+
 - A vector-store backend (ChromaDB by default)
-- ~300 MB disk for the embedding model. Onboarding (`python -m mempalace.onboarding`) offers `embeddinggemma-300m` (multilingual, 100+ languages, recommended) or `all-MiniLM-L6-v2` (English-only, ~30 MB). See the docstring at [`mempalace/embedding.py`](mempalace/embedding.py) for details and migration notes.
-- Optional — compute embeddings on a server instead of locally. Set `embedding_model: "openai-compat"` in `~/.mempalace/config.json` together with `embedding_api_url` / `embedding_api_model` (and `embedding_api_key` if the server needs auth) to use any OpenAI-compatible `/v1/embeddings` endpoint — LM Studio, llama.cpp, vLLM, Ollama's OpenAI shim, or a self-hosted server (e.g. a larger multilingual or GPU-served embedder). Each key is overridable via the matching `MEMPALACE_EMBEDDING_API_*` env var. When the endpoint is on your machine or LAN, no content leaves your network. Switching to it requires `mempalace repair rebuild-index` (different vector space).
+- ~300 MB disk for the embedding model. Onboarding (`python -m mempalace.onboarding`) offers `embeddinggemma-300m` (multilingual, 100+ languages, recommended) or `all-MiniLM-L6-v2` (English-only, ~30 MB). See the docstring at [`trimemo/embedding.py`](trimemo/embedding.py) for details and migration notes.
+- Optional — compute embeddings on a server instead of locally. Set `embedding_model: "openai-compat"` in `~/.mempalace/config.json` together with `embedding_api_url` / `embedding_api_model` (and `embedding_api_key` if the server needs auth) to use any OpenAI-compatible `/v1/embeddings` endpoint — LM Studio, llama.cpp, vLLM, Ollama's OpenAI shim, or a self-hosted server (e.g. a larger multilingual or GPU-served embedder). Each key is overridable via the matching `MEMPALACE_EMBEDDING_API_*` env var. When the endpoint is on your machine or LAN, no content leaves your network. Switching to it requires `trimemo repair rebuild-index` (different vector space).
 
 No API key is required for the core benchmark path.
 
@@ -353,12 +353,14 @@ PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MIT — see [LICENSE](LICENSE).
 
+This repository is a maintained fork of [MemPalace](https://github.com/MemPalace/mempalace) (MIT), renamed and rebranded as **TriMemo** (三忆). Upstream code is © the MemPalace authors; fork modifications are documented in [CHANGELOG.md](CHANGELOG.md).
+
 <!-- Link Definitions -->
 [version-shield]: https://img.shields.io/badge/version-3.10.0-4dc9f6?style=flat-square&labelColor=0a0e14
-[release-link]: https://github.com/MemPalace/mempalace/releases
+[release-link]: https://github.com/XY4222/trimemo/releases
 [python-shield]: https://img.shields.io/badge/python-3.9+-7dd8f8?style=flat-square&labelColor=0a0e14&logo=python&logoColor=7dd8f8
 [python-link]: https://www.python.org/
 [license-shield]: https://img.shields.io/badge/license-MIT-b0e8ff?style=flat-square&labelColor=0a0e14
-[license-link]: https://github.com/MemPalace/mempalace/blob/main/LICENSE
+[license-link]: https://github.com/XY4222/trimemo/blob/main/LICENSE
 [discord-shield]: https://img.shields.io/badge/discord-join-5865F2?style=flat-square&labelColor=0a0e14&logo=discord&logoColor=5865F2
 [discord-link]: https://discord.com/invite/ycTQQCu6kn

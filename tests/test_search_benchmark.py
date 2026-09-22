@@ -428,7 +428,7 @@ def test_hub_search_client_reuses_authenticated_transport_and_parses_tool_result
             },
         }
 
-    monkeypatch.setattr("mempalace.hub_client.forward_json_rpc", fake_forward)
+    monkeypatch.setattr("trimemo.hub_client.forward_json_rpc", fake_forward)
     client = HubSearchClient(
         "http://127.0.0.1:9",
         {"Content-Type": "application/json", "Authorization": "Bearer local-secret"},

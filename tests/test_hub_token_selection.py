@@ -6,7 +6,7 @@ import urllib.request
 
 import pytest
 
-from mempalace import server_registry
+from trimemo import server_registry
 
 
 @pytest.fixture

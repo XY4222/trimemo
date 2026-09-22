@@ -4,12 +4,12 @@ import json
 
 import pytest
 
-from mempalace import mcp_server as mcp, palace
+from trimemo import mcp_server as mcp, palace
 
 
 @pytest.fixture
 def isolated_writer(monkeypatch, tmp_path):
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.setattr(mcp, "_config", MempalaceConfig(palace_path=tmp_path / "palace"))
     for name, value in (
@@ -71,8 +71,8 @@ def test_lock_setup_error_does_not_claim_contention(isolated_writer, monkeypatch
 
 
 def test_light_dispatch_writes_and_reads_after_config_repair(isolated_writer, monkeypatch, kg):
-    from mempalace import mcp_light_server
-    from mempalace.backends import embedding_wrapper
+    from trimemo import mcp_light_server
+    from trimemo.backends import embedding_wrapper
 
     monkeypatch.setattr(mcp, "_get_kg", lambda *a, **kw: kg)
     monkeypatch.setattr(mcp, "_READ_ONLY", False)
@@ -119,7 +119,7 @@ def test_light_dispatch_writes_and_reads_after_config_repair(isolated_writer, mo
 
 
 def test_light_hub_forward_does_not_acquire_local_writer(isolated_writer, monkeypatch):
-    from mempalace import mcp_light_server
+    from trimemo import mcp_light_server
 
     monkeypatch.setattr(mcp, "_hub_proxy_target", lambda: ("http://127.0.0.1:9", {}))
     monkeypatch.setattr(
@@ -154,8 +154,8 @@ def test_light_hub_forward_does_not_acquire_local_writer(isolated_writer, monkey
 def test_peer_sync_thread_does_not_pollute_unrelated_palace(tmp_path, monkeypatch):
     """Issue #2493: peer sync thread must not create or mutate other palaces."""
     import threading
-    import mempalace.logsync as logsync_mod
-    from mempalace.config import MempalaceConfig
+    import trimemo.logsync as logsync_mod
+    from trimemo.config import MempalaceConfig
 
     palace1 = tmp_path / "sync_palace"
     palace1.mkdir()
@@ -171,7 +171,7 @@ def test_peer_sync_thread_does_not_pollute_unrelated_palace(tmp_path, monkeypatc
         sync_round_completed.set()
         return res
 
-    monkeypatch.setattr("mempalace.logsync.sync_all", _sync_all_wrapper)
+    monkeypatch.setattr("trimemo.logsync.sync_all", _sync_all_wrapper)
 
     unrelated_palace = tmp_path / "unrelated_palace"
     assert not unrelated_palace.exists()

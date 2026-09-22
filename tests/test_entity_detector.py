@@ -12,7 +12,7 @@ from unittest.mock import patch
 from hypothesis import given
 from hypothesis import strategies as st
 
-from mempalace.entity_detector import (
+from trimemo.entity_detector import (
     PROSE_EXTENSIONS,
     STOPWORDS,
     _MAX_CANDIDATE_TOKEN_LEN,
@@ -142,9 +142,9 @@ def test_coca_wordlist_file_loads_with_expected_shape():
     """The data file ships with a stable schema."""
     import json
     from pathlib import Path
-    import mempalace
+    import trimemo
 
-    pkg_dir = Path(mempalace.__file__).parent
+    pkg_dir = Path(trimemo.__file__).parent
     p = pkg_dir / "data" / "coca_content_words.json"
     assert p.exists(), f"COCA wordlist must exist at {p}"
     d = json.loads(p.read_text(encoding="utf-8"))
@@ -164,9 +164,9 @@ def test_coca_wordlist_contains_all_known_aya_false_positives():
     false positive from Aya's real palace, lowercased."""
     import json
     from pathlib import Path
-    import mempalace
+    import trimemo
 
-    pkg_dir = Path(mempalace.__file__).parent
+    pkg_dir = Path(trimemo.__file__).parent
     p = pkg_dir / "data" / "coca_content_words.json"
     words = set(json.loads(p.read_text(encoding="utf-8"))["words"])
     must_have = ["code", "brutal", "phase", "chat", "mar", "backups", "planning", "line", "note"]
@@ -261,9 +261,9 @@ def test_known_systems_file_loads_with_expected_shape():
     """The data file ships with a stable schema."""
     import json
     from pathlib import Path
-    import mempalace
+    import trimemo
 
-    pkg_dir = Path(mempalace.__file__).parent
+    pkg_dir = Path(trimemo.__file__).parent
     p = pkg_dir / "data" / "known_systems.json"
     assert p.exists(), f"known_systems.json must exist at {p}"
     d = json.loads(p.read_text(encoding="utf-8"))
@@ -287,9 +287,9 @@ def test_known_systems_file_contains_expected_high_value_entries():
     users mention in real palaces."""
     import json
     from pathlib import Path
-    import mempalace
+    import trimemo
 
-    pkg_dir = Path(mempalace.__file__).parent
+    pkg_dir = Path(trimemo.__file__).parent
     p = pkg_dir / "data" / "known_systems.json"
     compounds = set(json.loads(p.read_text(encoding="utf-8"))["compounds"])
     must_have = [
@@ -695,22 +695,33 @@ def test_scan_for_detection_max_files(tmp_path):
 
 @contextlib.contextmanager
 def _temp_locale(locale_code: str, entity_section: dict):
-    """Context manager that drops a locale JSON into mempalace/i18n/ for the test body.
+    """Context manager that drops a locale JSON into trimemo/i18n/ for the test body.
 
     Cleans up the file and clears every cache that depends on locale data on exit,
     even if the test fails or the entity section is invalid.
 
-    Note: writes into the real mempalace/i18n/ directory. If a test process is
+    Note: writes into the real trimemo/i18n/ directory. If a test process is
     SIGKILLed mid-test the orphan zz-test-*.json file will break test_all_languages_load
     on the next run (the fixture lacks the required terms/cli/aaak sections).
-    Recover with `rm mempalace/i18n/zz-test-*.json`.
+    Recover with `rm trimemo/i18n/zz-test-*.json`.
     """
-    from mempalace import i18n
-    from mempalace import entity_detector
+    from trimemo import i18n
+    from trimemo import entity_detector
 
     locale_path = Path(i18n.__file__).parent / f"{locale_code}.json"
     if locale_path.exists():
-        raise RuntimeError(f"Test locale {locale_code} collides with an existing file")
+        # Self-heal after a SIGKILLed run: the fixture's own payload is
+        # recognisable (it has the exact keys we write below). A file that
+        # matches is an orphan from an interrupted run, safe to reap so the
+        # suite recovers without a manual `rm trimemo/i18n/zz-test-*.json`.
+        try:
+            stale = json.loads(locale_path.read_text(encoding="utf-8"))
+        except Exception:
+            stale = None
+        if isinstance(stale, dict) and stale.get("lang") == locale_code and "entity" in stale:
+            locale_path.unlink()
+        else:
+            raise RuntimeError(f"Test locale {locale_code} collides with an existing file")
 
     payload = {
         "lang": locale_code,
@@ -809,7 +820,7 @@ def test_score_entity_unions_person_verbs_across_languages():
 
 def test_get_entity_patterns_unknown_lang_falls_back_to_english():
     """Asking for a non-existent language returns English defaults."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     patterns = get_entity_patterns(("zz-does-not-exist",))
     assert len(patterns["stopwords"]) > 0
@@ -818,7 +829,7 @@ def test_get_entity_patterns_unknown_lang_falls_back_to_english():
 
 def test_get_entity_patterns_dedupes_across_overlapping_languages():
     """Loading ('en', 'en') doesn't double-count patterns or stopwords."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     single = get_entity_patterns(("en",))
     doubled = get_entity_patterns(("en", "en"))
@@ -828,7 +839,7 @@ def test_get_entity_patterns_dedupes_across_overlapping_languages():
 
 def test_build_patterns_cache_is_keyed_by_language():
     """Same name with different language tuples yields different compiled sets."""
-    from mempalace.entity_detector import _build_patterns
+    from trimemo.entity_detector import _build_patterns
 
     locale = {
         "candidate_pattern": "[A-Z][a-z]+",
@@ -847,7 +858,7 @@ def test_build_patterns_cache_is_keyed_by_language():
 
 def test_normalize_langs_handles_string_input():
     """Passing a bare string instead of a tuple still works."""
-    from mempalace.entity_detector import _normalize_langs
+    from trimemo.entity_detector import _normalize_langs
 
     assert _normalize_langs("en") == ("en",)
     assert _normalize_langs(["en", "pt-br"]) == ("en", "pt-br")
@@ -857,7 +868,7 @@ def test_normalize_langs_handles_string_input():
 
 def test_config_entity_languages_defaults_to_english(tmp_path, monkeypatch):
     """MempalaceConfig.entity_languages defaults to ['en'] with no config file."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.delenv("MEMPALACE_ENTITY_LANGUAGES", raising=False)
     monkeypatch.delenv("MEMPAL_ENTITY_LANGUAGES", raising=False)
@@ -867,7 +878,7 @@ def test_config_entity_languages_defaults_to_english(tmp_path, monkeypatch):
 
 def test_config_entity_languages_from_env(tmp_path, monkeypatch):
     """Env var overrides config file."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.setenv("MEMPALACE_ENTITY_LANGUAGES", "en,pt-br,ru")
     cfg = MempalaceConfig(config_dir=str(tmp_path))
@@ -876,7 +887,7 @@ def test_config_entity_languages_from_env(tmp_path, monkeypatch):
 
 def test_config_set_entity_languages_persists(tmp_path, monkeypatch):
     """set_entity_languages writes to disk and is read back."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.delenv("MEMPALACE_ENTITY_LANGUAGES", raising=False)
     monkeypatch.delenv("MEMPAL_ENTITY_LANGUAGES", raising=False)
@@ -888,7 +899,7 @@ def test_config_set_entity_languages_persists(tmp_path, monkeypatch):
 
 def test_config_set_entity_languages_empty_falls_back_to_english(tmp_path, monkeypatch):
     """An empty list normalizes to ['en']."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.delenv("MEMPALACE_ENTITY_LANGUAGES", raising=False)
     monkeypatch.delenv("MEMPAL_ENTITY_LANGUAGES", raising=False)
@@ -1013,7 +1024,7 @@ def test_zh_tw_person_classification():
 def test_zh_tw_stopwords_filter_common_particles():
     """Common Chinese particles / pronouns should be stopword-filtered
     even if they happen to share a surname prefix like 甘 or 習."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     patterns = get_entity_patterns(("zh-TW",))
     stopwords = set(patterns["stopwords"])
@@ -1126,8 +1137,8 @@ def test_entity_extraction_no_redos_on_adversarial_ascii_run():
     complete fast, not hang (#2063). Run in a subprocess with a hard timeout so
     a regression fails fast instead of pinning CI (no pytest-timeout available)."""
     code = (
-        "from mempalace.entity_detector import extract_candidates\n"
-        "from mempalace.palace import _candidate_entity_words\n"
+        "from trimemo.entity_detector import extract_candidates\n"
+        "from trimemo.palace import _candidate_entity_words\n"
         "payload = 'Aa' + 'B' * 400 + '0'\n"
         "extract_candidates(payload)\n"
         "_candidate_entity_words(payload)\n"

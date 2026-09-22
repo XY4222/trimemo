@@ -18,7 +18,7 @@ np = pytest.importorskip("numpy")
 pytest.importorskip("huggingface_hub")
 pytest.importorskip("tokenizers")
 
-import mempalace.embedding as embedding  # noqa: E402  (after importorskip)
+import trimemo.embedding as embedding  # noqa: E402  (after importorskip)
 
 
 @pytest.fixture(autouse=True)
@@ -586,7 +586,7 @@ def test_missing_deps_raise_helpful_error(monkeypatch):
     monkeypatch.setitem(sys.modules, "tokenizers", None)
 
     ef = embedding.EmbeddinggemmaONNX()
-    with pytest.raises(ImportError, match=r"pip install.*mempalace"):
+    with pytest.raises(ImportError, match=r"pip install.*trimemo"):
         ef(["anything"])
 
 
@@ -743,7 +743,7 @@ def test_no_device_setting_can_produce_nan_vectors(patched_lazy_load, monkeypatc
 
 def test_config_embedding_model_env_override(monkeypatch):
     """MEMPALACE_EMBEDDING_MODEL env var must override the config file default."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.setenv("MEMPALACE_EMBEDDING_MODEL", "embeddinggemma")
     assert MempalaceConfig().embedding_model == "embeddinggemma"
@@ -754,7 +754,7 @@ def test_config_embedding_model_env_override(monkeypatch):
 
 def test_config_embedding_model_default_is_minilm(monkeypatch):
     """Back-compat: existing installs without explicit config get minilm."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.delenv("MEMPALACE_EMBEDDING_MODEL", raising=False)
     assert MempalaceConfig().embedding_model == "minilm"

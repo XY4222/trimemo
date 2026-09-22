@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "crates/mempalace-core",
-    "crates/mempalace-py",
-    "crates/mempalace-cli",
+    "crates/trimemo-core",
+    "crates/trimemo-py",
+    "crates/trimemo-cli",
 ]
 resolver = "2"
 
@@ -10,8 +10,8 @@ resolver = "2"
 version = "3.10.0"
 edition = "2021"
 license = "MIT"
-authors = ["mempalace contributors"]
-repository = "https://github.com/MemPalace/mempalace"
+authors = ["trimemo contributors"]
+repository = "https://github.com/MemPalace/trimemo"
 
 [profile.release]
 opt-level = 3

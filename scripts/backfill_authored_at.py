@@ -23,10 +23,10 @@ Usage (dry-run prints what would change; pass --apply to write):
 In Docker (the MCP image), mount the volume and your session dirs read-only:
 
     docker run --rm \
-      -v mempalace-data:/data \
+      -v trimemo-data:/data \
       -v ~/.claude:/sessions/claude:ro -v ~/.codex:/sessions/codex:ro \
       -v "$PWD/scripts/backfill_authored_at.py:/tmp/backfill.py:ro" \
-      --entrypoint /app/.venv/bin/python mempalace:local \
+      --entrypoint /app/.venv/bin/python trimemo:local \
       /tmp/backfill.py --palace /data/.mempalace/palace \
         --sessions /sessions/claude --sessions /sessions/codex --apply
 """
@@ -37,7 +37,7 @@ import os
 
 import chromadb
 
-from mempalace.convo_miner import _extract_authored_at
+from trimemo.convo_miner import _extract_authored_at
 
 COLLECTION = "mempalace_drawers"
 PAGE = 2000

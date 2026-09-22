@@ -28,7 +28,7 @@ _EXIT_TIMEOUT = 60
 
 def _spawn_server() -> subprocess.Popen:
     return subprocess.Popen(
-        [sys.executable, "-m", "mempalace.mcp_server"],
+        [sys.executable, "-m", "trimemo.mcp_server"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

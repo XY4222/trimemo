@@ -1,10 +1,10 @@
-# MemPalace Scale Benchmark Suite
+# TriMemo Scale Benchmark Suite
 
-106 tests that benchmark mempalace at scale to validate real-world performance limits.
+106 tests that benchmark trimemo at scale to validate real-world performance limits.
 
 ## Why
 
-MemPalace has strong academic scores (96.6% R@5 on LongMemEval) but no empirical data on how it behaves at scale. Key unknowns:
+TriMemo has strong academic scores (96.6% R@5 on LongMemEval) but no empirical data on how it behaves at scale. Key unknowns:
 
 - `tool_status()` loads ALL metadata into memory — at what palace size does this OOM?
 - `PersistentClient` is re-instantiated on every MCP call — what's the overhead?

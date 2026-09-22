@@ -25,7 +25,7 @@ def test_diary_write_chunked_logical_id_fetches_deletes_and_lists_as_one(
     _client, _col = _get_collection(palace_path, create=True)
     del _client
 
-    from mempalace.mcp_server import (
+    from trimemo.mcp_server import (
         tool_delete_drawer,
         tool_diary_write,
         tool_get_drawer,
@@ -66,7 +66,7 @@ def test_diary_write_chunked_logical_id_updates_group(monkeypatch, config, palac
     _client, _col = _get_collection(palace_path, create=True)
     del _client
 
-    from mempalace.mcp_server import (
+    from trimemo.mcp_server import (
         tool_diary_write,
         tool_get_drawer,
         tool_update_drawer,
@@ -96,14 +96,14 @@ def test_legacy_diary_chunks_resolve_without_parent_drawer_id(monkeypatch, confi
     _client, col = _get_collection(palace_path, create=True)
     del _client
 
-    from mempalace.mcp_server import (
+    from trimemo.mcp_server import (
         tool_delete_drawer,
         tool_get_drawer,
         tool_list_drawers,
     )
 
     entry_id = "diary_wing_lily_20260808_142113121027_3e4c74763d73"
-    # Exactly what mempalace 3.6.0 wrote: parent_entry_id only.
+    # Exactly what trimemo 3.6.0 wrote: parent_entry_id only.
     col.upsert(
         ids=[f"{entry_id}_chunk_{i:06d}" for i in range(3)],
         documents=["legacy-0 ", "legacy-1 ", "legacy-2"],
@@ -142,7 +142,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_write, tool_diary_read
+        from trimemo.mcp_server import tool_diary_write, tool_diary_read
 
         w = tool_diary_write(
             agent_name="TestAgent",
@@ -162,7 +162,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_read
+        from trimemo.mcp_server import tool_diary_read
 
         r = tool_diary_read(agent_name="Nobody")
         assert r["entries"] == []
@@ -170,7 +170,7 @@ class TestDiaryTools:
     def test_diary_read_pages_past_10000_and_returns_true_latest(self, monkeypatch, config, kg):
         """Entries beyond the old 10k cap must affect both recency and total."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class PagedDiaryCollection:
             total = 10001
@@ -222,7 +222,7 @@ class TestDiaryTools:
         _client, _col = _get_collection(palace_path, create=True)
         del _client
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class FrozenDateTime:
             calls = [
@@ -239,7 +239,7 @@ class TestDiaryTools:
 
         monkeypatch.setattr(mcp_server, "datetime", FrozenDateTime)
 
-        from mempalace.mcp_server import tool_diary_read, tool_diary_write
+        from trimemo.mcp_server import tool_diary_read, tool_diary_write
 
         entry1 = "A" * 50 + " entry one"
         entry2 = "A" * 50 + " entry two"
@@ -264,7 +264,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_read, tool_diary_write
+        from trimemo.mcp_server import tool_diary_read, tool_diary_write
 
         w1 = tool_diary_write(
             agent_name="TestAgent",
@@ -300,7 +300,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_read, tool_diary_write
+        from trimemo.mcp_server import tool_diary_read, tool_diary_write
 
         # Write as "Claude" → read as "claude" should match.
         w1 = tool_diary_write(
@@ -344,7 +344,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_write
+        from trimemo.mcp_server import tool_diary_write
 
         r = tool_diary_write(
             agent_name="TestAgent",
@@ -365,7 +365,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_write
+        from trimemo.mcp_server import tool_diary_write
 
         # 5000 chars: well above CHUNK_SIZE=800. Expected chunks: ceil(5000/800) = 7.
         oversized = "Z" * 5000
@@ -396,7 +396,7 @@ class TestDiaryTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_diary_write
+        from trimemo.mcp_server import tool_diary_write
 
         oversized = "Q" * 3500  # ~5 chunks at CHUNK_SIZE=800
         r = tool_diary_write(agent_name="TestAgent", entry=oversized, topic="general")

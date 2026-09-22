@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from mempalace.transport import (
+from trimemo.transport import (
     HttpsBearerTransport,
     Transport,
     TransportError,
@@ -51,7 +51,7 @@ class TestSeamContract:
 
 class TestHttpsBearerTransport:
     def test_self_id_is_the_replica_id(self, palace_path):
-        from mempalace.replica import get_replica_id
+        from trimemo.replica import get_replica_id
 
         transport = HttpsBearerTransport(palace_path)
         assert transport.self_id() == get_replica_id(palace_path)
@@ -65,7 +65,7 @@ class TestHttpsBearerTransport:
         assert HttpsBearerTransport(palace_path).peers() == []
 
     def test_request_routes_through_wire_primitive(self, peered_palace, monkeypatch):
-        import mempalace.transport as transport_mod
+        import trimemo.transport as transport_mod
 
         calls = []
 
@@ -105,7 +105,7 @@ class TestFactorySwapPoint:
 
 class TestCompatSurface:
     def test_logsync_reexports_survive(self):
-        from mempalace.logsync import (
+        from trimemo.logsync import (
             PEERS_FILENAME,
             SyncPeerError,
             _peer_get,
@@ -122,8 +122,8 @@ class TestCompatSurface:
         assert SyncPeerError is TransportError
 
     def test_sync_all_accepts_injected_transport(self, palace_path):
-        from mempalace.logstream import Logstream
-        from mempalace.logsync import sync_all
+        from trimemo.logstream import Logstream
+        from trimemo.logsync import sync_all
 
         class _EmptyTransport(Transport):
             def self_id(self):

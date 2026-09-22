@@ -27,7 +27,7 @@ def _make_fake_collection(metadatas, ids=None):
 
 # Patch chromadb at import time so palace_graph can be imported
 with patch.dict("sys.modules", {"chromadb": MagicMock()}):
-    from mempalace.palace_graph import (
+    from trimemo.palace_graph import (
         _fuzzy_match,
         build_graph,
         find_tunnels,
@@ -360,7 +360,7 @@ class TestSqliteGroupedCountsReader:
     MAGIC = b"SQLite format 3\x00"
 
     def _config(self, palace_path):
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         cfg_dir = os.path.join(os.path.dirname(palace_path), "config")
         os.makedirs(cfg_dir, exist_ok=True)
@@ -369,8 +369,8 @@ class TestSqliteGroupedCountsReader:
         return MempalaceConfig(config_dir=cfg_dir)
 
     def test_chroma_palace_resolves_a_reader(self, tmp_path):
-        from mempalace.backends.chroma import sqlite_room_wing_hall_counts
-        from mempalace.palace_graph import sqlite_grouped_counts_reader
+        from trimemo.backends.chroma import sqlite_room_wing_hall_counts
+        from trimemo.palace_graph import sqlite_grouped_counts_reader
 
         palace = tmp_path / "palace"
         palace.mkdir()
@@ -382,7 +382,7 @@ class TestSqliteGroupedCountsReader:
     def test_missing_database_falls_back_to_the_client(self, tmp_path):
         """No db file means no fast path — that is how a broken palace still
         reports a diagnostic instead of an empty graph."""
-        from mempalace.palace_graph import sqlite_grouped_counts_reader
+        from trimemo.palace_graph import sqlite_grouped_counts_reader
 
         palace = tmp_path / "palace"
         palace.mkdir()
@@ -391,7 +391,7 @@ class TestSqliteGroupedCountsReader:
     def test_mixed_backend_artifacts_do_not_get_sniffed(self, tmp_path):
         """Two backends' files in one directory is a ``BackendMismatchError``
         on every normal path; picking one by file order would hide that."""
-        from mempalace.palace_graph import sqlite_grouped_counts_reader
+        from trimemo.palace_graph import sqlite_grouped_counts_reader
 
         palace = tmp_path / "palace"
         palace.mkdir()
@@ -401,7 +401,7 @@ class TestSqliteGroupedCountsReader:
 
 
 def test_2288_grouped_general_room_is_not_filtered():
-    from mempalace.palace_graph import _nodes_edges_from_grouped_rows
+    from trimemo.palace_graph import _nodes_edges_from_grouped_rows
 
     nodes, edges = _nodes_edges_from_grouped_rows(
         [

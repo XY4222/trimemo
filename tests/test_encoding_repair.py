@@ -5,7 +5,7 @@ import unicodedata
 
 import pytest
 
-from mempalace.encoding_repair import (
+from trimemo.encoding_repair import (
     repair_collection,
     repair_mojibake,
     repair_mojibake_once,
@@ -515,7 +515,7 @@ def test_restore_validates_whole_backup_before_writing(
     backup.write_text(
         (
             '{"format":'
-            '"mempalace-encoding-repair",'
+            '"trimemo-encoding-repair",'
             '"version":1}\n'
             '{"id":"drawer-0",'
             '"original_document":"cafÃ©"}\n'
@@ -567,7 +567,7 @@ def test_collection_rejects_misaligned_results():
 def test_real_chromadb_repair_path_preserves_review_cases(
     tmp_path,
 ):
-    from mempalace.palace import (
+    from trimemo.palace import (
         get_collection,
     )
 
@@ -659,7 +659,7 @@ def test_real_chromadb_repair_path_preserves_review_cases(
 def test_backup_header_resolves_wrapped_chroma_collection_name(
     tmp_path,
 ):
-    from mempalace.backends.chroma import (
+    from trimemo.backends.chroma import (
         ChromaCollection,
     )
 
@@ -682,7 +682,7 @@ def test_backup_header_resolves_wrapped_chroma_collection_name(
     assert report["updated"] == 1
     assert lines[0] == {
         "collection": "mempalace_drawers",
-        "format": "mempalace-encoding-repair",
+        "format": "trimemo-encoding-repair",
         "version": 1,
     }
     assert lines[1] == {
@@ -698,7 +698,7 @@ def test_restore_rejects_backup_for_another_collection(
     backup.write_text(
         (
             '{"collection":"source_collection",'
-            '"format":"mempalace-encoding-repair",'
+            '"format":"trimemo-encoding-repair",'
             '"version":1}\n'
             '{"id":"drawer-0",'
             '"original_document":"cafÃ©"}\n'
@@ -844,7 +844,7 @@ def test_apply_completes_undefined_cp1252_rows_in_one_pass(
 def test_real_chromadb_completes_undefined_cp1252_rows_in_one_pass(
     tmp_path,
 ):
-    from mempalace.palace import (
+    from trimemo.palace import (
         get_backend_for_palace,
         get_collection,
     )

@@ -10,11 +10,11 @@ once they install the plugin:
    valid JSON and points at the same plugin.
 3. The MCP config (``.cursor-plugin/mcp.json``) is valid JSON, wraps
    server entries under the documented ``mcpServers`` key, and
-   registers the ``mempalace-mcp`` binary that ships with the package.
+   registers the ``trimemo-mcp`` binary that ships with the package.
 4. Every skill ``SKILL.md`` and command ``*.md`` parses as YAML
    frontmatter + markdown body.  Cursor derives the slash-command
-   slug from the **filename stem** (e.g. ``mempalace-help.md`` →
-   ``/mempalace-help``), so command files do NOT need a ``name``
+   slug from the **filename stem** (e.g. ``trimemo-help.md`` →
+   ``/trimemo-help``), so command files do NOT need a ``name``
    frontmatter field — only ``description`` is required.
 
 Run with::
@@ -53,11 +53,11 @@ RULES_DIR = REPO_ROOT / "rules"
 # table is the user-facing contract; if you add/remove a command,
 # update both the README and this list.
 EXPECTED_COMMAND_NAMES = {
-    "mempalace-help",
-    "mempalace-init",
-    "mempalace-mine",
-    "mempalace-search",
-    "mempalace-status",
+    "trimemo-help",
+    "trimemo-init",
+    "trimemo-mine",
+    "trimemo-search",
+    "trimemo-status",
 }
 
 # Per cursor.com/docs/reference/plugins: "Plugin identifier. Lowercase,
@@ -141,7 +141,7 @@ class TestPluginManifest:
     def test_manifest_omits_hardcoded_version(self):
         """plugin.json must NOT hardcode a ``version`` field.
 
-        ``mempalace/version.py`` is the single source of truth (per
+        ``trimemo/version.py`` is the single source of truth (per
         CLAUDE.md). A hardcoded version here silently drifts on the next
         release (igorls review, PR #1632). The sibling Antigravity plugin
         omits the field entirely; we match that. The marketplace resolves
@@ -150,7 +150,7 @@ class TestPluginManifest:
         data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         assert "version" not in data, (
             "plugin.json must omit the hardcoded 'version' field to avoid "
-            f"drift from mempalace/version.py; found {data.get('version')!r}"
+            f"drift from trimemo/version.py; found {data.get('version')!r}"
         )
 
     def test_marketplace_entry_omits_hardcoded_version(self):
@@ -266,11 +266,11 @@ class TestMcpConfig:
     def test_mcp_config_registers_mempalace_server(self):
         data = json.loads(MCP_PATH.read_text(encoding="utf-8"))
         servers = data["mcpServers"]
-        assert "mempalace" in servers, "mcp.json must register a server named 'mempalace'"
-        entry = servers["mempalace"]
+        assert "trimemo" in servers, "mcp.json must register a server named 'trimemo'"
+        entry = servers["trimemo"]
         assert isinstance(entry, dict) and isinstance(entry.get("command"), str)
-        assert entry["command"] == "mempalace-mcp", (
-            f"mempalace server command must be 'mempalace-mcp' (the binary "
+        assert entry["command"] == "trimemo-mcp", (
+            f"trimemo server command must be 'trimemo-mcp' (the binary "
             f"shipped by the package); got {entry.get('command')!r}"
         )
 
@@ -290,38 +290,38 @@ class TestSkills:
         )
 
     def test_mempalace_skill_exists(self):
-        assert (SKILLS_DIR / "mempalace" / "SKILL.md").is_file()
+        assert (SKILLS_DIR / "trimemo" / "SKILL.md").is_file()
 
     def test_mempalace_recall_skill_exists(self):
         """The recall skill is the search-before-answer half of the
-        plugin (the ``mempalace`` skill covers setup/mine/status). If it
+        plugin (the ``trimemo`` skill covers setup/mine/status). If it
         goes missing, recall silently regresses to model-memory guessing.
         """
-        assert (SKILLS_DIR / "mempalace-recall" / "SKILL.md").is_file()
+        assert (SKILLS_DIR / "trimemo-recall" / "SKILL.md").is_file()
 
     def test_mempalace_task_skill_exists(self):
-        assert (SKILLS_DIR / "mempalace-task" / "SKILL.md").is_file()
+        assert (SKILLS_DIR / "trimemo-task" / "SKILL.md").is_file()
 
     def test_setup_skill_covers_skill_first_shared_brain_onboarding(self):
-        body = (SKILLS_DIR / "mempalace" / "SKILL.md").read_text(encoding="utf-8")
+        body = (SKILLS_DIR / "trimemo" / "SKILL.md").read_text(encoding="utf-8")
         for contract in (
-            "uv tool install mempalace",
+            "uv tool install trimemo",
             "private local palace",
             "shared-brain hub",
             "client joining an existing hub",
-            "mempalace rules --host",
-            "mempalace logstream",
+            "trimemo rules --host",
+            "trimemo logstream",
         ):
             assert contract in body, f"setup skill is missing onboarding contract: {contract}"
 
     def test_task_skill_uses_the_task_cli_and_requires_exact_preview(self):
-        body = (SKILLS_DIR / "mempalace-task" / "SKILL.md").read_text(encoding="utf-8")
+        body = (SKILLS_DIR / "trimemo-task" / "SKILL.md").read_text(encoding="utf-8")
         for contract in (
             "mempalace_task_create",
-            "mempalace task create",
+            "trimemo task create",
             "exact normalized task",
             "Ready to paste",
-            "mempalace task launch",
+            "trimemo task launch",
             "coordination-protocol.md",
         ):
             assert contract in body, f"task skill is missing workflow contract: {contract}"
@@ -390,7 +390,7 @@ class TestRules:
         )
 
     def test_recall_rule_exists(self):
-        assert (RULES_DIR / "mempalace-recall.mdc").is_file()
+        assert (RULES_DIR / "trimemo-recall.mdc").is_file()
 
     def test_each_rule_has_valid_frontmatter(self):
         """Every ``.mdc`` rule must declare a non-empty ``description``
@@ -417,12 +417,12 @@ class TestRules:
 
         An always-on rule loads on every turn in every workspace the
         plugin touches, adding MCP latency to unrelated work and fighting
-        MemPalace's "memory should feel instant" budget. The aggressive
+        TriMemo's "memory should feel instant" budget. The aggressive
         ``alwaysApply: true`` variant is an opt-in shipped only under
         examples/, never wired into the default plugin bundle.
         """
         meta, _ = _parse_frontmatter(
-            (RULES_DIR / "mempalace-recall.mdc").read_text(encoding="utf-8")
+            (RULES_DIR / "trimemo-recall.mdc").read_text(encoding="utf-8")
         )
         assert meta.get("alwaysApply") is False, (
             "the plugin-shipped recall rule must be alwaysApply: false; "
@@ -521,17 +521,17 @@ class TestCommands:
 
     def test_each_command_name_prefixed_with_mempalace(self):
         """Cursor commands are global (not plugin-namespaced), so every
-        command file must be named ``mempalace-*.md`` to avoid colliding
+        command file must be named ``trimemo-*.md`` to avoid colliding
         with built-in or other-plugin commands.
 
         The slash-command slug is the filename stem, so
-        ``mempalace-help.md`` → ``/mempalace-help``.
+        ``trimemo-help.md`` → ``/trimemo-help``.
         """
         for cmd_path in COMMANDS_DIR.glob("*.md"):
             stem = cmd_path.stem
-            assert stem.startswith("mempalace-"), (
+            assert stem.startswith("trimemo-"), (
                 f"{cmd_path.relative_to(REPO_ROOT)}: filename stem {stem!r} "
-                "must be prefixed with 'mempalace-' to avoid global-namespace collisions"
+                "must be prefixed with 'trimemo-' to avoid global-namespace collisions"
             )
 
 

@@ -1,6 +1,6 @@
-// mempalace-recall: stored memory in each session's system prompt.
+// trimemo-recall: stored memory in each session's system prompt.
 //
-// At `agent/session-start` this row reads `mempalace wake-up` for the project's
+// At `agent/session-start` this row reads `trimemo wake-up` for the project's
 // wing and registers one prompt section plus one prompt variable on that
 // agent's own context, so both are agent-local and unwind with the agent.
 // Prompt assembly then serves a cached string; the only I/O is the one read.
@@ -18,22 +18,22 @@
 
 import { describeFailure, isTracked, projectWing, resolveSettings, runCli } from './palace.js'
 
-export const name = 'mempalace-recall'
+export const name = 'trimemo-recall'
 export const inject = ['systemPrompt', 'subprocess']
 
-export const SECTION_NAME = 'mempalace:memory'
+export const SECTION_NAME = 'trimemo:memory'
 export const VARIABLE_NAME = 'mempalace_memory'
 /** After the first-party tool guidance, before structured-output and harness-source sections. */
 export const SECTION_ORDER = 9800
-export const SECTION_TEXT = `## MemPalace memory\n\n{{${VARIABLE_NAME}}}`
+export const SECTION_TEXT = `## TriMemo memory\n\n{{${VARIABLE_NAME}}}`
 
 /** What `Layer0.render` prints when ~/.mempalace/identity.txt does not exist. */
 const L0_PLACEHOLDER = '## L0 — IDENTITY\nNo identity configured. Create ~/.mempalace/identity.txt'
-/** Blocks `mempalace wake-up` prints in place of L1 when the palace cannot be read. */
+/** Blocks `trimemo wake-up` prints in place of L1 when the palace cannot be read. */
 const L1_UNAVAILABLE = [/^## L1 — No palace found\b/, /^## Palace is busy\b/]
 
 /**
- * The memory in `mempalace wake-up` output, verbatim, or '' when there is none.
+ * The memory in `trimemo wake-up` output, verbatim, or '' when there is none.
  *
  * Drops the CLI banner, the L0 placeholder, and an L1 block that only says the
  * palace could not be read. Those are CLI hints, and a section re-sent on every
@@ -62,7 +62,7 @@ export function parseWakeup(stdout) {
 export function renderMemory(memory, wing, searchTool) {
   const scope = wing === undefined ? '' : ` for wing \`${wing}\``
   return [
-    `Your stored memory${scope}, returned verbatim by MemPalace:`,
+    `Your stored memory${scope}, returned verbatim by TriMemo:`,
     '',
     memory,
     '',
@@ -97,7 +97,7 @@ export async function readMemory(ctx, settings, cwd, onFailure = () => {}, signa
   const args = wing === undefined ? ['wake-up'] : ['wake-up', '--wing', wing]
   const result = await runCli(ctx, settings, args, { cwd, signal })
   if (!result.ok) {
-    if (!signal?.aborted) onFailure(`mempalace wake-up failed: ${describeFailure(result)}`)
+    if (!signal?.aborted) onFailure(`trimemo wake-up failed: ${describeFailure(result)}`)
     return ''
   }
   const memory = parseWakeup(result.stdout)
@@ -106,7 +106,7 @@ export async function readMemory(ctx, settings, cwd, onFailure = () => {}, signa
 
 export function apply(ctx, config) {
   const settings = resolveSettings(config)
-  const logger = ctx.logger('mempalace-recall')
+  const logger = ctx.logger('trimemo-recall')
 
   /** session-start fires again on the same agent after `compact` and `clear`. */
   const wired = new WeakSet()
@@ -197,7 +197,7 @@ export function apply(ctx, config) {
       registrations.clear()
       await Promise.allSettled(reads)
     },
-    'mempalace-recall: unregister memory sections',
+    'trimemo-recall: unregister memory sections',
   )
 }
 

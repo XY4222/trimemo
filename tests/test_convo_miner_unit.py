@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from mempalace.convo_miner import (
+from trimemo.convo_miner import (
     CHUNK_SIZE,
     _emit_bounded,
     _extract_authored_at,
@@ -62,7 +62,7 @@ class TestChunkExchanges:
         lines = [f"Line {i}" for i in range(51)]
         content = "\n".join(lines)
         chunks = chunk_exchanges(content)
-        from mempalace.convo_miner import MIN_CHUNK_SIZE
+        from trimemo.convo_miner import MIN_CHUNK_SIZE
 
         assert len(chunks) == 2, (
             f"expected 2 drawers (groups 0-24 and 25-49); got {len(chunks)}; "
@@ -460,7 +460,7 @@ class TestScanConvos:
     def test_scan_skips_oversized_files(self, tmp_path, capsys, monkeypatch):
         import re
 
-        import mempalace.convo_miner as convo_mod
+        import trimemo.convo_miner as convo_mod
 
         monkeypatch.setattr(convo_mod, "MAX_FILE_SIZE", 100)
 
@@ -608,7 +608,7 @@ class TestScanConvos:
 
 class TestFileChunksLocked:
     def test_uses_bounded_upsert_batches(self, monkeypatch):
-        import mempalace.convo_miner as convo_miner
+        import trimemo.convo_miner as convo_miner
 
         class FakeCol:
             def __init__(self):
@@ -644,7 +644,7 @@ class TestFileChunksLocked:
         assert col.batch_sizes == [2, 2, 1]
 
     def test_populates_entities_metadata(self, monkeypatch):
-        import mempalace.convo_miner as convo_miner
+        import trimemo.convo_miner as convo_miner
 
         class FakeCol:
             def __init__(self):
@@ -683,7 +683,7 @@ class TestFileChunksLocked:
         """#105: a failed purge must abort the mine attempt, not silently
         proceed to upsert on top of it — the same swallow already fixed
         for miner.py's process_file at #23, own instance here."""
-        import mempalace.convo_miner as convo_miner
+        import trimemo.convo_miner as convo_miner
 
         class FailingPurgeCol:
             def __init__(self):
@@ -720,7 +720,7 @@ class TestFileChunksLocked:
 
     def test_stamps_chunk_total_for_completion_check(self, monkeypatch):
         """Every convo drawer of one pass must carry chunk_total (#2183)."""
-        import mempalace.convo_miner as convo_miner
+        import trimemo.convo_miner as convo_miner
 
         class FakeCol:
             def __init__(self):
@@ -754,7 +754,7 @@ class TestFileChunksLocked:
 
     def test_cleans_partial_drawers_after_batch_upsert_failure(self, monkeypatch, tmp_path):
         """A failed later batch must not leave mtime-stamped partials (#2183)."""
-        import mempalace.convo_miner as convo_miner
+        import trimemo.convo_miner as convo_miner
 
         class FailingCol:
             def __init__(self):

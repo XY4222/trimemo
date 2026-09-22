@@ -27,10 +27,10 @@ import time
 import pytest
 from _chroma_palace_helper import make_minimal_chroma_sqlite, make_minimal_sqlite_exact_sqlite
 
-from mempalace.backends import PalaceRef, _magic
-from mempalace.backends.chroma import ChromaBackend
-from mempalace.backends.sqlite_exact import _DB_FILENAME, SQLiteExactBackend
-from mempalace.palace import resolve_backend_name
+from trimemo.backends import PalaceRef, _magic
+from trimemo.backends.chroma import ChromaBackend
+from trimemo.backends.sqlite_exact import _DB_FILENAME, SQLiteExactBackend
+from trimemo.palace import resolve_backend_name
 
 posix_only = pytest.mark.skipif(os.name != "posix", reason="POSIX fcntl lock semantics only")
 

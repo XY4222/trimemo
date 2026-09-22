@@ -3,9 +3,9 @@ requires = ["maturin>=1.7,<2"]
 build-backend = "maturin"
 
 [project]
-name = "mempalace-native-core"
+name = "trimemo-native-core"
 dynamic = ["version"]
-description = "Optional native exact-vector accelerator for MemPalace"
+description = "Optional native exact-vector accelerator for TriMemo"
 requires-python = ">=3.9"
 license = "MIT"
 

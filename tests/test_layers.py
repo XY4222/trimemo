@@ -3,8 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from mempalace.backends.base import BaseCollection, GetResult
-from mempalace.layers import Layer0, Layer1, Layer2, Layer3, MemoryStack
+from trimemo.backends.base import BaseCollection, GetResult
+from trimemo.layers import Layer0, Layer1, Layer2, Layer3, MemoryStack
 
 
 # ── Layer0 — with identity file ─────────────────────────────────────────
@@ -97,7 +97,7 @@ def _mock_legacy_collection():
 
 def test_layer1_no_palace():
     """Layer1 returns helpful message when no palace exists."""
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent/palace"
         layer = Layer1(palace_path="/nonexistent/palace")
     result = layer.generate()
@@ -116,8 +116,8 @@ def test_layer1_generates_essential_story():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -131,8 +131,8 @@ def test_layer1_empty_palace():
     mock_col = _mock_legacy_collection()
     mock_col.get.return_value = {"documents": [], "metadatas": []}
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -147,8 +147,8 @@ def test_layer1_with_wing_filter():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake", wing="project_x")
@@ -166,8 +166,8 @@ def test_layer1_truncates_long_snippets():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -183,8 +183,8 @@ def test_layer1_respects_max_chars():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -205,8 +205,8 @@ def test_layer1_importance_from_various_keys():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -226,8 +226,8 @@ def test_layer1_breaks_importance_ties_by_filed_at_recency():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         result = Layer1(palace_path="/fake").generate()
@@ -244,8 +244,8 @@ def test_layer1_batch_exception_breaks():
         RuntimeError("batch error"),
     ]
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -279,8 +279,8 @@ def test_layer1_uses_backend_recency_capability():
     mock_col.get_recent = fake_get_recent
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         result = Layer1(palace_path="/fake").generate()
@@ -309,8 +309,8 @@ def test_layer1_recency_capability_receives_wing_filter():
     mock_col.get_recent = fake_get_recent
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         Layer1(palace_path="/fake", wing="my_project").generate()
@@ -329,8 +329,8 @@ def test_layer1_falls_back_to_scan_when_capability_missing():
         {"documents": [], "metadatas": []},
     ]
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         result = Layer1(palace_path="/fake").generate()
@@ -351,8 +351,8 @@ def test_layer1_falls_back_to_scan_when_capability_raises():
         {"documents": [], "metadatas": []},
     ]
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         result = Layer1(palace_path="/fake").generate()
@@ -420,8 +420,8 @@ class _RecencyOrderCollection(_StorageOrderCollection):
 
 def _generate_l1(col):
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         return Layer1(palace_path="/fake").generate()
@@ -438,7 +438,7 @@ def test_layer1_scan_fallback_is_capped_at_max_scan():
     """Without pushdown the window is still MAX_SCAN rows — the documented limit."""
     docs, metas = _oversized_palace()
     col = _StorageOrderCollection(docs, metas)
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/fake"
         fetched_docs, _ = Layer1(palace_path="/fake")._fetch_candidates(col)
     assert len(fetched_docs) == Layer1.MAX_SCAN
@@ -450,7 +450,7 @@ def test_layer1_scan_fallback_is_capped_at_max_scan():
 
 
 def test_layer2_no_palace():
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent/palace"
         layer = Layer2(palace_path="/nonexistent/palace")
     result = layer.retrieve(wing="test")
@@ -464,8 +464,8 @@ def test_layer2_retrieve_with_wing():
         "metadatas": [{"room": "backend", "source_file": "notes.txt"}],
     }
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -482,8 +482,8 @@ def test_layer2_retrieve_with_room():
         "metadatas": [{"room": "architecture", "source_file": "arch.txt"}],
     }
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -499,8 +499,8 @@ def test_layer2_retrieve_wing_and_room():
         "metadatas": [{"room": "backend", "source_file": "x.txt"}],
     }
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -515,8 +515,8 @@ def test_layer2_retrieve_empty():
     mock_col = MagicMock()
     mock_col.get.return_value = {"documents": [], "metadatas": []}
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -529,8 +529,8 @@ def test_layer2_retrieve_no_filter():
     mock_col = MagicMock()
     mock_col.get.return_value = {"documents": [], "metadatas": []}
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -545,8 +545,8 @@ def test_layer2_retrieve_error():
     mock_col = MagicMock()
     mock_col.get.side_effect = RuntimeError("db error")
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -562,8 +562,8 @@ def test_layer2_truncates_long_snippets():
         "metadatas": [{"room": "r", "source_file": "s.txt"}],
     }
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -584,7 +584,7 @@ def _mock_query_results(docs, metas, dists):
 
 
 def test_layer3_no_palace():
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent/palace"
         layer = Layer3(palace_path="/nonexistent/palace")
     result = layer.search("test query")
@@ -592,7 +592,7 @@ def test_layer3_no_palace():
 
 
 def test_layer3_search_raw_no_palace():
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent/palace"
         layer = Layer3(palace_path="/nonexistent/palace")
     result = layer.search_raw("test query")
@@ -607,8 +607,8 @@ def test_layer3_search_with_results():
         [0.2],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -623,8 +623,8 @@ def test_layer3_search_no_results():
     mock_col = MagicMock()
     mock_col.query.return_value = _mock_query_results([], [], [])
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -641,8 +641,8 @@ def test_layer3_search_with_wing_filter():
         [0.1],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -660,8 +660,8 @@ def test_layer3_search_with_room_filter():
         [0.1],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -679,8 +679,8 @@ def test_layer3_search_with_wing_and_room():
         [0.1],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -694,8 +694,8 @@ def test_layer3_search_error():
     mock_col = MagicMock()
     mock_col.query.side_effect = RuntimeError("search failed")
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -712,8 +712,8 @@ def test_layer3_search_truncates_long_docs():
         [0.1],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -730,8 +730,8 @@ def test_layer3_search_raw_returns_dicts():
         [0.3],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -752,8 +752,8 @@ def test_layer3_search_raw_with_filters():
         [0.1],
     )
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -767,8 +767,8 @@ def test_layer3_search_raw_error():
     mock_col = MagicMock()
     mock_col.query.side_effect = RuntimeError("fail")
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer3(palace_path="/fake")
@@ -784,7 +784,7 @@ def test_memory_stack_wake_up(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent"
         stack = MemoryStack(
             palace_path="/nonexistent",
@@ -801,7 +801,7 @@ def test_memory_stack_wake_up_with_wing(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent"
         stack = MemoryStack(
             palace_path="/nonexistent",
@@ -817,7 +817,7 @@ def test_memory_stack_recall(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent"
         stack = MemoryStack(
             palace_path="/nonexistent",
@@ -832,7 +832,7 @@ def test_memory_stack_search(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent"
         stack = MemoryStack(
             palace_path="/nonexistent",
@@ -847,7 +847,7 @@ def test_memory_stack_status(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
-    with patch("mempalace.layers.MempalaceConfig") as mock_cfg:
+    with patch("trimemo.layers.MempalaceConfig") as mock_cfg:
         mock_cfg.return_value.palace_path = "/nonexistent"
         stack = MemoryStack(
             palace_path="/nonexistent",
@@ -870,8 +870,8 @@ def test_memory_stack_status_with_palace(tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 42
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         stack = MemoryStack(
@@ -901,8 +901,8 @@ def test_layer1_handles_none_metadata():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -923,8 +923,8 @@ def test_layer1_handles_none_document():
     mock_col = _mock_chromadb_for_layer(docs, metas)
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer1(palace_path="/fake")
@@ -942,8 +942,8 @@ def test_layer2_handles_none_metadata():
     }
 
     with (
-        patch("mempalace.layers.MempalaceConfig") as mock_cfg,
-        patch("mempalace.layers._get_collection", return_value=mock_col),
+        patch("trimemo.layers.MempalaceConfig") as mock_cfg,
+        patch("trimemo.layers._get_collection", return_value=mock_col),
     ):
         mock_cfg.return_value.palace_path = "/fake"
         layer = Layer2(palace_path="/fake")
@@ -957,34 +957,34 @@ def test_layer2_handles_none_metadata():
 # Read-only opens and lock reporting
 #
 # This stack is pure read. Before it asked for a read-only open, a writable
-# open on sqlite_exact took the mine lock, so `mempalace wake-up` failed
-# whenever another MemPalace process (the hub, a daemon, a mine) held it — and
+# open on sqlite_exact took the mine lock, so `trimemo wake-up` failed
+# whenever another TriMemo process (the hub, a daemon, a mine) held it — and
 # the swallowed exception reported that healthy palace as missing.
 # ---------------------------------------------------------------------------
 
 
 def test_layers_open_the_palace_read_only():
     """Every read in this stack opens with create=False, read_only=True."""
-    with patch("mempalace.layers._get_collection") as mock_open:
+    with patch("trimemo.layers._get_collection") as mock_open:
         Layer1(palace_path="/some/palace").generate()
     mock_open.assert_called_once_with("/some/palace", create=False, read_only=True)
 
-    with patch("mempalace.layers._get_collection") as mock_open:
+    with patch("trimemo.layers._get_collection") as mock_open:
         Layer2(palace_path="/some/palace").retrieve()
     mock_open.assert_called_once_with("/some/palace", create=False, read_only=True)
 
-    with patch("mempalace.layers._get_collection") as mock_open:
+    with patch("trimemo.layers._get_collection") as mock_open:
         Layer3(palace_path="/some/palace").search("q")
     mock_open.assert_called_once_with("/some/palace", create=False, read_only=True)
 
 
 def test_layer1_lock_conflict_is_not_reported_as_missing_palace():
     """A write lock held elsewhere must not read as "no palace" (regression)."""
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     layer = Layer1(palace_path="/some/palace")
     with patch(
-        "mempalace.layers._open_for_read",
+        "trimemo.layers._open_for_read",
         side_effect=MineAlreadyRunning("palace /some/palace is held by PID 30200"),
     ):
         result = layer.generate()
@@ -994,11 +994,11 @@ def test_layer1_lock_conflict_is_not_reported_as_missing_palace():
 
 
 def test_layer2_lock_conflict_is_not_reported_as_missing_palace():
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     layer = Layer2(palace_path="/some/palace")
     with patch(
-        "mempalace.layers._open_for_read",
+        "trimemo.layers._open_for_read",
         side_effect=MineAlreadyRunning("palace /some/palace is held by PID 30200"),
     ):
         result = layer.retrieve()
@@ -1007,11 +1007,11 @@ def test_layer2_lock_conflict_is_not_reported_as_missing_palace():
 
 
 def test_layer3_lock_conflict_is_not_reported_as_missing_palace():
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     layer = Layer3(palace_path="/some/palace")
     with patch(
-        "mempalace.layers._open_for_read",
+        "trimemo.layers._open_for_read",
         side_effect=MineAlreadyRunning("palace /some/palace is held by PID 30200"),
     ):
         result = layer.search("q")

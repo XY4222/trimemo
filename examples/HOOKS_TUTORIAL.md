@@ -1,6 +1,6 @@
-# How to Use MemPalace Hooks (Auto-Save)
+# How to Use TriMemo Hooks (Auto-Save)
 
-MemPalace hooks act as an "Auto-Save" feature. They help your AI keep a permanent memory without you needing to run manual commands.
+TriMemo hooks act as an "Auto-Save" feature. They help your AI keep a permanent memory without you needing to run manual commands.
 
 ### 1. What are these hooks?
 * **Save Hook** (`mempal_save_hook.sh`): Saves new facts and decisions every 15 messages.
@@ -41,7 +41,7 @@ chmod +x /absolute/path/to/hooks/mempal_save_hook.sh
 chmod +x /absolute/path/to/hooks/mempal_precompact_hook.sh
 ```
 
-**Note:** Replace `/absolute/path/to/hooks/` with the actual path where you cloned the MemPalace repository (e.g., `~/projects/mempalace/hooks/`).
+**Note:** Replace `/absolute/path/to/hooks/` with the actual path where you cloned the TriMemo repository (e.g., `~/projects/trimemo/hooks/`).
 
 ### 3. What changed (v3.1.0+)
 
@@ -56,11 +56,11 @@ Both hooks now have **two-layer capture**:
 The hooks capture conversations going forward, but you probably have months of past sessions. Run this once to mine them all:
 
 ```bash
-mempalace mine ~/.claude/projects/ --mode convos
+trimemo mine ~/.claude/projects/ --mode convos
 ```
 
 ### 5. Configuration
 
 - **`SAVE_INTERVAL=15`** — How many human messages between saves
-- **`MEMPALACE_PYTHON`** — Python interpreter with mempalace + chromadb. Auto-detects: env var → repo venv → system python3
-- **`MEMPAL_DIR`** — Optional directory for auto-ingest via `mempalace mine`
+- **`MEMPALACE_PYTHON`** — Python interpreter with trimemo + chromadb. Auto-detects: env var → repo venv → system python3
+- **`MEMPAL_DIR`** — Optional directory for auto-ingest via `trimemo mine`

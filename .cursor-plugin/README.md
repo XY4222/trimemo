@@ -1,6 +1,6 @@
-# MemPalace Cursor Plugin
+# TriMemo Cursor Plugin
 
-A Cursor IDE plugin that gives your agent a persistent memory system. Auto-registers the `mempalace-mcp` server (45 MCP tools), ships 5 slash commands, three model-invocable skills (setup, recall, and logstream tasks), and an optional recall rule.
+A Cursor IDE plugin that gives your agent a persistent memory system. Auto-registers the `trimemo-mcp` server (45 MCP tools), ships 5 slash commands, three model-invocable skills (setup, recall, and logstream tasks), and an optional recall rule.
 
 > Hooks (auto-save + session-start memory recall) are shipped separately under `hooks/cursor/` so the plugin is safe to install in any Cursor workspace without touching the agent loop. See [Hooks](#hooks-optional) below.
 
@@ -16,38 +16,38 @@ A Cursor IDE plugin that gives your agent a persistent memory system. Auto-regis
 Symlink (or copy) this repository into Cursor's local plugins folder:
 
 ```bash
-ln -s /path/to/mempalace ~/.cursor/plugins/local/mempalace
+ln -s /path/to/trimemo ~/.cursor/plugins/local/trimemo
 ```
 
 Then in Cursor: <kbd>Cmd</kbd>-<kbd>Shift</kbd>-<kbd>P</kbd> → **Developer: Reload Window**.
 
 ### Marketplace
 
-Once published, install via the Cursor marketplace panel and select `mempalace`. Required-plugin distribution from a team marketplace is also supported.
+Once published, install via the Cursor marketplace panel and select `trimemo`. Required-plugin distribution from a team marketplace is also supported.
 
 ## Post-Install Setup
 
 After installing the plugin, run the `init` command in a Cursor chat:
 
 ```
-/mempalace-init
+/trimemo-init
 ```
 
-(Or just say "use the mempalace skill" — Cursor will model-invoke the bundled skill.)
+(Or just say "use the trimemo skill" — Cursor will model-invoke the bundled skill.)
 
-This installs the `mempalace` package via `uv tool` or `pip`, initializes a palace under `~/.mempalace/`, and verifies the MCP server is reachable.
+This installs the `trimemo` package via `uv tool` or `pip`, initializes a palace under `~/.mempalace/`, and verifies the MCP server is reachable.
 
 ## Available Slash Commands
 
 | Command             | Description                                                                       |
 |---------------------|-----------------------------------------------------------------------------------|
-| `/mempalace-help`   | Show available tools, skills, CLI commands, hooks, and architecture               |
-| `/mempalace-init`   | Set up MemPalace — install, configure, onboard                                    |
-| `/mempalace-search` | Search your memories across the palace using semantic search                      |
-| `/mempalace-mine`   | Mine projects and conversations into the palace                                   |
-| `/mempalace-status` | Show palace overview — wings, rooms, drawer counts                                |
+| `/trimemo-help`   | Show available tools, skills, CLI commands, hooks, and architecture               |
+| `/trimemo-init`   | Set up TriMemo — install, configure, onboard                                    |
+| `/trimemo-search` | Search your memories across the palace using semantic search                      |
+| `/trimemo-mine`   | Mine projects and conversations into the palace                                   |
+| `/trimemo-status` | Show palace overview — wings, rooms, drawer counts                                |
 
-> Cursor commands are global, not plugin-namespaced — that's why each slug is prefixed with `mempalace-` rather than appearing as `/help`, `/init`, etc. This keeps them collision-free with built-in or other-plugin commands.
+> Cursor commands are global, not plugin-namespaced — that's why each slug is prefixed with `trimemo-` rather than appearing as `/help`, `/init`, etc. This keeps them collision-free with built-in or other-plugin commands.
 
 ## Skills
 
@@ -55,51 +55,51 @@ Two model-invocable skills ship at the plugin root under `skills/`:
 
 | Skill | What it does |
 |-------|--------------|
-| `mempalace` | Setup, mining, status, and the dynamic `mempalace instructions` CLI. |
-| `mempalace-recall` | Search-before-answer protocol — makes the agent read the palace before answering about past work, people, projects, or prior decisions instead of guessing. |
+| `trimemo` | Setup, mining, status, and the dynamic `trimemo instructions` CLI. |
+| `trimemo-recall` | Search-before-answer protocol — makes the agent read the palace before answering about past work, people, projects, or prior decisions instead of guessing. |
 
 Cursor surfaces these automatically when a request matches their description, or you can attach them explicitly.
 
 ## Recall rule (optional)
 
-The plugin also ships a Cursor rule at the plugin root under `rules/mempalace-recall.mdc`:
+The plugin also ships a Cursor rule at the plugin root under `rules/trimemo-recall.mdc`:
 
 ```yaml
 description: When the user asks about past work, prior decisions, people, ... call mempalace_search before answering ...
 alwaysApply: false
 ```
 
-It is `alwaysApply: false` on purpose — Cursor loads it only when its matcher judges the turn recall-relevant, so it never fires on unrelated coding work and never adds MCP latency to greenfield tasks. The rule, the `mempalace-recall` skill, and the `sessionStart` hook all reference the same canonical protocol in [`integrations/shared/recall-protocol.md`](../integrations/shared/recall-protocol.md).
+It is `alwaysApply: false` on purpose — Cursor loads it only when its matcher judges the turn recall-relevant, so it never fires on unrelated coding work and never adds MCP latency to greenfield tasks. The rule, the `trimemo-recall` skill, and the `sessionStart` hook all reference the same canonical protocol in [`integrations/shared/recall-protocol.md`](../integrations/shared/recall-protocol.md).
 
 Want recall forced into **every** conversation regardless of context? Copy the aggressive `alwaysApply: true` variant from [`examples/cursor/rules/`](../examples/cursor/rules/README.md) into `~/.cursor/rules/`. That is a deliberate, heavier opt-in, not a default.
 
 ## MCP Server
 
-This plugin ships `mcp.json` at the plugin root, so Cursor auto-loads the `mempalace-mcp` server on plugin install:
+This plugin ships `mcp.json` at the plugin root, so Cursor auto-loads the `trimemo-mcp` server on plugin install:
 
 ```json
 {
   "mcpServers": {
-    "mempalace": {
-      "command": "mempalace-mcp"
+    "trimemo": {
+      "command": "trimemo-mcp"
     }
   }
 }
 ```
 
-All 45 MemPalace MCP tools (`mempalace_search`, `mempalace_add_drawer`, `mempalace_diary_write`, `mempalace_check_duplicate`, `mempalace_diary_read`, …) become available to the agent immediately. No manual `~/.cursor/mcp.json` edit required.
+All 45 TriMemo MCP tools (`mempalace_search`, `mempalace_add_drawer`, `mempalace_diary_write`, `mempalace_check_duplicate`, `mempalace_diary_read`, …) become available to the agent immediately. No manual `~/.cursor/mcp.json` edit required.
 
-If the server doesn't appear, confirm `mempalace-mcp` is on the user `$PATH`:
+If the server doesn't appear, confirm `trimemo-mcp` is on the user `$PATH`:
 
 ```bash
-command -v mempalace-mcp
+command -v trimemo-mcp
 ```
 
-If it isn't, run `/init` (or `mempalace install` from a terminal) — `mempalace-mcp` is installed alongside the `mempalace` package.
+If it isn't, run `/init` (or `trimemo install` from a terminal) — `trimemo-mcp` is installed alongside the `trimemo` package.
 
 ## Hooks (optional)
 
-Cursor's hooks system is configured separately from plugins (in `~/.cursor/hooks.json` or `.cursor/hooks.json`), so this plugin does **not** wire hooks itself. The MemPalace repository ships three Cursor-native hooks under [`hooks/cursor/`](../hooks/cursor/) that you install with one command.
+Cursor's hooks system is configured separately from plugins (in `~/.cursor/hooks.json` or `.cursor/hooks.json`), so this plugin does **not** wire hooks itself. The TriMemo repository ships three Cursor-native hooks under [`hooks/cursor/`](../hooks/cursor/) that you install with one command.
 
 User scope — writes `~/.cursor/hooks.json`, applies to every Cursor workspace (recommended):
 
@@ -128,7 +128,7 @@ Full details: [`website/guide/cursor-hooks.md`](../website/guide/cursor-hooks.md
 Remove the local plugin symlink:
 
 ```bash
-rm ~/.cursor/plugins/local/mempalace
+rm ~/.cursor/plugins/local/trimemo
 ```
 
 Then in Cursor: <kbd>Cmd</kbd>-<kbd>Shift</kbd>-<kbd>P</kbd> → **Developer: Reload Window**.

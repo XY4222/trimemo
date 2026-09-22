@@ -14,7 +14,7 @@ useLandingEffects()
 </script>
 
 <template>
-  <div class="mempalace-landing">
+  <div class="trimemo-landing">
     <div class="page">
       <FolioHeader />
       <HeroSection />

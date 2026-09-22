@@ -7,7 +7,7 @@ import pytest
 
 def _patch_mcp_server(monkeypatch, config, kg):
     """Patch the mcp_server module globals to use test fixtures."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_config", config)
     # Accept varargs because production ``_get_kg`` now takes an optional
@@ -15,7 +15,7 @@ def _patch_mcp_server(monkeypatch, config, kg):
     monkeypatch.setattr(mcp_server, "_get_kg", lambda *a, **kw: kg)
     monkeypatch.setattr(mcp_server, "_taxonomy_cache", None)
     monkeypatch.setattr(mcp_server, "_taxonomy_cache_time", 0.0)
-    from mempalace.palace_graph import invalidate_graph_cache
+    from trimemo.palace_graph import invalidate_graph_cache
 
     invalidate_graph_cache()
 

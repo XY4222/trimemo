@@ -17,7 +17,7 @@ AAAK is a separate compression layer, **not the storage default**. The 96.6% ben
 
 - **Not lossless compression.** The original text cannot be reconstructed.
 - **Not efficient at small scale.** Short text already tokenizes efficiently — AAAK overhead costs more than it saves.
-- **Not the default storage format.** MemPalace stores raw verbatim text in ChromaDB.
+- **Not the default storage format.** TriMemo stores raw verbatim text in ChromaDB.
 
 ## Format
 
@@ -78,16 +78,16 @@ was excited about the schema-first approach.
 
 ```bash
 # Preview compression
-mempalace compress --wing myapp --dry-run
+trimemo compress --wing myapp --dry-run
 
 # Compress and store
-mempalace compress --wing myapp
+trimemo compress --wing myapp
 ```
 
 ### With entity config
 
 ```bash
-mempalace compress --wing myapp --config entities.json
+trimemo compress --wing myapp --config entities.json
 ```
 
 Entity config format:

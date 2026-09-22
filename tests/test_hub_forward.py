@@ -1,13 +1,13 @@
 """Hub discovery plus CLI and stdio forwarding.
 
-A long-lived HTTP hub (``mempalace serve``) holds the MCP writer lease for
-its lifetime, which locks the save hooks' spawned ``mempalace mine`` CLI out
+A long-lived HTTP hub (``trimemo serve``) holds the MCP writer lease for
+its lifetime, which locks the save hooks' spawned ``trimemo mine`` CLI out
 of the palace — transcript capture would silently stop on the hub machine.
 These tests cover the fix: the HTTP transport records a per-palace
 serverinfo file, and ``cmd_mine`` forwards forwardable mines to the live hub
 over HTTP instead of colliding with the lease.
 
-Read-only ``mempalace search`` also forwards to the live hub so agent shell
+Read-only ``trimemo search`` also forwards to the live hub so agent shell
 commands do not cold-load a private copy of a large HNSW index per process.
 """
 
@@ -20,8 +20,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from mempalace import cli, mcp_proxy, server_registry
-from mempalace.config import MempalaceConfig
+from trimemo import cli, mcp_proxy, server_registry
+from trimemo.config import MempalaceConfig
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def _mine_args(source_dir, **overrides):
         wing=None,
         no_gitignore=False,
         include_ignored=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         redetect_origin=False,
         dry_run=False,
@@ -169,7 +169,7 @@ class TestServerRegistry:
 
 
 class _FakeHub:
-    """Minimal /healthz + /mcp endpoint standing in for `mempalace serve`."""
+    """Minimal /healthz + /mcp endpoint standing in for `trimemo serve`."""
 
     def __init__(self, mine_result=None, search_result=None, rpc_error=None, required_token=None):
         self.requests = []
@@ -687,7 +687,7 @@ class TestForwardSearchToHub:
         real_import = builtins.__import__
 
         def import_without_local_searcher(name, *args, **kwargs):
-            if name == "mempalace.searcher":
+            if name == "trimemo.searcher":
                 raise AssertionError("forwarded search must not import the local storage stack")
             return real_import(name, *args, **kwargs)
 
@@ -776,7 +776,7 @@ class TestForwardability:
 
 
 class TestStdioProxy:
-    """`mempalace-mcp` (stdio) must delegate to a live hub instead of opening
+    """`trimemo-mcp` (stdio) must delegate to a live hub instead of opening
     its own Chroma handles — this is what lets stdio-only harnesses (plugins,
     desktop apps) share one writer with zero client-side reconfiguration."""
 
@@ -787,7 +787,7 @@ class TestStdioProxy:
         return palace
 
     def _local_sentinel(self, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         calls = []
 
@@ -812,7 +812,7 @@ class TestStdioProxy:
         path.write_text(json.dumps(record))
 
     def test_forwards_request_to_live_hub(self, proxied_palace, fake_hub, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         _register_hub(proxied_palace, fake_hub)
@@ -830,7 +830,7 @@ class TestStdioProxy:
         assert "result" in response
 
     def test_retries_process_token_after_stale_palace_token_401(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         hub = _FakeHub(required_token="current-token")
         try:
@@ -851,7 +851,7 @@ class TestStdioProxy:
             hub.stop()
 
     def test_dynamic_proxy_status_adds_local_client_update_state(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server, mcp_proxy
+        from trimemo import mcp_server, mcp_proxy
 
         hub = _FakeHub(mine_result={"updates": {"server": {"enabled": True, "installed": "3.9.0"}}})
         try:
@@ -882,7 +882,7 @@ class TestStdioProxy:
             hub.stop()
 
     def test_no_hub_handles_locally(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         request = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
@@ -891,7 +891,7 @@ class TestStdioProxy:
         assert response["result"] == "local"
 
     def test_own_process_record_is_not_a_proxy_target(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         server_registry.write_serverinfo(
@@ -902,7 +902,7 @@ class TestStdioProxy:
         assert local_calls == [request], "the hub itself must never proxy to itself"
 
     def test_kill_switch_disables_proxying(self, proxied_palace, fake_hub, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         _register_hub(proxied_palace, fake_hub)
@@ -923,7 +923,7 @@ class TestStdioProxy:
         self._disown_record(palace)
 
     def test_unreachable_hub_read_request_falls_back_locally(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         self._register_dead_hub(proxied_palace)
@@ -935,7 +935,7 @@ class TestStdioProxy:
     def test_unreachable_hub_mutating_request_errors_without_local_replay(
         self, proxied_palace, monkeypatch
     ):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         local_calls = self._local_sentinel(monkeypatch)
         self._register_dead_hub(proxied_palace)
@@ -951,7 +951,7 @@ class TestStdioProxy:
         assert "hub" in response["error"]["message"]
 
     def test_unreachable_hub_notification_returns_none(self, proxied_palace, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._local_sentinel(monkeypatch)
         self._register_dead_hub(proxied_palace)
@@ -989,7 +989,7 @@ class TestThinStdioProxyTokenRetry:
 
 class TestServeHttpRegistersServerinfo:
     def test_serve_http_writes_then_clears_serverinfo(self, isolated_home, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         palace = str(isolated_home / "palace")
         monkeypatch.setenv("MEMPALACE_PALACE_PATH", palace)

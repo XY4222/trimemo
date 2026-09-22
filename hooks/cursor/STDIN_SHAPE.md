@@ -1,7 +1,7 @@
 # Cursor Hook Stdin Shape — Reference
 
 This file documents the JSON payloads the Cursor IDE sends to the
-MemPalace hook scripts in `hooks/cursor/`. It exists so a future
+TriMemo hook scripts in `hooks/cursor/`. It exists so a future
 contributor does not have to re-discover the schema by writing a
 probe hook.
 
@@ -37,7 +37,7 @@ fields. Source: docs section "Common schema → Input (all hooks)".
 
 - `conversation_id` is the stable per-conversation ID. The Cursor
   `stop` event does **not** carry a `session_id` — only
-  `conversation_id`. MemPalace keys its counter files on this. Cursor
+  `conversation_id`. TriMemo keys its counter files on this. Cursor
   `sessionStart` does carry a `session_id`, and the docs note it is
   "same as `conversation_id`".
 - `generation_id` changes every user message. We do not use it.
@@ -45,7 +45,7 @@ fields. Source: docs section "Common schema → Input (all hooks)".
   transcripts in Cursor settings. The hooks degrade gracefully when
   the value is empty.
 - `workspace_roots` is normally a single-entry array but multi-root
-  workspaces are supported; MemPalace uses index `[0]`.
+  workspaces are supported; TriMemo uses index `[0]`.
 
 ## Event-specific fields
 
@@ -97,10 +97,10 @@ limited to:
 ```
 
 There is **no** `followup_message` and **no** `decision: block` on
-this event — unlike Claude Code's `PreCompact`. MemPalace works
+this event — unlike Claude Code's `PreCompact`. TriMemo works
 around this by:
 
-1. Running `mempalace mine` synchronously inside the hook so the
+1. Running `trimemo mine` synchronously inside the hook so the
    verbatim transcript lands in the palace before compaction
    summarises it.
 2. Dropping a `cursor_<conversation_id>.pending` marker that the next
@@ -129,7 +129,7 @@ explicit about this).
 }
 ```
 
-`additional_context` is the field MemPalace uses. The schema also
+`additional_context` is the field TriMemo uses. The schema also
 accepts `continue` and `user_message` but the docs explicitly note
 "current callers do not enforce them; session creation is not
 blocked even when continue is false". We do not emit either.
@@ -157,8 +157,8 @@ Cursor interprets command-hook exit codes as follows
 - `2` — block the action (equivalent to `permission: "deny"`).
 - Other — hook failed; action proceeds (fail-open by default).
 
-MemPalace hooks always exit `0` and emit either `{}` (no-op) or a
-valid JSON response. We never use exit code `2`; nothing MemPalace
+TriMemo hooks always exit `0` and emit either `{}` (no-op) or a
+valid JSON response. We never use exit code `2`; nothing TriMemo
 does should ever block an agent action.
 
 ## Working directory contract
@@ -166,7 +166,7 @@ does should ever block an agent action.
 - **User hooks** (`~/.cursor/hooks.json`) run from `~/.cursor/`.
 - **Project hooks** (`.cursor/hooks.json`) run from the project root.
 
-The MemPalace hooks always resolve their sibling `lib/common.sh` via
+The TriMemo hooks always resolve their sibling `lib/common.sh` via
 `BASH_SOURCE[0]` so the working directory does not matter for the
 script's own loading — only the `command` path in `hooks.json` needs
 to point at the absolute location of the script.
@@ -174,10 +174,10 @@ to point at the absolute location of the script.
 ## Transcript file format (out of scope)
 
 The format of the file at `transcript_path` is **not documented by
-Cursor** as of the fetch date above. MemPalace deliberately does not
+Cursor** as of the fetch date above. TriMemo deliberately does not
 parse it: the save hook counts `stop` invocations (each one
 corresponds to one assistant turn) and hands the transcript to
-`mempalace mine`, which has its own normaliser layer.
+`trimemo mine`, which has its own normaliser layer.
 
 If you need to consume the transcript directly, probe its shape with
 a throw-away hook that does `cat > /tmp/cursor-transcript-sample.txt`

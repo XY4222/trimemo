@@ -6,7 +6,7 @@ drawer-level co-occurrence. Two entities are linked by a hallway when
 they appear together in enough drawers across the wing.
 
 This file is RED-first. The corresponding implementation lives in
-``mempalace/hallways.py`` and is written to make these tests pass.
+``trimemo/hallways.py`` and is written to make these tests pass.
 """
 
 from unittest.mock import MagicMock, patch
@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 # in environments where chromadb isn't installed. Mirrors the pattern in
 # ``tests/test_palace_graph_tunnels.py``.
 with patch.dict("sys.modules", {"chromadb": MagicMock()}):
-    from mempalace import hallways as hallways_mod
+    from trimemo import hallways as hallways_mod
 
 
 def _use_tmp_hallway_file(monkeypatch, tmp_path):
@@ -93,7 +93,7 @@ class TestHallwayStorage:
 
 class TestComputeHallways:
     def test_explicit_config_scopes_persistence_to_selected_palace(self, tmp_path):
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         default_cfg = MempalaceConfig(palace_path=tmp_path / "default" / "palace")
         selected_cfg = MempalaceConfig(palace_path=tmp_path / "selected" / "palace")
@@ -319,7 +319,7 @@ class TestHallwayQuery:
         assert hallways_mod.delete_hallway("nonexistent") is False
 
     def test_delete_hallway_uses_selected_palace_config(self, tmp_path):
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         default_cfg = MempalaceConfig(palace_path=tmp_path / "default" / "palace")
         selected_cfg = MempalaceConfig(palace_path=tmp_path / "selected" / "palace")
@@ -346,7 +346,7 @@ class TestHallwayDynamicsIntegration:
     weights and L7 is undermined."""
 
     def test_new_hallway_record_carries_all_dynamics_fields(self, tmp_path, monkeypatch):
-        from mempalace.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
+        from trimemo.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
 
         _use_tmp_hallway_file(monkeypatch, tmp_path)
         col = _fake_collection(
@@ -410,7 +410,7 @@ class TestHallwayDynamicsIntegration:
         """When a recompute discovers a NEW entity pair (not in the prior
         wing's hallways), the new record gets default dynamics — not
         inherited from some unrelated previous record."""
-        from mempalace.dynamics import DEFAULT_STRENGTH
+        from trimemo.dynamics import DEFAULT_STRENGTH
 
         _use_tmp_hallway_file(monkeypatch, tmp_path)
         col_a = _fake_collection(

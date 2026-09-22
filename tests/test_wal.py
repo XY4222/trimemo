@@ -3,19 +3,19 @@ import sys
 
 
 def test_wal_import_has_no_mcp_server_side_effect():
-    """Importing mempalace.wal must NOT import mempalace.mcp_server.
+    """Importing mempalace.wal must NOT import trimemo.mcp_server.
 
     mcp_server installs MCP stdio protection at import time (os.dup2(2, 1) and
     sys.stdout = sys.stderr). The CLI sync path and the daemon service layer
-    obtain _wal_log from mempalace.wal precisely so they can audit writes
+    obtain _wal_log from trimemo.wal precisely so they can audit writes
     without triggering that process-global redirect. Run in a fresh subprocess
     so the already-imported mcp_server in this test session can't mask a
     regression.
     """
     code = (
         "import sys\n"
-        "import mempalace.wal\n"
-        "assert 'mempalace.mcp_server' not in sys.modules, "
+        "import trimemo.wal\n"
+        "assert 'trimemo.mcp_server' not in sys.modules, "
         "'importing mempalace.wal pulled in mempalace.mcp_server'\n"
         "print('ok')\n"
     )
@@ -28,7 +28,7 @@ def test_wal_log_redacts_and_writes(tmp_path, monkeypatch):
     """_wal_log lives in mempalace.wal now; smoke-test redaction + write there."""
     import json
 
-    from mempalace import wal
+    from trimemo import wal
 
     wal_file = tmp_path / "wal" / "write_log.jsonl"
     monkeypatch.setattr(wal, "_WAL_FILE", wal_file)
@@ -52,7 +52,7 @@ def test_wal_ensure_is_idempotent_and_cached(tmp_path, monkeypatch):
     """
     from pathlib import Path
 
-    from mempalace import wal
+    from trimemo import wal
 
     wal_dir = tmp_path / "wal"
     wal_dir.mkdir()
@@ -80,7 +80,7 @@ def test_wal_log_never_raises_when_write_fails(tmp_path, monkeypatch, caplog):
     """
     import logging
 
-    from mempalace import wal
+    from trimemo import wal
 
     monkeypatch.setattr(wal, "_WAL_FILE", tmp_path / "wal" / "write_log.jsonl")
     monkeypatch.setattr(wal, "_WAL_INITIALIZED_DIR", None)
@@ -90,7 +90,7 @@ def test_wal_log_never_raises_when_write_fails(tmp_path, monkeypatch, caplog):
 
     monkeypatch.setattr(wal.os, "open", _boom)
 
-    with caplog.at_level(logging.ERROR, logger="mempalace.wal"):
+    with caplog.at_level(logging.ERROR, logger="trimemo.wal"):
         wal._wal_log("add_drawer", {"safe": "ok"})  # must not raise
 
     assert any("WAL write failed" in r.getMessage() for r in caplog.records)
@@ -105,7 +105,7 @@ def test_wal_ensure_swallows_chmod_failure_on_existing_dir(tmp_path, monkeypatch
     """
     from pathlib import Path
 
-    from mempalace import wal
+    from trimemo import wal
 
     wal_dir = tmp_path / "wal"
     wal_dir.mkdir()
@@ -129,7 +129,7 @@ def test_wal_ensure_swallows_mkdir_failure(tmp_path, monkeypatch):
     """
     from pathlib import Path
 
-    from mempalace import wal
+    from trimemo import wal
 
     wal_dir = tmp_path / "missing" / "wal"
     monkeypatch.setattr(wal, "_WAL_FILE", wal_dir / "write_log.jsonl")
@@ -157,7 +157,7 @@ def test_wal_log_redacts_non_string_values(tmp_path, monkeypatch):
     """
     import json
 
-    from mempalace import wal
+    from trimemo import wal
 
     wal_file = tmp_path / "wal" / "write_log.jsonl"
     monkeypatch.setattr(wal, "_WAL_FILE", wal_file)

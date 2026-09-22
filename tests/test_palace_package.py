@@ -17,7 +17,7 @@ FRAGMENTS = (
 
 
 def test_palace_is_a_package():
-    import mempalace.palace as palace
+    import trimemo.palace as palace
 
     assert hasattr(palace, "__path__")
     assert callable(palace.get_collection)
@@ -31,11 +31,11 @@ def test_palace_is_a_package():
 @pytest.mark.parametrize("name", FRAGMENTS)
 def test_fragments_refuse_direct_import(name):
     with pytest.raises(ImportError, match="implementation fragment"):
-        importlib.import_module(f"mempalace.palace.{name}")
+        importlib.import_module(f"trimemo.palace.{name}")
 
 
 def test_fragment_files_exist():
-    pkg = REPO_ROOT / "mempalace" / "palace"
+    pkg = REPO_ROOT / "trimemo" / "palace"
     missing = [name for name in FRAGMENTS if not (pkg / f"{name}.py").is_file()]
     assert missing == []
-    assert not (REPO_ROOT / "mempalace" / "palace.py").exists()
+    assert not (REPO_ROOT / "trimemo" / "palace.py").exists()

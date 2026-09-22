@@ -1,5 +1,5 @@
 {
-  "name": "mempalace",
+  "name": "trimemo",
   "version": "3.10.0",
   "description": "Give your AI a memory — mine projects and conversations into a searchable palace. 45 MCP tools, auto-save hooks, and guided setup.",
   "author": {
@@ -8,8 +8,8 @@
   "license": "MIT",
   "commands": [],
   "mcpServers": {
-    "mempalace": {
-      "command": "mempalace-mcp"
+    "trimemo": {
+      "command": "trimemo-mcp"
     }
   },
   "keywords": [
@@ -21,5 +21,5 @@
     "palace",
     "search"
   ],
-  "repository": "https://github.com/MemPalace/mempalace"
+  "repository": "https://github.com/MemPalace/trimemo"
 }

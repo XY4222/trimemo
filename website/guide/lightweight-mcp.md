@@ -1,6 +1,6 @@
 # Lightweight MCP Integration & Palace Query Language (PQL)
 
-The **MemPalace Lightweight MCP Server** reduces the MCP tool surface from **45 separate tools down to 3 high-density tools** (`palace_query`, `palace_exec`, `palace_coordinate`). This saves **>80–90% of schema context tokens** on every AI interaction while retaining 100% of underlying features, guarantees, and security checks.
+The **TriMemo Lightweight MCP Server** reduces the MCP tool surface from **45 separate tools down to 3 high-density tools** (`palace_query`, `palace_exec`, `palace_coordinate`). This saves **>80–90% of schema context tokens** on every AI interaction while retaining 100% of underlying features, guarantees, and security checks.
 
 ---
 
@@ -8,15 +8,15 @@ The **MemPalace Lightweight MCP Server** reduces the MCP tool surface from **45 
 
 ### Connection Command
 ```bash
-claude mcp add mempalace-light -- mempalace-light-mcp
-codex mcp add mempalace-light -- mempalace-light-mcp
+claude mcp add trimemo-light -- trimemo-light-mcp
+codex mcp add trimemo-light -- trimemo-light-mcp
 ```
 
-Side-by-side with the existing 45-tool server: keep `mempalace` pointing at `mempalace-mcp`, and register the 3-tool server as `mempalace-light`.
+Side-by-side with the existing 45-tool server: keep `trimemo` pointing at `trimemo-mcp`, and register the 3-tool server as `trimemo-light`.
 
 ### With Custom Palace Path
 ```bash
-claude mcp add mempalace-light -- mempalace-light-mcp --palace /path/to/palace
+claude mcp add trimemo-light -- trimemo-light-mcp --palace /path/to/palace
 ```
 
 ---

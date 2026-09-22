@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from mempalace.date_window import filed_at_in_window, parse_date_bound, parse_window
+from trimemo.date_window import filed_at_in_window, parse_date_bound, parse_window
 
 
 class TestParseDateBound:

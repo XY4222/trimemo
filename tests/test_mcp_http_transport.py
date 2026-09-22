@@ -28,7 +28,7 @@ import time
 
 import pytest
 
-from mempalace import mcp_server as mcp
+from trimemo import mcp_server as mcp
 
 
 def _post(port, path, body, headers=None, host_header=None):
@@ -97,7 +97,7 @@ def test_initialize_reports_server_info(http_server):
     port, _ = http_server
     status, body = _post(port, "/mcp", {"jsonrpc": "2.0", "id": 7, "method": "initialize"})
     assert status == 200
-    assert json.loads(body)["result"]["serverInfo"]["name"] == "mempalace"
+    assert json.loads(body)["result"]["serverInfo"]["name"] == "trimemo"
 
 
 class TestPalaceReadsDoNotStarveTheHub:
@@ -171,7 +171,7 @@ class TestPalaceReadsDoNotStarveTheHub:
         assert not errors, errors
         assert status == 200
         if method == "initialize":
-            assert payload["result"]["serverInfo"]["name"] == "mempalace"
+            assert payload["result"]["serverInfo"]["name"] == "trimemo"
         else:
             assert "mempalace_search" in {tool["name"] for tool in payload["result"]["tools"]}
         assert elapsed < 0.4, f"{method} waited on search: {elapsed:.3f}s"
@@ -288,7 +288,7 @@ def test_statusz_reports_machine_readable_server_and_client_state(http_server, m
     assert status == 200
     payload = json.loads(body)
     assert payload["ok"] is True
-    assert payload["server"]["name"] == "mempalace"
+    assert payload["server"]["name"] == "trimemo"
     assert payload["server"]["transport"] == "http"
     assert payload["server"]["port"] == port
     assert payload["requests"]["total"] >= 1
@@ -655,7 +655,7 @@ def _contended_then_free(attempts_before_free, events):
         events.append("attempt")
         if state["calls"] <= attempts_before_free:
             mcp._MCP_WRITER_READ_ONLY = True
-            return False, "another mempalace writer already holds the palace lock"
+            return False, "another trimemo writer already holds the palace lock"
         mcp._MCP_WRITER_READ_ONLY = False
         mcp._MCP_WRITER_LOCK_CM = Lease()
         return True, ""

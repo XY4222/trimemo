@@ -9,10 +9,10 @@ import pytest
 
 from _backend_conformance import assert_partition_isolation
 
-from mempalace.backends import PalaceRef
-from mempalace.backends.chroma import ChromaBackend
-from mempalace.backends.sqlite_exact import SQLiteExactBackend
-from mempalace.backends.rust_exact import RustExactBackend
+from trimemo.backends import PalaceRef
+from trimemo.backends.chroma import ChromaBackend
+from trimemo.backends.sqlite_exact import SQLiteExactBackend
+from trimemo.backends.rust_exact import RustExactBackend
 
 _LOCAL_BACKENDS = [
     pytest.param(ChromaBackend, id="chroma"),
@@ -50,7 +50,7 @@ def test_local_backends_do_not_claim_namespace_isolation():
 def test_local_backends_reject_populated_namespace(backend_cls, tmp_path):
     """RFC 001 section 4.4 no-silent-drop: non-advertising backends MUST raise when
     PalaceRef.namespace is set rather than accept-and-ignore."""
-    from mempalace.backends.base import UnsupportedCapabilityError
+    from trimemo.backends.base import UnsupportedCapabilityError
 
     backend = backend_cls()
     try:

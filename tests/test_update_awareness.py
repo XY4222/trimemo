@@ -6,7 +6,7 @@ import threading
 import time
 from datetime import datetime, timezone
 
-from mempalace.update_awareness import (
+from trimemo.update_awareness import (
     cached_update_status,
     check_updates,
     configure_updates,
@@ -172,15 +172,15 @@ def test_cached_agent_status_and_plan_never_apply_the_upgrade(tmp_path):
     assert plan["requires_user_authorization"] is True
     assert plan["actions"][0] == {
         "kind": "command",
-        "argv": ["uv", "tool", "upgrade", "mempalace"],
+        "argv": ["uv", "tool", "upgrade", "trimemo"],
     }
     assert plan["actions"][1] == {
         "kind": "command",
-        "argv": ["npx", "skills", "update", "mempalace", "mempalace-recall", "mempalace-task"],
+        "argv": ["npx", "skills", "update", "trimemo", "trimemo-recall", "trimemo-task"],
     }
     assert plan["actions"][2] == {
         "kind": "instruction",
-        "text": "restart the MemPalace MCP server or shared hub",
+        "text": "restart the TriMemo MCP server or shared hub",
     }
     assert plan["actions"][3] == {
         "kind": "instruction",
@@ -205,7 +205,7 @@ def test_pip_plan_targets_the_interpreter_running_mempalace(tmp_path, monkeypatc
 
     assert plan["actions"][0] == {
         "kind": "command",
-        "argv": [str(runtime), "-m", "pip", "install", "--upgrade", "mempalace"],
+        "argv": [str(runtime), "-m", "pip", "install", "--upgrade", "trimemo"],
     }
 
 

@@ -1,11 +1,11 @@
 """
-conftest.py — Shared fixtures for MemPalace tests.
+conftest.py — Shared fixtures for TriMemo tests.
 
 Provides isolated palace and knowledge graph instances so tests never
 touch the user's real data or leak temp files on failure.
 
 HOME is redirected to a temp directory at module load time — before any
-mempalace imports — so that module-level initialisations (e.g.
+trimemo imports — so that module-level initialisations (e.g.
 ``_kg = KnowledgeGraph()`` in mcp_server) write to a throwaway location
 instead of the real user profile.
 """
@@ -17,7 +17,7 @@ import re
 import shutil
 import tempfile
 
-# ── Isolate HOME before any mempalace imports ──────────────────────────
+# ── Isolate HOME before any trimemo imports ──────────────────────────
 _original_env = {}
 _session_tmp = tempfile.mkdtemp(prefix="mempalace_session_")
 
@@ -29,12 +29,12 @@ os.environ["USERPROFILE"] = _session_tmp
 os.environ["HOMEDRIVE"] = os.path.splitdrive(_session_tmp)[0] or "C:"
 os.environ["HOMEPATH"] = os.path.splitdrive(_session_tmp)[1] or _session_tmp
 
-# Now it is safe to import mempalace modules that trigger initialisation.
+# Now it is safe to import trimemo modules that trigger initialisation.
 import chromadb  # noqa: E402
 import pytest  # noqa: E402
 
-from mempalace.config import MempalaceConfig  # noqa: E402
-from mempalace.knowledge_graph import KnowledgeGraph  # noqa: E402
+from trimemo.config import MempalaceConfig  # noqa: E402
+from trimemo.knowledge_graph import KnowledgeGraph  # noqa: E402
 
 _TEST_EMBED_DIM = 384
 _TEST_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
@@ -125,9 +125,9 @@ def _stable_embedding_function_for_tests(request, monkeypatch):
 
     ef = _StableTestEmbeddingFunction()
 
-    import mempalace.backends.chroma as chroma_mod
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    import mempalace.embedding as embedding_mod
+    import trimemo.backends.chroma as chroma_mod
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    import trimemo.embedding as embedding_mod
     from chromadb.api.types import DefaultEmbeddingFunction
 
     monkeypatch.setattr(DefaultEmbeddingFunction, "__call__", lambda self, input: ef(input=input))
@@ -190,7 +190,7 @@ def _reset_mcp_cache(monkeypatch):
         try:
             import sys
 
-            mcp_server = sys.modules.get("mempalace.mcp_server")
+            mcp_server = sys.modules.get("trimemo.mcp_server")
             if mcp_server is not None:
                 stop_sync = getattr(mcp_server, "_stop_peer_sync_thread", None)
                 if callable(stop_sync):
@@ -250,7 +250,7 @@ def _reset_mcp_cache(monkeypatch):
             # HNSW capacity verdicts (#1471) for the same reason — a test that
             # reuses a palace path would otherwise inherit the previous test's
             # verdict.
-            from mempalace.backends.chroma import ChromaBackend, reset_hnsw_capacity_cache
+            from trimemo.backends.chroma import ChromaBackend, reset_hnsw_capacity_cache
 
             ChromaBackend._quarantined_paths.clear()
             reset_hnsw_capacity_cache()
@@ -267,7 +267,7 @@ def _reset_mcp_cache(monkeypatch):
         # (#1128 Windows CI). close_palace() closes the client and drops the
         # handle without marking the backend closed, so it stays reusable.
         try:
-            from mempalace import palace as _palace
+            from trimemo import palace as _palace
 
             backend = getattr(_palace, "_DEFAULT_BACKEND", None)
             clients = getattr(backend, "_clients", None)

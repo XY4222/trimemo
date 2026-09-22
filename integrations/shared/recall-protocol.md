@@ -1,12 +1,12 @@
-# MemPalace Recall Protocol
+# TriMemo Recall Protocol
 
 The canonical "search before answering" protocol shared across every
-MemPalace integration (Cursor, Antigravity, Claude Code, Codex,
+TriMemo integration (Cursor, Antigravity, Claude Code, Codex,
 OpenClaw). This file is the single source of truth — skills and rules
 should link here rather than restating the protocol, so the rule never
 drifts from the skill.
 
-The protocol exists to honour MemPalace's foundational promise:
+The protocol exists to honour TriMemo's foundational promise:
 **100% recall, verbatim, never guess.** When the palace might hold the
 answer, the agent must read the palace before answering from model
 memory.
@@ -69,7 +69,7 @@ question — not a system prompt or pasted conversation) plus optional
   answer to fill the gap. Offer to widen the search (drop the wing
   filter) or to file the new information.
 - **MCP unavailable / tool error.** Surface the error plainly and suggest
-  the user verify the server (`mempalace status`, or re-run install).
+  the user verify the server (`trimemo status`, or re-run install).
   Do not silently fall back to guessing from model memory.
 - **Palace index corrupt / compactor error.** When the server returns an
   error mentioning the HNSW segment writer, a ChromaDB compaction
@@ -91,20 +91,20 @@ sync with `chroma.sqlite3` and wedge the MCP server (every call returns
 Guide the user through these CLI steps — never run an in-process rebuild
 from the agent (it can break other live clients):
 
-1. Stop the MCP server (kill the `mempalace-mcp` process, or restart the
+1. Stop the MCP server (kill the `trimemo-mcp` process, or restart the
    host editor).
 2. Optional backup of the palace directory (`--archive-existing` already
    moves the old palace aside, so this is belt-and-suspenders):
    - macOS / Linux: `cp -a ~/.mempalace/palace ~/.mempalace/palace.bak.$(date +%F)`
    - Windows (PowerShell): `Copy-Item -Recurse "$env:USERPROFILE\.mempalace\palace" "$env:USERPROFILE\.mempalace\palace.bak"`
 3. Rebuild from SQLite:
-   `mempalace repair --mode from-sqlite --archive-existing --yes`
-4. Verify: `mempalace repair-status` (divergence should read 0).
+   `trimemo repair --mode from-sqlite --archive-existing --yes`
+4. Verify: `trimemo repair-status` (divergence should read 0).
 5. Restart the MCP server.
 
 Do **not** re-mine from source files to recover: re-mining drops drawers
 added through the MCP server and diary entries, which have no source file
-(see MemPalace issue #1843).
+(see TriMemo issue #1843).
 
 ## Anti-patterns
 
@@ -126,5 +126,5 @@ added through the MCP server and diary entries, which have no source file
   hub, they use the logstream (`mempalace_event_append` /
   `mempalace_event_wait`), not drawers. Recall answers questions;
   the logstream moves work.
-- MemPalace design principles (verbatim, local-first, never summarize):
-  <https://github.com/MemPalace/mempalace>
+- TriMemo design principles (verbatim, local-first, never summarize):
+  <https://github.com/MemPalace/trimemo>

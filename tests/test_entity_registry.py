@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mempalace.entity_registry import (
+from trimemo.entity_registry import (
     COMMON_ENGLISH_WORDS,
     PERSON_CONTEXT_PATTERNS,
     EntityRegistry,
@@ -58,13 +58,13 @@ def test_save_and_load_roundtrip(tmp_path):
     registry.seed(
         mode="work",
         people=[{"name": "Alice", "relationship": "colleague", "context": "work"}],
-        projects=["MemPalace"],
+        projects=["TriMemo"],
     )
     # Load again from same dir
     loaded = EntityRegistry.load(config_dir=tmp_path)
     assert loaded.mode == "work"
     assert "Alice" in loaded.people
-    assert "MemPalace" in loaded.projects
+    assert "TriMemo" in loaded.projects
 
 
 def test_save_creates_file(tmp_path):
@@ -174,7 +174,7 @@ def test_seed_registers_people(tmp_path):
             {"name": "Riley", "relationship": "daughter", "context": "personal"},
             {"name": "Devon", "relationship": "friend", "context": "personal"},
         ],
-        projects=["MemPalace"],
+        projects=["TriMemo"],
     )
     assert "Riley" in registry.people
     assert "Devon" in registry.people
@@ -251,8 +251,8 @@ def test_lookup_known_person(tmp_path):
 
 def test_lookup_known_project(tmp_path):
     registry = EntityRegistry.load(config_dir=tmp_path)
-    registry.seed(mode="work", people=[], projects=["MemPalace"])
-    result = registry.lookup("MemPalace")
+    registry.seed(mode="work", people=[], projects=["TriMemo"])
+    result = registry.lookup("TriMemo")
     assert result["type"] == "project"
     assert result["confidence"] == 1.0
 
@@ -322,7 +322,7 @@ def test_research_local_only_by_default(tmp_path):
     registry.seed(mode="personal", people=[], projects=[])
 
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "trimemo.entity_registry._wikipedia_lookup",
         side_effect=AssertionError("network call should not happen"),
     ):
         result = registry.research("Saoirse")
@@ -339,7 +339,7 @@ def test_research_with_allow_network(tmp_path):
     registry.seed(mode="personal", people=[], projects=[])
 
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "trimemo.entity_registry._wikipedia_lookup",
         return_value=dict(_MOCK_SAOIRSE_PERSON),
     ):
         result = registry.research("Saoirse", auto_confirm=True, allow_network=True)
@@ -352,7 +352,7 @@ def test_research_caches_result(tmp_path):
     registry.seed(mode="personal", people=[], projects=[])
 
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "trimemo.entity_registry._wikipedia_lookup",
         return_value=dict(_MOCK_SAOIRSE_PERSON),
     ):
         result = registry.research("Saoirse", auto_confirm=True, allow_network=True)
@@ -360,7 +360,7 @@ def test_research_caches_result(tmp_path):
 
     # Second call should use cache, not call Wikipedia again
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "trimemo.entity_registry._wikipedia_lookup",
         side_effect=AssertionError("should not be called"),
     ):
         cached = registry.research("Saoirse")
@@ -381,7 +381,7 @@ def test_confirm_research_adds_to_people(tmp_path):
     registry.seed(mode="personal", people=[], projects=[])
 
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "trimemo.entity_registry._wikipedia_lookup",
         return_value=dict(_MOCK_SAOIRSE_PERSON),
     ):
         registry.research("Saoirse", auto_confirm=False, allow_network=True)
@@ -403,7 +403,7 @@ def test_wikipedia_404_returns_unknown(tmp_path):
         "wiki_title": None,
         "note": "not found in Wikipedia",
     }
-    with patch("mempalace.entity_registry._wikipedia_lookup", return_value=mock_result):
+    with patch("trimemo.entity_registry._wikipedia_lookup", return_value=mock_result):
         result = registry.research("Zzxqy", auto_confirm=False, allow_network=True)
 
     assert result["inferred_type"] == "unknown"
@@ -457,9 +457,9 @@ def test_summary(tmp_path):
     registry.seed(
         mode="personal",
         people=[{"name": "Riley", "relationship": "daughter", "context": "personal"}],
-        projects=["MemPalace"],
+        projects=["TriMemo"],
     )
     s = registry.summary()
     assert "personal" in s
     assert "Riley" in s
-    assert "MemPalace" in s
+    assert "TriMemo" in s

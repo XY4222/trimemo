@@ -24,7 +24,7 @@ FRAGMENTS = (
 
 
 def test_cli_is_a_package():
-    import mempalace.cli as cli
+    import trimemo.cli as cli
 
     assert hasattr(cli, "__path__")
     assert callable(cli.main)
@@ -37,23 +37,23 @@ def test_cli_is_a_package():
 @pytest.mark.parametrize("name", FRAGMENTS)
 def test_fragments_refuse_direct_import(name):
     with pytest.raises(ImportError, match="implementation fragment"):
-        importlib.import_module(f"mempalace.cli.{name}")
+        importlib.import_module(f"trimemo.cli.{name}")
 
 
 def test_python_m_cli_version():
     proc = subprocess.run(
-        [sys.executable, "-m", "mempalace.cli", "--version"],
+        [sys.executable, "-m", "trimemo.cli", "--version"],
         capture_output=True,
         timeout=60,
         cwd=str(REPO_ROOT),
         text=True,
     )
     assert proc.returncode == 0, proc.stderr
-    assert "MemPalace" in (proc.stdout + proc.stderr)
+    assert "TriMemo" in (proc.stdout + proc.stderr)
 
 
 def test_fragment_files_exist():
-    pkg = REPO_ROOT / "mempalace" / "cli"
+    pkg = REPO_ROOT / "trimemo" / "cli"
     missing = [name for name in FRAGMENTS if not (pkg / f"{name}.py").is_file()]
     assert missing == []
-    assert not (REPO_ROOT / "mempalace" / "cli.py").exists()
+    assert not (REPO_ROOT / "trimemo" / "cli.py").exists()

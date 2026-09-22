@@ -1,6 +1,6 @@
 # Shared Brain: One Palace for Your Whole Agent Fleet
 
-Run one MemPalace hub and let every agent you work with — Claude Code on your
+Run one TriMemo hub and let every agent you work with — Claude Code on your
 Mac, Codex on a Windows box, OpenCode on a laptop, a Hermes bot on a home
 server — read, write, and coordinate through the **same palace**. One memory,
 many minds. This guide takes you from zero to a working fleet.
@@ -8,7 +8,7 @@ many minds. This guide takes you from zero to a working fleet.
 ## What you're building
 
 ```
-  mac-claude ──────┐  stdio auto-proxy          ┌─ mempalace serve
+  mac-claude ──────┐  stdio auto-proxy          ┌─ trimemo serve
   mac-codex ───────┤  or HTTP (loopback)        │  (one host owns the palace)
                    ├───────────────────────────▶│
   windows-codex ───┤  HTTPS + bearer token      │   drawers + KG + diary   ← memory
@@ -37,7 +37,7 @@ Pick the machine that will own the palace (the one with your data, or the one
 with a GPU for embedding) and start the hub on loopback:
 
 ```bash
-mempalace serve --host 127.0.0.1 --port 8765
+trimemo serve --host 127.0.0.1 --port 8765
 ```
 
 That's it for a single-machine fleet. One `serve` process holds the palace's
@@ -51,8 +51,8 @@ set them up with the normal stdio server
 ([MCP Integration](/guide/mcp-integration)):
 
 ```bash
-claude mcp add mempalace -- python -m mempalace.mcp_server
-codex mcp add mempalace -- python -m mempalace.mcp_server
+claude mcp add trimemo -- python -m mempalace.mcp_server
+codex mcp add trimemo -- python -m mempalace.mcp_server
 ```
 
 …each stdio process checks for a live hub serving its palace and
@@ -75,7 +75,7 @@ lives in [Remote / Team Server](/guide/remote-server); follow that guide
 once, then connect each remote agent:
 
 ```bash
-claude mcp add --transport http mempalace https://memory.example.com/mcp \
+claude mcp add --transport http trimemo https://memory.example.com/mcp \
   --header "Authorization: Bearer $MEMPALACE_MCP_HTTP_TOKEN"
 ```
 
@@ -84,7 +84,7 @@ non-loopback binds**. A loopback bind fronted by a proxy is tokenless unless
 you set one explicitly — mint one and pass it at startup:
 
 ```bash
-mempalace serve --host 127.0.0.1 --port 8765 --token "$(openssl rand -hex 32)"
+trimemo serve --host 127.0.0.1 --port 8765 --token "$(openssl rand -hex 32)"
 ```
 
 (or export `MEMPALACE_MCP_HTTP_TOKEN` before starting the hub).
@@ -113,17 +113,17 @@ that inbox once after cutover and stop putting the old name in the prompt.
 
 Agents don't discover the etiquette on their own; you teach it once, in
 their instruction files. The canonical copy lives in
-[`integrations/shared/coordination-protocol.md`](https://github.com/MemPalace/mempalace/blob/develop/integrations/shared/coordination-protocol.md)
+[`integrations/shared/coordination-protocol.md`](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/coordination-protocol.md)
 — that file is the single source of truth and the version below tracks it.
 The easiest way to get a correct copy is to let the CLI render it with the
 agent's identity filled in:
 
 ```bash
-mempalace rules --host mac --harness claude --project myapp >> ~/.claude/CLAUDE.md
+trimemo rules --host mac --harness claude --project myapp >> ~/.claude/CLAUDE.md
 # 3-tool server: add --mcp light
 ```
 
-The output is wrapped in `<!-- mempalace-shared-brain:start/end -->`
+The output is wrapped in `<!-- trimemo-shared-brain:start/end -->`
 markers, so after a protocol update you re-render and replace the block
 instead of hand-editing N system prompts. If you'd rather paste by hand,
 copy the snippet verbatim (so the rules never drift per-agent), replacing
@@ -131,13 +131,13 @@ copy the snippet verbatim (so the rules never drift per-agent), replacing
 runtime identity is `host:harness:<project>` from the current workspace:
 
 ```text
-## MemPalace shared brain
+## TriMemo shared brain
 
-You share a MemPalace hub with other agents. Your agent identity is
+You share a TriMemo hub with other agents. Your agent identity is
 host:harness:project — on this machine <HOST>:<HARNESS>:<project>, where
 <project> is the current workspace/repo name (lowercase, e.g.
 <HOST>:<HARNESS>:<PROJECT>). Use that composed identity as
-from_agent/created_by in every MemPalace call. Sessions in the same
+from_agent/created_by in every TriMemo call. Sessions in the same
 project share ONE identity (one knowledge scope); put per-session
 detail like PID in event metadata, not in the identity. Never
 impersonate another agent. Never mint a second harness suffix to split
@@ -168,11 +168,11 @@ Coordination (logstream):
   events are ordered by append order, so a peer's event can arrive
   already "older" than a timestamp cursor and be skipped forever. '*'
   broadcasts match automatically.
-- Arm mempalace logstream watch (and re-arm after every wake) when any
+- Arm trimemo logstream watch (and re-arm after every wake) when any
   of these happen — not before: (1) the user asked you to listen or
   coordinate, (2) you ack a task with status=claimed, (3) you delegate
   (append a task.request). Command:
-  `mempalace logstream watch --agent <HOST>:<HARNESS>:<project>
+  `trimemo logstream watch --agent <HOST>:<HARNESS>:<project>
   --type task.request --type task.reply --type patch.ready --json`
   Use --agent, not --to-agent: it also excludes your own events. The
   CLI defaults a sanitized --state-file from --agent. Treat exit 0 as
@@ -187,11 +187,11 @@ Coordination (logstream):
   to_agent=*) naming your filter and cursor so others know you are
   listening. If you cannot watch, say so and publish the cursor —
   never claim a watch you do not have.
-- Acks: mempalace_event_ack (CLI: `mempalace logstream ack`) — it
+- Acks: mempalace_event_ack (CLI: `trimemo logstream ack`) — it
   fills type=event.ack and the ack_of link; don't hand-roll event.ack
   appends. Acks inherit the target event's topic.
 - If your harness gates shell commands or MCP writes behind approval
-  prompts, ask the operator to allowlist the mempalace tools and the
+  prompts, ask the operator to allowlist the trimemo tools and the
   watch command: an unnoticed prompt stalls the loop silently, and to
   your peers it looks like "claimed but gone quiet".
 - Topics: write topic=<lane> on named workstreams (e.g. auth-v2). Do
@@ -236,13 +236,13 @@ imperative triggers: the user asked you to listen, you ack
 `status=claimed`, or you delegate. Anything else is folklore.
 
 The memory half composes with the
-[recall protocol](https://github.com/MemPalace/mempalace/blob/develop/integrations/shared/recall-protocol.md);
+[recall protocol](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/recall-protocol.md);
 link the canonical files rather than restating them.
 
 ## 6. Run your first delegation
 
 The canonical loop: request → claimed → patch.ready → verify → apply → ack.
-The steps below use the [CLI one-liners](/reference/cli#mempalace-logstream)
+The steps below use the [CLI one-liners](/reference/cli#trimemo-logstream)
 because they're the easiest way to follow (and debug) a loop; agents drive
 the same operations through the matching MCP tools. Every `--json` result
 includes the event or artifact `id` — the `evt_...` / `art_...` values in
@@ -252,7 +252,7 @@ later steps come from the previous command's output (e.g. `| jq -r .id`).
 whole exchange together:
 
 ```bash
-mempalace logstream append --type task.request --stream project/myapp \
+trimemo logstream append --type task.request --stream project/myapp \
   --room delegation --from-agent mac-claude --to-agent windows-codex \
   --correlation-id task_fix_ranking_7f3a --status open \
   --branch fix/ranking --base-commit abc1234 \
@@ -264,9 +264,9 @@ mempalace logstream append --type task.request --stream project/myapp \
 agent duplicates the work:
 
 ```bash
-mempalace logstream wait --to-agent windows-codex --type task.request \
+trimemo logstream wait --to-agent windows-codex --type task.request \
   --timeout-ms 300000 --json    # request event id is .events[0].id
-mempalace logstream ack evt_... --from-agent windows-codex --status claimed
+trimemo logstream ack evt_... --from-agent windows-codex --status claimed
 ```
 
 **3. Deliver** — after doing the work on the stated branch, it stores the
@@ -274,9 +274,9 @@ diff byte-exactly and announces `patch.ready` referencing the artifact (over
 MCP, `mempalace_patch_submit` does both in one call):
 
 ```bash
-git diff | mempalace artifact put --kind patch --created-by windows-codex \
+git diff | trimemo artifact put --kind patch --created-by windows-codex \
   --json    # note .id (art_...) and .sha256
-mempalace logstream append --type patch.ready --stream project/myapp \
+trimemo logstream append --type patch.ready --stream project/myapp \
   --room patches --from-agent windows-codex --to-agent mac-claude \
   --correlation-id task_fix_ranking_7f3a --status ready \
   --artifact-id art_... --body "Ranking fixed; tests green on Windows."
@@ -292,13 +292,13 @@ then apply — `artifact get` prints exact bytes on stdout, so it pipes
 straight into `git apply`:
 
 ```bash
-mempalace logstream wait --correlation-id task_fix_ranking_7f3a \
+trimemo logstream wait --correlation-id task_fix_ranking_7f3a \
   --type patch.ready --to-agent mac-claude --timeout-ms 300000 --json
 
-mempalace artifact get art_... --json | jq -r .sha256   # expected
-mempalace artifact get art_... | shasum -a 256          # actual — must match
+trimemo artifact get art_... --json | jq -r .sha256   # expected
+trimemo artifact get art_... | shasum -a 256          # actual — must match
 
-mempalace artifact get art_... | git apply --3way       # explicit, user-visible
+trimemo artifact get art_... | git apply --3way       # explicit, user-visible
 uv run pytest tests/test_searcher.py -q
 ```
 
@@ -306,7 +306,7 @@ uv run pytest tests/test_searcher.py -q
 drawer so the decision is searchable without replaying the event trail:
 
 ```bash
-mempalace logstream ack evt_... --from-agent mac-claude --status applied \
+trimemo logstream ack evt_... --from-agent mac-claude --status applied \
   --body "Patch applied on abc1234; tests/test_searcher.py green."
 ```
 
@@ -324,13 +324,13 @@ new fleets skip is making agents that get *woken* — because a delegation to
 an agent that only polls at session start sits unread until someone happens
 to open a terminal.
 
-`mempalace logstream watch` (3.8.0+) is the primitive for this. It blocks
+`trimemo logstream watch` (3.8.0+) is the primitive for this. It blocks
 until an event matching its filters lands, then exits — so any harness that
 can background a process and react to its exit gets a wake-up call, whatever
 model it runs:
 
 ```bash
-mempalace logstream watch \
+trimemo logstream watch \
   --agent <HOST>:<HARNESS>:<project> \
   --type task.request --type task.reply --type patch.ready \
   --json
@@ -395,8 +395,8 @@ this is indistinguishable from a crash — the agent claimed a task and went
 quiet — and a five-second round trip quietly becomes minutes or hours
 (measured: the same ping that completed in 5 seconds once approved sat for
 4½ minutes behind an unnoticed prompt). For unattended coordination,
-allowlist the mempalace MCP tools (at minimum event append/ack and
-`mempalace_patch_submit`) and the `mempalace logstream watch` command in
+allowlist the trimemo MCP tools (at minimum event append/ack and
+`mempalace_patch_submit`) and the `trimemo logstream watch` command in
 each harness's permission settings.
 
 Two etiquette rules close the loop. **Announce your watch**: before a
@@ -480,7 +480,7 @@ The same non-negotiables that govern memory govern coordination:
 ## Operating the shared brain
 
 - **Upgrades**: the hub process serves the tool list, so new tools (or a new
-  MemPalace version) appear fleet-wide after a **hub restart**. Stdio
+  TriMemo version) appear fleet-wide after a **hub restart**. Stdio
   proxies re-check for a live hub on every request, so clients follow a
   restarted hub — even on a new port — with no restart or reconfiguration.
   MCP *clients* cache tool lists, though: after a hub upgrade, have each
@@ -532,7 +532,7 @@ machine sleeping.
 
 Two steps per machine:
 
-1. **Run a hub locally** (same `mempalace serve` as above, LaunchAgent /
+1. **Run a hub locally** (same `trimemo serve` as above, LaunchAgent /
    systemd unit recommended) — agents on that machine point at `127.0.0.1`.
 2. **Name the peers** in `peers.json` in the palace directory — each entry
    is a `name`, the peer hub's `url`, and its bearer `token` (exchange
@@ -564,7 +564,7 @@ synced machines share an inbox and can hand patches back and forth, but
 they do not yet share recall: ask one of them what it remembers and you get
 that machine's palace.
 
-Replicating memory itself is [RFC 004](https://github.com/MemPalace/mempalace/blob/develop/docs/rfcs/004-replicated-palace.md),
+Replicating memory itself is [RFC 004](https://github.com/MemPalace/trimemo/blob/develop/docs/rfcs/004-replicated-palace.md),
 staged for a later release. If you want one shared memory across machines
 today, point every agent at a single hub ([Remote / Team
 Server](/guide/remote-server)) instead of running one per machine.
@@ -575,4 +575,4 @@ Server](/guide/remote-server)) instead of running one per machine.
 - [Agent Logstream](/concepts/agent-logstream) — the event/artifact model in depth
 - [Remote / Team Server](/guide/remote-server) — full hub deployment: tokens, TLS, backends, Docker/systemd
 - [MCP Integration](/guide/mcp-integration) — the memory tools every connected agent gets
-- [CLI Reference](/reference/cli#mempalace-logstream) — `mempalace logstream`, `mempalace artifact`
+- [CLI Reference](/reference/cli#trimemo-logstream) — `trimemo logstream`, `trimemo artifact`

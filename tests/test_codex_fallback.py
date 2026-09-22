@@ -5,8 +5,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from mempalace.convo_miner import _normalize_convo_conversations
-from mempalace.normalize import (
+from trimemo.convo_miner import _normalize_convo_conversations
+from trimemo.normalize import (
     UnparsedCodexTranscriptError,
     normalize,
     normalize_conversations,
@@ -48,7 +48,7 @@ def test_failed_source_is_not_registered_and_can_be_retried(tmp_path, monkeypatc
     source = tmp_path / "rollout.jsonl"
     _rollout(source, [{"type": "event_msg", "payload": {"type": "future_format"}}])
     register = Mock()
-    monkeypatch.setattr("mempalace.convo_miner._register_file", register)
+    monkeypatch.setattr("trimemo.convo_miner._register_file", register)
     collection = Mock()
 
     def read():

@@ -1,6 +1,6 @@
 # Android / Termux
 
-MemPalace does not currently install directly into Termux's Android Python.
+TriMemo does not currently install directly into Termux's Android Python.
 Its compiled dependencies publish Linux wheels, while Termux uses Android's
 Bionic libc and Android wheel tags. `pip` therefore falls back to source builds
 that may fail in dependencies such as ChromaDB or Maturin.
@@ -16,10 +16,10 @@ tested on Android ARM64 with Termux, Debian 12, Python 3.11, and the
 - Allow at least 2 GB of free space for the Debian root filesystem, Python
   environment, dependencies, and embedding model.
 - Keep the palace inside the PRoot container. Only bind the Termux directories
-  that MemPalace needs to read.
+  that TriMemo needs to read.
 
 PRoot is a compatibility layer, not a security boundary. The launcher below
-uses isolated mode and exposes only the Termux home directory, but MemPalace can
+uses isolated mode and exposes only the Termux home directory, but TriMemo can
 still read everything under that bind.
 
 ## Install the container
@@ -29,20 +29,20 @@ Run these commands in Termux:
 ```bash
 pkg update
 pkg install proot-distro
-proot-distro install -n mempalace debian:12
+proot-distro install -n trimemo debian:12
 ```
 
-Then install MemPalace into a dedicated virtual environment inside Debian:
+Then install TriMemo into a dedicated virtual environment inside Debian:
 
 ```bash
-proot-distro login --isolated mempalace -- /bin/sh -lc '
+proot-distro login --isolated trimemo -- /bin/sh -lc '
   set -eu
   apt-get update
   apt-get install -y --no-install-recommends ca-certificates python3 python3-venv
-  mkdir -p /opt/mempalace/home /opt/mempalace/cache /opt/mempalace/palace
-  python3 -m venv /opt/mempalace/venv
-  /opt/mempalace/venv/bin/python -m pip install --upgrade pip
-  /opt/mempalace/venv/bin/python -m pip install --only-binary=:all: mempalace
+  mkdir -p /opt/trimemo/home /opt/trimemo/cache /opt/trimemo/palace
+  python3 -m venv /opt/trimemo/venv
+  /opt/trimemo/venv/bin/python -m pip install --upgrade pip
+  /opt/trimemo/venv/bin/python -m pip install --only-binary=:all: trimemo
 '
 ```
 
@@ -51,8 +51,8 @@ an unsupported source build if a future dependency has no Linux ARM64 wheel.
 
 ## Add a launcher
 
-Save the following script as `~/.local/bin/mempalace-proot` in Termux, then run
-`chmod 700 ~/.local/bin/mempalace-proot`:
+Save the following script as `~/.local/bin/trimemo-proot` in Termux, then run
+`chmod 700 ~/.local/bin/trimemo-proot`:
 
 ```bash
 #!/data/data/com.termux/files/usr/bin/bash
@@ -76,19 +76,19 @@ exec "${PREFIX:?}/bin/proot-distro" login \
   --isolated \
   --bind "$termux_home:$termux_home" \
   --work-dir "$work_dir" \
-  mempalace -- \
+  trimemo -- \
   env -i \
-    HOME=/opt/mempalace/home \
-    PATH=/opt/mempalace/venv/bin:/usr/bin:/bin \
+    HOME=/opt/trimemo/home \
+    PATH=/opt/trimemo/venv/bin:/usr/bin:/bin \
     LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-    XDG_CACHE_HOME=/opt/mempalace/cache \
-    MEMPALACE_PALACE_PATH=/opt/mempalace/palace \
+    XDG_CACHE_HOME=/opt/trimemo/cache \
+    MEMPALACE_PALACE_PATH=/opt/trimemo/palace \
     MEMPALACE_BACKEND=sqlite_exact \
     MEMPALACE_EMBEDDING_MODEL=minilm \
     MEMPALACE_EMBEDDING_DEVICE=cpu \
     MEMPALACE_EMBEDDING_THREADS=1 \
     OMP_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false \
-    /opt/mempalace/venv/bin/mempalace "$@"
+    /opt/trimemo/venv/bin/trimemo "$@"
 ```
 
 The wrapper preserves every command-line argument and the current working
@@ -100,15 +100,15 @@ embedding thread is a conservative default for phone thermals.
 ## Verify and use it
 
 ```bash
-mempalace-proot --version
+trimemo-proot --version
 
 # Project files under the Termux home bind
-mempalace-proot mine "$HOME/projects/myapp"
+trimemo-proot mine "$HOME/projects/myapp"
 
 # Codex conversations
-mempalace-proot mine "$HOME/.codex/sessions" --mode convos
+trimemo-proot mine "$HOME/.codex/sessions" --mode convos
 
-mempalace-proot search "why did we change the authentication flow"
+trimemo-proot search "why did we change the authentication flow"
 ```
 
 The first mine or search downloads the local MiniLM model (about 80 MB). A
@@ -122,14 +122,14 @@ the launcher after considering what that exposes.
 ## Upgrade
 
 Upgrade only the Python environment; the palace remains under
-`/opt/mempalace/palace`:
+`/opt/trimemo/palace`:
 
 ```bash
-proot-distro login --isolated mempalace -- \
-  /opt/mempalace/venv/bin/python -m pip install \
-  --upgrade --only-binary=:all: mempalace
+proot-distro login --isolated trimemo -- \
+  /opt/trimemo/venv/bin/python -m pip install \
+  --upgrade --only-binary=:all: trimemo
 ```
 
 Back up the container before removing or resetting it. Both
-`proot-distro remove mempalace` and `proot-distro reset mempalace` destroy the
+`proot-distro remove trimemo` and `proot-distro reset trimemo` destroy the
 palace stored inside the container.

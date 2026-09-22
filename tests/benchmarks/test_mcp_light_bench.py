@@ -3,8 +3,8 @@ test_mcp_light_bench.py — Benchmark schema size and token savings of Lightweig
 """
 
 import json
-from mempalace.mcp_server import TOOLS as LEGACY_TOOLS
-from mempalace.mcp_light_server import LIGHT_TOOLS
+from trimemo.mcp_server import TOOLS as LEGACY_TOOLS
+from trimemo.mcp_light_server import LIGHT_TOOLS
 
 
 def test_schema_reduction_benchmark():

@@ -24,7 +24,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from mempalace.llm_client import LLMError, LLMResponse, get_provider
+from trimemo.llm_client import LLMError, LLMResponse, get_provider
 
 from .metrics import (
     HostInfo,
@@ -129,7 +129,7 @@ def _classify_with_timing(
 ) -> tuple[Optional[LLMResponse], TimingSample, Optional[str]]:
     """Run one classify call. Always disables thinking on hybrid models.
 
-    MemPalace classification tasks (room, entity, memory) never benefit
+    TriMemo classification tasks (room, entity, memory) never benefit
     from extended reasoning. Forcing think=False keeps hybrid Qwen 3
     models in fast-instruct mode, gives pure-instruct models a no-op,
     and ensures the benchmark measures the real production code path.

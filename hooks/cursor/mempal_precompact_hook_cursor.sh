@@ -12,7 +12,7 @@
 # and force a save before compaction proceeds), the Cursor preCompact
 # hook can only do two useful things at this moment:
 #
-#   1. Run `mempalace mine` SYNCHRONOUSLY against the transcript file
+#   1. Run `trimemo mine` SYNCHRONOUSLY against the transcript file
 #      so whatever Cursor's transcript contains is ingested BEFORE
 #      Cursor summarises the conversation — zero LLM cost, no agent
 #      interaction needed. NOTE: this is BEST-EFFORT for Cursor.
@@ -83,7 +83,7 @@ mempal_log "preCompact" "$MEMPAL_CONV_ID" \
 # TIMEOUT TRADEOFF (igorls review, PR #1632): on a very large transcript
 # this synchronous mine can exceed Cursor's per-hook timeout, in which
 # case Cursor kills the process mid-mine. That is acceptable and safe
-# here: `mempalace mine` is incremental and append-only (a crash mid-
+# here: `trimemo mine` is incremental and append-only (a crash mid-
 # operation leaves the existing palace untouched — see CLAUDE.md
 # "Incremental only"), so a killed mine simply resumes on the next mine
 # invocation rather than corrupting the palace. We deliberately do NOT
@@ -92,26 +92,26 @@ mempal_log "preCompact" "$MEMPAL_CONV_ID" \
 # right before the irreversible compaction. The pending-save marker
 # below is the backstop: the next `stop` hook re-mines and nudges a
 # verbatim save regardless of whether this mine completed.
-if command -v mempalace >/dev/null 2>&1; then
+if command -v trimemo >/dev/null 2>&1; then
     if mempal_is_valid_transcript "$MEMPAL_TRANSCRIPT" \
         && [ -f "$MEMPAL_TRANSCRIPT" ]; then
-        mempalace mine "$(dirname "$MEMPAL_TRANSCRIPT")" --mode convos \
+        trimemo mine "$(dirname "$MEMPAL_TRANSCRIPT")" --mode convos \
             >> "$MEMPAL_CURSOR_LOG" 2>&1 || \
             mempal_log "preCompact" "$MEMPAL_CONV_ID" \
-                "WARN: mempalace mine convos returned non-zero"
+                "WARN: trimemo mine convos returned non-zero"
     elif [ -n "$MEMPAL_TRANSCRIPT" ]; then
         mempal_log "preCompact" "$MEMPAL_CONV_ID" \
             "skipping invalid transcript path: $MEMPAL_TRANSCRIPT"
     fi
     if [ -n "$MEMPAL_DIR" ] && [ -d "$MEMPAL_DIR" ]; then
-        mempalace mine "$MEMPAL_DIR" --mode projects \
+        trimemo mine "$MEMPAL_DIR" --mode projects \
             >> "$MEMPAL_CURSOR_LOG" 2>&1 || \
             mempal_log "preCompact" "$MEMPAL_CONV_ID" \
-                "WARN: mempalace mine projects returned non-zero"
+                "WARN: trimemo mine projects returned non-zero"
     fi
 else
     mempal_log "preCompact" "$MEMPAL_CONV_ID" \
-        "mempalace CLI not on PATH; skipping synchronous mine"
+        "trimemo CLI not on PATH; skipping synchronous mine"
 fi
 
 # ── Drop the pending-save marker ──────────────────────────────────
@@ -126,7 +126,7 @@ mempal_set_pending "$MEMPAL_CONV_ID" || \
 import json
 print(json.dumps({
     "user_message": (
-        "MemPalace: transcript snapshotted before compaction. "
+        "TriMemo: transcript snapshotted before compaction. "
         "A diary nudge is queued for the next agent turn."
     )
 }))

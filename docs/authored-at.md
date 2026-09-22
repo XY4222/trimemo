@@ -84,7 +84,7 @@ current `NORMALIZE_VERSION`. Two options:
    `scripts/backfill_authored_at.py` for the exact `docker run` invocation.
 
    > Back up first: `tar czf palace-backup.tgz -C <palace-dir> .` (or snapshot the
-   > `mempalace-data` volume).
+   > `trimemo-data` volume).
 
 2. **Drop and recreate.** Delete the affected drawers and re-mine the transcripts; the fresh
    mine stamps `authored_at`. Simpler, but re-embeds everything.

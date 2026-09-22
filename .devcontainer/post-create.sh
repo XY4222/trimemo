@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== MemPalace Dev Container Setup ==="
+echo "=== TriMemo Dev Container Setup ==="
 
 pip install -e ".[dev]"
 

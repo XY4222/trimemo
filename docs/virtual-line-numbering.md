@@ -1,7 +1,7 @@
 # Virtual line numbering for drawers
 
-**Proposed for mempalace 3.3.6.**
-**Target file:** `mempalace/searcher.py` (new module-level functions, alongside `_tokenize`, `_bm25_scores`, etc.)
+**Proposed for trimemo 3.3.6.**
+**Target file:** `trimemo/searcher.py` (new module-level functions, alongside `_tokenize`, `_bm25_scores`, etc.)
 **New tests:** `tests/test_line_numbers.py` (21 cases, all green; see `PROOF.md`).
 
 ---
@@ -125,7 +125,7 @@ All 21 pass on Python 3.9 / pytest 8.4.2 in 0.01s. See `PROOF.md` for verbatim r
 
 ---
 
-## Where to integrate in `mempalace/searcher.py`
+## Where to integrate in `trimemo/searcher.py`
 
 Drop the two functions at module level, alongside the existing helpers (`_tokenize`, `_bm25_scores`, `_hybrid_rank`). They have no dependencies beyond `re` (already imported).
 

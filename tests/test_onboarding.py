@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from mempalace.onboarding import (
+from trimemo.onboarding import (
     DEFAULT_WINGS,
     _ask,
     _ask_embedding_model,
@@ -101,11 +101,11 @@ def test_quick_setup_creates_registry(tmp_path):
     registry = quick_setup(
         mode="personal",
         people=[{"name": "Riley", "relationship": "daughter", "context": "personal"}],
-        projects=["MemPalace"],
+        projects=["TriMemo"],
         config_dir=tmp_path,
     )
     assert "Riley" in registry.people
-    assert "MemPalace" in registry.projects
+    assert "TriMemo" in registry.projects
     assert registry.mode == "personal"
 
 
@@ -144,7 +144,7 @@ def test_generate_aaak_bootstrap_creates_files(tmp_path):
         {"name": "Riley", "relationship": "daughter", "context": "personal"},
         {"name": "Devon", "relationship": "friend", "context": "personal"},
     ]
-    projects = ["MemPalace"]
+    projects = ["TriMemo"]
     wings = ["family", "creative"]
     _generate_aaak_bootstrap(people, projects, wings, "personal", config_dir=tmp_path)
 
@@ -154,14 +154,14 @@ def test_generate_aaak_bootstrap_creates_files(tmp_path):
 
 def test_generate_aaak_bootstrap_entities_content(tmp_path):
     people = [{"name": "Riley", "relationship": "daughter", "context": "personal"}]
-    projects = ["MemPalace"]
+    projects = ["TriMemo"]
     wings = ["family"]
     _generate_aaak_bootstrap(people, projects, wings, "personal", config_dir=tmp_path)
 
     content = (tmp_path / "aaak_entities.md").read_text(encoding="utf-8")
     assert "Riley" in content
     assert "RIL" in content  # entity code
-    assert "MemPalace" in content
+    assert "TriMemo" in content
 
 
 def test_generate_aaak_bootstrap_facts_content(tmp_path):
@@ -387,8 +387,8 @@ def test_auto_detect_filters_known(tmp_path):
         "uncertain": [],
     }
     with (
-        patch("mempalace.onboarding.scan_for_detection", return_value=["file.txt"]),
-        patch("mempalace.onboarding.detect_entities", return_value=fake_detected),
+        patch("trimemo.onboarding.scan_for_detection", return_value=["file.txt"]),
+        patch("trimemo.onboarding.detect_entities", return_value=fake_detected),
     ):
         result = _auto_detect(str(tmp_path), known)
     names = [p["name"] for p in result]
@@ -403,15 +403,15 @@ def test_auto_detect_filters_low_confidence(tmp_path):
         "uncertain": [],
     }
     with (
-        patch("mempalace.onboarding.scan_for_detection", return_value=["file.txt"]),
-        patch("mempalace.onboarding.detect_entities", return_value=fake_detected),
+        patch("trimemo.onboarding.scan_for_detection", return_value=["file.txt"]),
+        patch("trimemo.onboarding.detect_entities", return_value=fake_detected),
     ):
         result = _auto_detect(str(tmp_path), [])
     assert len(result) == 0
 
 
 def test_auto_detect_handles_exception(tmp_path):
-    with patch("mempalace.onboarding.scan_for_detection", side_effect=Exception("boom")):
+    with patch("trimemo.onboarding.scan_for_detection", side_effect=Exception("boom")):
         result = _auto_detect(str(tmp_path), [])
     assert result == []
 
@@ -422,16 +422,16 @@ def test_auto_detect_handles_exception(tmp_path):
 def test_run_onboarding_basic_flow(tmp_path):
     """Test the full onboarding flow with minimal mocking."""
     with (
-        patch("mempalace.onboarding._ask_mode", return_value="work"),
-        patch("mempalace.onboarding._ask_embedding_model", return_value="embeddinggemma"),
+        patch("trimemo.onboarding._ask_mode", return_value="work"),
+        patch("trimemo.onboarding._ask_embedding_model", return_value="embeddinggemma"),
         patch(
-            "mempalace.onboarding._ask_people",
+            "trimemo.onboarding._ask_people",
             return_value=([{"name": "Bob", "relationship": "boss", "context": "work"}], {}),
         ),
-        patch("mempalace.onboarding._ask_projects", return_value=["Acme"]),
-        patch("mempalace.onboarding._ask_wings", return_value=["projects", "team"]),
-        patch("mempalace.onboarding._yn", return_value=False),
-        patch("mempalace.onboarding._warn_ambiguous", return_value=[]),
+        patch("trimemo.onboarding._ask_projects", return_value=["Acme"]),
+        patch("trimemo.onboarding._ask_wings", return_value=["projects", "team"]),
+        patch("trimemo.onboarding._yn", return_value=False),
+        patch("trimemo.onboarding._warn_ambiguous", return_value=[]),
     ):
         registry = run_onboarding(directory=".", config_dir=tmp_path, auto_detect=False)
     assert "Bob" in registry.people
@@ -441,15 +441,15 @@ def test_run_onboarding_basic_flow(tmp_path):
 def test_run_onboarding_with_ambiguous_names(tmp_path):
     """Onboarding prints a warning for ambiguous names."""
     with (
-        patch("mempalace.onboarding._ask_mode", return_value="personal"),
-        patch("mempalace.onboarding._ask_embedding_model", return_value="embeddinggemma"),
+        patch("trimemo.onboarding._ask_mode", return_value="personal"),
+        patch("trimemo.onboarding._ask_embedding_model", return_value="embeddinggemma"),
         patch(
-            "mempalace.onboarding._ask_people",
+            "trimemo.onboarding._ask_people",
             return_value=([{"name": "Grace", "relationship": "friend", "context": "personal"}], {}),
         ),
-        patch("mempalace.onboarding._ask_projects", return_value=[]),
-        patch("mempalace.onboarding._ask_wings", return_value=["family"]),
-        patch("mempalace.onboarding._yn", return_value=False),
+        patch("trimemo.onboarding._ask_projects", return_value=[]),
+        patch("trimemo.onboarding._ask_wings", return_value=["family"]),
+        patch("trimemo.onboarding._yn", return_value=False),
     ):
         registry = run_onboarding(directory=".", config_dir=tmp_path, auto_detect=False)
     assert "Grace" in registry.people
@@ -483,19 +483,19 @@ def test_run_onboarding_persists_multilingual_choice(tmp_path):
     so subsequent loads pick up embeddinggemma without re-prompting."""
     import json
 
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     with (
-        patch("mempalace.onboarding._ask_mode", return_value="work"),
-        patch("mempalace.onboarding._ask_embedding_model", return_value="embeddinggemma"),
+        patch("trimemo.onboarding._ask_mode", return_value="work"),
+        patch("trimemo.onboarding._ask_embedding_model", return_value="embeddinggemma"),
         patch(
-            "mempalace.onboarding._ask_people",
+            "trimemo.onboarding._ask_people",
             return_value=([{"name": "Bob", "relationship": "boss", "context": "work"}], {}),
         ),
-        patch("mempalace.onboarding._ask_projects", return_value=[]),
-        patch("mempalace.onboarding._ask_wings", return_value=["projects"]),
-        patch("mempalace.onboarding._yn", return_value=False),
-        patch("mempalace.onboarding._warn_ambiguous", return_value=[]),
+        patch("trimemo.onboarding._ask_projects", return_value=[]),
+        patch("trimemo.onboarding._ask_wings", return_value=["projects"]),
+        patch("trimemo.onboarding._yn", return_value=False),
+        patch("trimemo.onboarding._warn_ambiguous", return_value=[]),
     ):
         run_onboarding(directory=".", config_dir=tmp_path, auto_detect=False)
 
@@ -514,13 +514,13 @@ def test_run_onboarding_persists_minilm_choice(tmp_path):
     import json
 
     with (
-        patch("mempalace.onboarding._ask_mode", return_value="work"),
-        patch("mempalace.onboarding._ask_embedding_model", return_value="minilm"),
-        patch("mempalace.onboarding._ask_people", return_value=([], {})),
-        patch("mempalace.onboarding._ask_projects", return_value=[]),
-        patch("mempalace.onboarding._ask_wings", return_value=["projects"]),
-        patch("mempalace.onboarding._yn", return_value=False),
-        patch("mempalace.onboarding._warn_ambiguous", return_value=[]),
+        patch("trimemo.onboarding._ask_mode", return_value="work"),
+        patch("trimemo.onboarding._ask_embedding_model", return_value="minilm"),
+        patch("trimemo.onboarding._ask_people", return_value=([], {})),
+        patch("trimemo.onboarding._ask_projects", return_value=[]),
+        patch("trimemo.onboarding._ask_wings", return_value=["projects"]),
+        patch("trimemo.onboarding._yn", return_value=False),
+        patch("trimemo.onboarding._warn_ambiguous", return_value=[]),
     ):
         run_onboarding(directory=".", config_dir=tmp_path, auto_detect=False)
 
@@ -561,7 +561,7 @@ def test_quick_setup_leaves_config_alone_when_no_model_provided(tmp_path):
 
 def test_set_embedding_model_persists_and_reloads(tmp_path):
     """Setter writes to config.json and a fresh MempalaceConfig reads it back."""
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     MempalaceConfig(config_dir=tmp_path).set_embedding_model("embeddinggemma")
     assert MempalaceConfig(config_dir=tmp_path).embedding_model == "embeddinggemma"

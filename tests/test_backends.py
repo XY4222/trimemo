@@ -8,7 +8,7 @@ from pathlib import Path
 import chromadb
 import pytest
 
-from mempalace.backends import (
+from trimemo.backends import (
     CollectionNotInitializedError,
     GetResult,
     PalaceNotFoundError,
@@ -18,8 +18,8 @@ from mempalace.backends import (
     available_backends,
     get_backend,
 )
-from mempalace.backends import chroma as chroma_module
-from mempalace.backends.chroma import (
+from trimemo.backends import chroma as chroma_module
+from trimemo.backends.chroma import (
     ChromaBackend,
     ChromaCollection,
     _HNSW_MISSING_METADATA_DATA_FLOOR,
@@ -167,9 +167,9 @@ def test_registry_unknown_backend_raises():
 
 
 def test_registry_unknown_backend_names_the_resolved_config_file(tmp_path, monkeypatch):
-    from mempalace.backends.registry import BackendUnavailableError
+    from trimemo.backends.registry import BackendUnavailableError
 
-    config_dir = tmp_path / "xdg" / "mempalace"
+    config_dir = tmp_path / "xdg" / "trimemo"
     monkeypatch.setenv("MEMPALACE_CONFIG_DIR", str(config_dir))
 
     with pytest.raises(BackendUnavailableError) as excinfo:
@@ -179,7 +179,7 @@ def test_registry_unknown_backend_names_the_resolved_config_file(tmp_path, monke
 
 
 def test_resolve_backend_priority_order(tmp_path):
-    from mempalace.backends import resolve_backend_for_palace
+    from trimemo.backends import resolve_backend_for_palace
 
     # explicit kwarg wins over everything
     assert resolve_backend_for_palace(explicit="pg", config_value="lance") == "pg"
@@ -672,7 +672,7 @@ def test_chroma_client_rebuild_stops_each_displaced_system(tmp_path, monkeypatch
 
 def test_base_collection_update_default_rejects_mismatched_lengths():
     """The ABC default update() raises ValueError rather than silently misaligning."""
-    from mempalace.backends.base import BaseCollection
+    from trimemo.backends.base import BaseCollection
 
     collection = ChromaCollection(_FakeCollection())
 
@@ -706,7 +706,7 @@ class _PagedCollection:
 
 
 def _recent(collection, **kwargs):
-    from mempalace.backends.base import BaseCollection
+    from trimemo.backends.base import BaseCollection
 
     return BaseCollection.get_recent(collection, **kwargs)
 
@@ -885,9 +885,9 @@ def test_chroma_backend_create_true_creates_directory_and_collection(tmp_path):
 
 def test_palace_wrapper_embeds_for_chroma(tmp_path, monkeypatch):
     """Normal Chroma callers should not rely on Chroma's internal ONNX embedder."""
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
-    from mempalace.palace import get_collection
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.palace import get_collection
 
     calls = []
 
@@ -1167,7 +1167,7 @@ def test_fix_blob_seq_ids_still_converts_legacy_blobs_in_embeddings(tmp_path):
 
 def test_fix_blob_seq_ids_writes_marker_after_blob_path(tmp_path):
     """The .blob_seq_ids_migrated marker is written after a successful BLOB → INTEGER conversion."""
-    from mempalace.backends.chroma import _BLOB_FIX_MARKER
+    from trimemo.backends.chroma import _BLOB_FIX_MARKER
 
     db_path = tmp_path / "chroma.sqlite3"
     with closing(sqlite3.connect(str(db_path))) as conn:
@@ -1191,7 +1191,7 @@ def test_fix_blob_seq_ids_writes_marker_when_already_integer(tmp_path):
     marker on first run too — next ``_fix_blob_seq_ids`` call short-circuits
     before touching the sqlite3 file.
     """
-    from mempalace.backends.chroma import _BLOB_FIX_MARKER
+    from trimemo.backends.chroma import _BLOB_FIX_MARKER
 
     db_path = tmp_path / "chroma.sqlite3"
     with closing(sqlite3.connect(str(db_path))) as conn:
@@ -1227,7 +1227,7 @@ def test_fix_blob_seq_ids_closes_sqlite_connection(tmp_path, monkeypatch):
         kwargs["factory"] = TrackingConnection
         return real_connect(*args, **kwargs)
 
-    monkeypatch.setattr("mempalace.backends.chroma.sqlite3.connect", tracking_connect)
+    monkeypatch.setattr("trimemo.backends.chroma.sqlite3.connect", tracking_connect)
 
     _fix_blob_seq_ids(str(tmp_path))
 
@@ -1243,14 +1243,14 @@ def test_fix_blob_seq_ids_skips_sqlite_when_marker_present(tmp_path):
     never want to open it again, even read-only.
     """
     from unittest.mock import patch
-    from mempalace.backends.chroma import _BLOB_FIX_MARKER
+    from trimemo.backends.chroma import _BLOB_FIX_MARKER
 
     # Pre-create the marker so the function should short-circuit.
     db_path = tmp_path / "chroma.sqlite3"
     db_path.write_bytes(b"sentinel")  # presence required for the function to proceed
     (tmp_path / _BLOB_FIX_MARKER).touch()
 
-    with patch("mempalace.backends.chroma.sqlite3.connect") as mock_connect:
+    with patch("trimemo.backends.chroma.sqlite3.connect") as mock_connect:
         _fix_blob_seq_ids(str(tmp_path))
 
     mock_connect.assert_not_called()
@@ -1303,7 +1303,7 @@ def test_fix_collection_type_preserves_existing(tmp_path):
 
 def test_fix_collection_type_noop_without_db(tmp_path):
     """No error when palace has no chroma.sqlite3, no marker written."""
-    from mempalace.backends.chroma import _COLLECTION_TYPE_MARKER
+    from trimemo.backends.chroma import _COLLECTION_TYPE_MARKER
 
     _fix_missing_collection_type(str(tmp_path))
     assert not (tmp_path / _COLLECTION_TYPE_MARKER).exists()
@@ -1311,7 +1311,7 @@ def test_fix_collection_type_noop_without_db(tmp_path):
 
 def test_fix_collection_type_writes_marker(tmp_path):
     """Marker is written after a successful migration."""
-    from mempalace.backends.chroma import _COLLECTION_TYPE_MARKER
+    from trimemo.backends.chroma import _COLLECTION_TYPE_MARKER
 
     db_path = tmp_path / "chroma.sqlite3"
     with closing(sqlite3.connect(str(db_path))) as conn:
@@ -1334,13 +1334,13 @@ def test_fix_collection_type_skips_with_marker(tmp_path):
     """When the marker exists, sqlite3 is not opened."""
     from unittest.mock import patch
 
-    from mempalace.backends.chroma import _COLLECTION_TYPE_MARKER
+    from trimemo.backends.chroma import _COLLECTION_TYPE_MARKER
 
     db_path = tmp_path / "chroma.sqlite3"
     db_path.write_bytes(b"sentinel")
     (tmp_path / _COLLECTION_TYPE_MARKER).touch()
 
-    with patch("mempalace.backends.chroma.sqlite3.connect") as mock_connect:
+    with patch("trimemo.backends.chroma.sqlite3.connect") as mock_connect:
         _fix_missing_collection_type(str(tmp_path))
 
     mock_connect.assert_not_called()
@@ -1350,7 +1350,7 @@ def test_fix_collection_type_writes_marker_when_already_has_type(tmp_path):
     """Marker written even when all collections already have _type (noop case)."""
     import json
 
-    from mempalace.backends.chroma import _COLLECTION_TYPE_MARKER
+    from trimemo.backends.chroma import _COLLECTION_TYPE_MARKER
 
     db_path = tmp_path / "chroma.sqlite3"
     with closing(sqlite3.connect(str(db_path))) as conn:
@@ -1626,7 +1626,7 @@ def test_make_client_quarantines_only_on_first_call_per_palace(tmp_path, monkeyp
 
     Invalid metadata quarantine shares the same cold-start gate here; the
     more aggressive refresh path lives in ``_client()``."""
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     palace_path = str(tmp_path / "palace")
     os.makedirs(palace_path, exist_ok=True)
@@ -1641,7 +1641,7 @@ def test_make_client_quarantines_only_on_first_call_per_palace(tmp_path, monkeyp
         calls.append(path)
         return []
 
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _spy)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _spy)
 
     ChromaBackend.make_client(palace_path)
     ChromaBackend.make_client(palace_path)
@@ -1654,7 +1654,7 @@ def test_make_client_quarantines_only_on_first_call_per_palace(tmp_path, monkeyp
 
 def test_make_client_gates_invalid_metadata_on_first_call(tmp_path, monkeypatch):
     """Invalid metadata quarantine is gated on the first make_client() call."""
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     palace_path = str(tmp_path / "palace")
     os.makedirs(palace_path, exist_ok=True)
@@ -1671,8 +1671,8 @@ def test_make_client_gates_invalid_metadata_on_first_call(tmp_path, monkeypatch)
     def _stale(path, stale_seconds=300.0):
         return []
 
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_invalid_hnsw_metadata", _invalid)
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _stale)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_invalid_hnsw_metadata", _invalid)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _stale)
 
     ChromaBackend.make_client(palace_path)
     ChromaBackend.make_client(palace_path)
@@ -1683,7 +1683,7 @@ def test_make_client_gates_invalid_metadata_on_first_call(tmp_path, monkeypatch)
 def test_make_client_quarantines_each_palace_independently(tmp_path, monkeypatch):
     """Two distinct palaces each get one quarantine attempt — the gate is
     keyed by palace path, not global."""
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     palace_a = str(tmp_path / "palace_a")
     palace_b = str(tmp_path / "palace_b")
@@ -1699,7 +1699,7 @@ def test_make_client_quarantines_each_palace_independently(tmp_path, monkeypatch
         calls.append(path)
         return []
 
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _spy)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _spy)
 
     ChromaBackend.make_client(palace_a)
     ChromaBackend.make_client(palace_b)
@@ -1755,7 +1755,7 @@ def test_client_quarantines_only_on_first_call_per_palace(tmp_path, monkeypatch)
         calls.append(path)
         return []
 
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _spy)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _spy)
 
     backend = ChromaBackend()
     try:
@@ -1790,7 +1790,7 @@ def test_client_rearms_quarantine_on_mtime_change(tmp_path, monkeypatch):
         calls.append(path)
         return []
 
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _spy)
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _spy)
 
     backend = ChromaBackend()
     try:
@@ -2066,7 +2066,7 @@ def test_quarantine_invalid_hnsw_metadata_skips_transient_read_errors(tmp_path, 
     meta.write_bytes(b"partial")
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma._SafePersistentDataUnpickler.load",
+        "trimemo.backends.chroma._SafePersistentDataUnpickler.load",
         lambda path: (_ for _ in ()).throw(EOFError("flush in progress")),
     )
 
@@ -2085,7 +2085,7 @@ def test_quarantine_invalid_hnsw_metadata_skips_truncated_pickle(tmp_path, monke
     meta.write_bytes(b"partial")
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma._SafePersistentDataUnpickler.load",
+        "trimemo.backends.chroma._SafePersistentDataUnpickler.load",
         lambda path: (_ for _ in ()).throw(pickle.UnpicklingError("pickle data was truncated")),
     )
 
@@ -2108,19 +2108,19 @@ def test_chroma_backend_preflights_metadata_before_persistent_client(tmp_path, m
         return inner
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma._fix_missing_collection_type", _record("collection_type")
+        "trimemo.backends.chroma._fix_missing_collection_type", _record("collection_type")
     )
-    monkeypatch.setattr("mempalace.backends.chroma._fix_blob_seq_ids", _record("blob"))
+    monkeypatch.setattr("trimemo.backends.chroma._fix_blob_seq_ids", _record("blob"))
     monkeypatch.setattr(
-        "mempalace.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
+        "trimemo.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
     )
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _record("stale"))
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _record("stale"))
 
     class DummyClient:
         pass
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
+        "trimemo.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
     )
 
     backend = ChromaBackend()
@@ -2151,19 +2151,19 @@ def test_chroma_backend_quarantine_rearms_on_mtime_refresh(tmp_path, monkeypatch
 
     monkeypatch.setattr(ChromaBackend, "_quarantined_paths", set())
     monkeypatch.setattr(
-        "mempalace.backends.chroma._fix_missing_collection_type", _record("collection_type")
+        "trimemo.backends.chroma._fix_missing_collection_type", _record("collection_type")
     )
-    monkeypatch.setattr("mempalace.backends.chroma._fix_blob_seq_ids", _record("blob"))
+    monkeypatch.setattr("trimemo.backends.chroma._fix_blob_seq_ids", _record("blob"))
     monkeypatch.setattr(
-        "mempalace.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
+        "trimemo.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
     )
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _record("stale"))
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _record("stale"))
 
     class DummyClient:
         pass
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
+        "trimemo.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
     )
 
     backend = ChromaBackend()
@@ -2200,19 +2200,19 @@ def test_chroma_backend_requarantines_after_inode_replacement(tmp_path, monkeypa
 
     monkeypatch.setattr(ChromaBackend, "_quarantined_paths", set())
     monkeypatch.setattr(
-        "mempalace.backends.chroma._fix_missing_collection_type", _record("collection_type")
+        "trimemo.backends.chroma._fix_missing_collection_type", _record("collection_type")
     )
-    monkeypatch.setattr("mempalace.backends.chroma._fix_blob_seq_ids", _record("blob"))
+    monkeypatch.setattr("trimemo.backends.chroma._fix_blob_seq_ids", _record("blob"))
     monkeypatch.setattr(
-        "mempalace.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
+        "trimemo.backends.chroma.quarantine_invalid_hnsw_metadata", _record("invalid")
     )
-    monkeypatch.setattr("mempalace.backends.chroma.quarantine_stale_hnsw", _record("stale"))
+    monkeypatch.setattr("trimemo.backends.chroma.quarantine_stale_hnsw", _record("stale"))
 
     class DummyClient:
         pass
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
+        "trimemo.backends.chroma.chromadb.PersistentClient", lambda path: DummyClient()
     )
 
     backend = ChromaBackend()
@@ -2251,7 +2251,7 @@ def test_chroma_backend_resets_system_cache_on_inode_change(tmp_path, monkeypatc
         "quarantine_stale_hnsw",
     ):
         monkeypatch.setattr(
-            f"mempalace.backends.chroma.{name}",
+            f"trimemo.backends.chroma.{name}",
             lambda path, *args, **kwargs: [],
         )
 
@@ -2269,7 +2269,7 @@ def test_chroma_backend_resets_system_cache_on_inode_change(tmp_path, monkeypatc
         return DummyClient(path)
 
     monkeypatch.setattr(
-        "mempalace.backends.chroma.chromadb.PersistentClient",
+        "trimemo.backends.chroma.chromadb.PersistentClient",
         record_open,
     )
 
@@ -2326,7 +2326,7 @@ def test_explain_ef_mismatch_recognizes_chromadb_conflict():
     assert msg is not None
     assert "/tmp/palace.db" in msg
     assert "MEMPALACE_EMBEDDING_MODEL" in msg
-    assert "mempalace --palace /tmp/palace.db repair rebuild-index" in msg
+    assert "trimemo --palace /tmp/palace.db repair rebuild-index" in msg
 
 
 def test_explain_ef_mismatch_returns_none_for_unrelated_errors():
@@ -2371,7 +2371,7 @@ def test_get_collection_translates_ef_mismatch_to_helpful_error(tmp_path):
 
 
 def test_palace_get_collection_uses_configured_collection_name(monkeypatch):
-    from mempalace import palace
+    from trimemo import palace
 
     captured = {}
 
@@ -2382,7 +2382,7 @@ def test_palace_get_collection_uses_configured_collection_name(monkeypatch):
         return object()
 
     monkeypatch.setattr(palace._DEFAULT_BACKEND, "get_collection", fake_get_collection)
-    monkeypatch.setattr("mempalace.config.get_configured_collection_name", lambda: "custom_drawers")
+    monkeypatch.setattr("trimemo.config.get_configured_collection_name", lambda: "custom_drawers")
 
     palace.get_collection("/palace", create=False)
 

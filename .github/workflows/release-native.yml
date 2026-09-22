@@ -41,7 +41,7 @@ jobs:
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
         with:
           target: ${{ matrix.target }}
-          args: --release --locked --out dist -m crates/mempalace-py/Cargo.toml
+          args: --release --locked --out dist -m crates/trimemo-py/Cargo.toml
           sccache: 'true'
       - name: Smoke-test wheel on matching host architecture
         if: (runner.arch == 'X64' && startsWith(matrix.target, 'x86_64')) || (runner.arch == 'ARM64' && startsWith(matrix.target, 'aarch64'))
@@ -62,19 +62,19 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: mempalace-native-linux-amd64
-            binary_path: target/release/mempalace-native
+            artifact_name: trimemo-native-linux-amd64
+            binary_path: target/release/trimemo-native
           - os: windows-latest
-            artifact_name: mempalace-native-windows-amd64.exe
-            binary_path: target/release/mempalace-native.exe
+            artifact_name: trimemo-native-windows-amd64.exe
+            binary_path: target/release/trimemo-native.exe
           - os: macos-latest
-            artifact_name: mempalace-native-macos
-            binary_path: target/release/mempalace-native
+            artifact_name: trimemo-native-macos
+            binary_path: target/release/trimemo-native
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
       - name: Build binary
-        run: cargo build --release --locked --bin mempalace-native
+        run: cargo build --release --locked --bin trimemo-native
       - name: Smoke-test executable
         run: ${{ matrix.binary_path }} --help
       - name: Stage binary

@@ -10,8 +10,8 @@ import json
 
 import pytest
 
-import mempalace.embedding as embedding
-from mempalace.config import MempalaceConfig
+import trimemo.embedding as embedding
+from trimemo.config import MempalaceConfig
 
 
 @pytest.fixture(autouse=True)
@@ -170,7 +170,7 @@ class _FakeCfg:
 
 def test_get_embedding_function_selects_openai_compat(monkeypatch):
     monkeypatch.setattr(
-        "mempalace.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h:8420", "small")
+        "trimemo.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h:8420", "small")
     )
     monkeypatch.setattr("urllib.request.urlopen", _fake_urlopen(dim=4))
     ef = embedding.get_embedding_function(device="cpu", model="openai-compat")
@@ -180,14 +180,14 @@ def test_get_embedding_function_selects_openai_compat(monkeypatch):
 
 
 def test_openai_compat_requires_url(monkeypatch):
-    monkeypatch.setattr("mempalace.config.MempalaceConfig", lambda *a, **k: _FakeCfg(None, "small"))
+    monkeypatch.setattr("trimemo.config.MempalaceConfig", lambda *a, **k: _FakeCfg(None, "small"))
     with pytest.raises(ValueError, match="requires an endpoint"):
         embedding.get_embedding_function(device="cpu", model="openai-compat")
 
 
 def test_openai_compat_requires_model(monkeypatch):
     monkeypatch.setattr(
-        "mempalace.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h", None)
+        "trimemo.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h", None)
     )
     with pytest.raises(ValueError, match="requires a model"):
         embedding.get_embedding_function(device="cpu", model="openai-compat")
@@ -250,7 +250,7 @@ def test_request_targets_v1_embeddings_with_expected_body(monkeypatch):
     assert req.full_url == "http://h:8420/v1/embeddings"
     assert req.get_header("Content-type") == "application/json"
     # Custom User-Agent so Cloudflare-fronted endpoints don't 403 us (#1570).
-    assert req.get_header("User-agent", "").startswith("mempalace/")
+    assert req.get_header("User-agent", "").startswith("trimemo/")
     assert json.loads(req.data) == {
         "model": "small",
         "input": ["a", "b"],
@@ -332,7 +332,7 @@ def test_raises_and_surfaces_server_error_body(monkeypatch):
 
 def test_get_embedding_function_caches_instance(monkeypatch):
     monkeypatch.setattr(
-        "mempalace.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h:8420", "small", "k")
+        "trimemo.config.MempalaceConfig", lambda *a, **k: _FakeCfg("http://h:8420", "small", "k")
     )
     a = embedding.get_embedding_function(device="cpu", model="openai-compat")
     b = embedding.get_embedding_function(device="cpu", model="openai-compat")
@@ -341,12 +341,12 @@ def test_get_embedding_function_caches_instance(monkeypatch):
 
 def test_describe_device_reports_openai_compat_endpoint(monkeypatch):
     monkeypatch.setattr(
-        "mempalace.config.MempalaceConfig",
+        "trimemo.config.MempalaceConfig",
         lambda *a, **k: _FakeCfg("http://10.0.0.1:8420", "small"),
     )
     assert embedding.describe_device() == "openai-compat (http://10.0.0.1:8420)"
 
 
 def test_describe_device_openai_compat_without_url(monkeypatch):
-    monkeypatch.setattr("mempalace.config.MempalaceConfig", lambda *a, **k: _FakeCfg(None, "small"))
+    monkeypatch.setattr("trimemo.config.MempalaceConfig", lambda *a, **k: _FakeCfg(None, "small"))
     assert embedding.describe_device() == "openai-compat"

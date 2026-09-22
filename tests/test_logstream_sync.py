@@ -17,10 +17,10 @@ import threading
 
 import pytest
 
-from mempalace import logsync
-from mempalace.hlc import MAX_FUTURE_DRIFT_MS, HybridLogicalClock, parse, render
-from mempalace.logstream import Logstream
-from mempalace.replica import get_replica_id
+from trimemo import logsync
+from trimemo.hlc import MAX_FUTURE_DRIFT_MS, HybridLogicalClock, parse, render
+from trimemo.logstream import Logstream
+from trimemo.replica import get_replica_id
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def ls_b(palace_b):
 def _append(ls, body="x", **overrides):
     fields = dict(
         type="task.request",
-        stream="project/mempalace",
+        stream="project/trimemo",
         room="delegation",
         from_agent="agent-a",
         body=body,
@@ -227,7 +227,7 @@ class TestMigration:
 
 class TestHttpTimeout:
     def test_default_and_env_override(self, monkeypatch):
-        from mempalace.transport import _HTTP_TIMEOUT_S, _http_timeout_s
+        from trimemo.transport import _HTTP_TIMEOUT_S, _http_timeout_s
 
         monkeypatch.delenv("MEMPALACE_SYNC_HTTP_TIMEOUT", raising=False)
         assert _http_timeout_s() == float(_HTTP_TIMEOUT_S)
@@ -348,7 +348,7 @@ class TestConvergence:
         submitted = ls_a.submit_patch(
             content="diff --git a/f b/f\n+1\n",
             from_agent="agent-a",
-            stream="project/mempalace",
+            stream="project/trimemo",
         )
         _append(ls_b, body="from b1", from_agent="agent-b")
 
@@ -394,7 +394,7 @@ class TestConvergence:
 
 @pytest.fixture
 def server(monkeypatch, config, palace_path):
-    from mempalace import mcp_server as mcp
+    from trimemo import mcp_server as mcp
 
     monkeypatch.setattr(mcp, "_config", config)
     monkeypatch.setattr(mcp, "_logstream_by_path", {})
@@ -517,7 +517,7 @@ class TestSyncOverHttp:
         assert "S3CRET" not in json.dumps(payload)
 
     def test_record_peer_sync_error_preserves_last_known_state(self):
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         mcp._PEER_SYNC_STATE.clear()
         mcp._record_peer_sync(
@@ -549,7 +549,7 @@ class TestSyncOverHttp:
 
         from types import SimpleNamespace
 
-        from mempalace.cli import cmd_logstream
+        from trimemo.cli import cmd_logstream
 
         local_palace = os.path.join(tmp_dir, "local_replica")
         os.makedirs(local_palace)
@@ -591,7 +591,7 @@ class TestPublishedEstate:
 
     @pytest.fixture(autouse=True)
     def _clean_estate_state(self):
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         mcp._KNOWN_PROFILES.clear()
         mcp._node_profile_cache.clear()
@@ -689,7 +689,7 @@ class TestPublishedEstate:
 
     def test_published_estate_never_carries_peer_tokens(self, server, palace_path):
         """peers.json tokens must not reach a file other processes read."""
-        from mempalace import server_registry
+        from trimemo import server_registry
 
         _port, mcp = server
         self._write_peers(palace_path)
@@ -702,7 +702,7 @@ class TestPublishedEstate:
 
     def test_published_estate_is_private_and_atomic(self, server, palace_path):
         """0600, and no partial file left behind for a concurrent reader."""
-        from mempalace import server_registry
+        from trimemo import server_registry
 
         _port, mcp = server
         self._write_peers(palace_path)
@@ -716,7 +716,7 @@ class TestPublishedEstate:
 
     def test_dead_writer_is_reported_as_not_alive(self, server, palace_path):
         """A crashed hub leaves a last-known-good estate, flagged as stale."""
-        from mempalace import server_registry
+        from trimemo import server_registry
 
         _port, mcp = server
         self._write_peers(palace_path)
@@ -736,7 +736,7 @@ class TestPublishedEstate:
 
     def test_missing_or_malformed_estate_degrades_quietly(self, server, palace_path):
         """No hub has ever published, or the file is corrupt: no traceback."""
-        from mempalace import server_registry
+        from trimemo import server_registry
 
         _port, mcp = server
         self._write_peers(palace_path)
@@ -761,7 +761,7 @@ class TestNodeProfile:
 
     @pytest.fixture(autouse=True)
     def _clean_profile_state(self):
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         mcp._KNOWN_PROFILES.clear()
         mcp._node_profile_cache.clear()
@@ -803,7 +803,7 @@ class TestNodeProfile:
         assert payload["profiles"]["rep_cccccccccccc"]["hardware"] == "test-c"
 
     def test_merge_known_profiles_is_lww_by_advertised_at(self):
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         newer = self._profile("b", "2026-07-03T02:00:00Z")
         older = self._profile("b", "2026-07-03T01:00:00Z")
@@ -863,7 +863,7 @@ class TestNodeProfile:
     def test_sync_with_peer_captures_remote_profile(self, server, tmp_dir):
         port, mcp = server
         mcp.tool_event_append(type="status.update", stream="s", room="r", from_agent="a", body="x")
-        from mempalace.logsync import sync_with_peer
+        from trimemo.logsync import sync_with_peer
 
         local = Logstream(db_path=os.path.join(tmp_dir, "local", "logstream.sqlite3"))
         try:
@@ -876,7 +876,7 @@ class TestNodeProfile:
     def test_mesh_peers_is_exempt_from_the_integrity_gate(self):
         # The estate is observability: it must answer while the palace
         # index is corrupt and under repair (caught live on the blade).
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         assert "mempalace_mesh_peers" in mcp._SQLITE_INTEGRITY_ALLOWED_TOOLS
 
@@ -892,7 +892,7 @@ class TestPeerSyncThreadStartup:
 
     @pytest.fixture(autouse=True)
     def _cleanup_peer_sync_thread(self):
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         yield
         mcp._stop_peer_sync_thread()
@@ -900,7 +900,7 @@ class TestPeerSyncThreadStartup:
     def _start(self, tmp_path, monkeypatch, interval="0.05"):
         import threading
 
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         monkeypatch.setenv("MEMPALACE_SYNC_INTERVAL", interval)
         monkeypatch.setenv("MEMPALACE_PALACE_PATH", str(tmp_path))
@@ -908,7 +908,7 @@ class TestPeerSyncThreadStartup:
         before = set(threading.enumerate())
         mcp._start_peer_sync_thread()
         return [
-            t for t in threading.enumerate() if t.name == "mempalace-logsync" and t not in before
+            t for t in threading.enumerate() if t.name == "trimemo-logsync" and t not in before
         ]
 
     def test_thread_starts_without_peers_json(self, tmp_path, monkeypatch):
@@ -921,7 +921,7 @@ class TestPeerSyncThreadStartup:
     def test_peers_written_after_startup_are_picked_up(self, tmp_path, monkeypatch):
         import time as _time
 
-        from mempalace import mcp_server as mcp
+        from trimemo import mcp_server as mcp
 
         calls = []
 
@@ -929,7 +929,7 @@ class TestPeerSyncThreadStartup:
             calls.append(palace_path)
             return []
 
-        monkeypatch.setattr("mempalace.logsync.sync_all", _fake_sync_all)
+        monkeypatch.setattr("trimemo.logsync.sync_all", _fake_sync_all)
         monkeypatch.setattr(mcp, "_get_logstream", lambda *args, **kwargs: object())
 
         assert self._start(tmp_path, monkeypatch)

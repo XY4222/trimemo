@@ -13,8 +13,8 @@ Default behavior is unchanged ("vector") — these tests exercise opt-in
 "union" mode.
 """
 
-from mempalace.palace import get_collection
-from mempalace.searcher import search_memories
+from trimemo.palace import get_collection
+from trimemo.searcher import search_memories
 
 
 def _seed_drawers(palace_path):
@@ -237,7 +237,7 @@ class TestHybridRankTolerantOfMissingDistance:
     candidates injected by union mode."""
 
     def test_distance_none_scored_as_zero_vector_sim(self):
-        from mempalace.searcher import _hybrid_rank
+        from trimemo.searcher import _hybrid_rank
 
         results = [
             {"text": "alpha beta gamma", "distance": 0.2},  # close vector match

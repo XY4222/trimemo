@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mempalace import hooks_cli
-from mempalace.write_routing import (
+from trimemo import hooks_cli
+from trimemo.write_routing import (
     ResolvedWriteRoutingPolicy,
     WriteRoutingError,
     WriteRoutingPolicy,
@@ -83,7 +83,7 @@ def _capture_output(callable_):
     captured = []
 
     with patch(
-        "mempalace.hooks_cli._output",
+        "trimemo.hooks_cli._output",
         side_effect=captured.append,
     ):
         callable_()
@@ -97,11 +97,11 @@ def test_direct_policy_does_not_probe_daemon():
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             side_effect=AssertionError("direct must not probe daemon"),
         ),
     ):
@@ -143,11 +143,11 @@ def test_hook_route_decision_matrix(policy, available, target):
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=available,
         ),
     ):
@@ -166,13 +166,13 @@ def test_invalid_policy_blocks_instead_of_falling_back_direct():
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
         ) as probe,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         routing = hooks_cli._compute_hook_write_routing()
 
@@ -186,14 +186,14 @@ def test_invalid_policy_blocks_instead_of_falling_back_direct():
 def test_unrelated_config_failure_preserves_historical_direct_fallback():
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             side_effect=RuntimeError("config unreadable"),
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             side_effect=AssertionError("direct fallback must not probe daemon"),
         ),
-        patch("mempalace.hooks_cli._log") as log,
+        patch("trimemo.hooks_cli._log") as log,
     ):
         routing = hooks_cli._compute_hook_write_routing()
 
@@ -209,14 +209,14 @@ def test_context_reuses_one_daemon_probe_for_whole_hook_fire():
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=True,
         ) as probe,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         with hooks_cli._hook_write_routing_context() as routing:
             assert hooks_cli._current_hook_write_routing() is routing
@@ -245,24 +245,24 @@ def test_project_auto_ingest_applies_policy(
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._get_mine_targets",
+            "trimemo.hooks_cli._get_mine_targets",
             return_value=[("/project", "projects")],
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=available,
         ),
         patch(
-            "mempalace.hooks_cli._submit_daemon_job",
+            "trimemo.hooks_cli._submit_daemon_job",
         ) as submit,
         patch(
-            "mempalace.hooks_cli._spawn_mine",
+            "trimemo.hooks_cli._spawn_mine",
         ) as spawn,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         hooks_cli._maybe_auto_ingest()
 
@@ -284,36 +284,36 @@ def test_require_unavailable_blocks_every_direct_hook_write_path(
     transcript = tmp_path / "session.jsonl"
     _write_transcript(transcript)
 
-    fake_mcp = types.ModuleType("mempalace.mcp_server")
+    fake_mcp = types.ModuleType("trimemo.mcp_server")
     fake_mcp.tool_diary_write = MagicMock()
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
         patch(
-            "mempalace.hooks_cli._get_mine_targets",
+            "trimemo.hooks_cli._get_mine_targets",
             return_value=[("/project", "projects")],
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=False,
         ) as probe,
         patch(
-            "mempalace.hooks_cli._submit_daemon_job",
+            "trimemo.hooks_cli._submit_daemon_job",
         ) as submit,
         patch(
-            "mempalace.hooks_cli._spawn_mine",
+            "trimemo.hooks_cli._spawn_mine",
         ) as spawn,
         patch(
-            "mempalace.hooks_cli.subprocess.run",
+            "trimemo.hooks_cli.subprocess.run",
         ) as sync_run,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
         patch.dict(
             sys.modules,
-            {"mempalace.mcp_server": fake_mcp},
+            {"trimemo.mcp_server": fake_mcp},
         ),
     ):
         with hooks_cli._hook_write_routing_context():
@@ -343,25 +343,25 @@ def test_daemon_submission_failure_never_falls_back_to_direct():
 
     with (
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._get_mine_targets",
+            "trimemo.hooks_cli._get_mine_targets",
             return_value=[("/project", "projects")],
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli._submit_daemon_job",
+            "trimemo.hooks_cli._submit_daemon_job",
             side_effect=RuntimeError("daemon disappeared"),
         ) as submit,
         patch(
-            "mempalace.hooks_cli._spawn_mine",
+            "trimemo.hooks_cli._spawn_mine",
         ) as spawn,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         hooks_cli._maybe_auto_ingest()
 
@@ -376,19 +376,19 @@ def test_session_start_warns_when_required_daemon_unavailable(
 
     with (
         patch(
-            "mempalace.hooks_cli._palace_root_exists",
+            "trimemo.hooks_cli._palace_root_exists",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=False,
         ),
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         output = _capture_output(
             lambda: hooks_cli.hook_session_start(
@@ -411,28 +411,28 @@ def test_stop_require_unavailable_warns_and_does_not_advance_marker(
 
     with (
         patch(
-            "mempalace.hooks_cli._palace_root_exists",
+            "trimemo.hooks_cli._palace_root_exists",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=False,
         ),
         patch(
-            "mempalace.hooks_cli._save_diary_direct",
+            "trimemo.hooks_cli._save_diary_direct",
         ) as diary,
         patch(
-            "mempalace.hooks_cli._ingest_transcript",
+            "trimemo.hooks_cli._ingest_transcript",
         ) as ingest,
         patch(
-            "mempalace.hooks_cli._maybe_auto_ingest",
+            "trimemo.hooks_cli._maybe_auto_ingest",
         ) as auto_ingest,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         output = _capture_output(
             lambda: hooks_cli.hook_stop(
@@ -461,24 +461,24 @@ def test_precompact_require_unavailable_skips_all_writes(
 
     with (
         patch(
-            "mempalace.hooks_cli._palace_root_exists",
+            "trimemo.hooks_cli._palace_root_exists",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=False,
         ),
         patch(
-            "mempalace.hooks_cli._ingest_transcript",
+            "trimemo.hooks_cli._ingest_transcript",
         ) as ingest,
         patch(
-            "mempalace.hooks_cli._mine_sync",
+            "trimemo.hooks_cli._mine_sync",
         ) as mine_sync,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         output = _capture_output(
             lambda: hooks_cli.hook_precompact(
@@ -507,28 +507,28 @@ def test_session_end_require_unavailable_skips_all_writes_and_cleans_marker(
 
     with (
         patch(
-            "mempalace.hooks_cli._palace_root_exists",
+            "trimemo.hooks_cli._palace_root_exists",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=False,
         ),
         patch(
-            "mempalace.hooks_cli._save_diary_direct",
+            "trimemo.hooks_cli._save_diary_direct",
         ) as diary,
         patch(
-            "mempalace.hooks_cli._ingest_transcript",
+            "trimemo.hooks_cli._ingest_transcript",
         ) as ingest,
         patch(
-            "mempalace.hooks_cli._maybe_auto_ingest",
+            "trimemo.hooks_cli._maybe_auto_ingest",
         ) as auto_ingest,
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         output = _capture_output(
             lambda: hooks_cli.hook_session_end(
@@ -567,31 +567,31 @@ def test_stop_uses_one_daemon_probe_for_all_write_helpers(
 
     with (
         patch(
-            "mempalace.hooks_cli._palace_root_exists",
+            "trimemo.hooks_cli._palace_root_exists",
             return_value=True,
         ),
         patch(
-            "mempalace.hooks_cli.MempalaceConfig",
+            "trimemo.hooks_cli.MempalaceConfig",
             return_value=config,
         ),
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
         patch(
-            "mempalace.hooks_cli._daemon_available",
+            "trimemo.hooks_cli._daemon_available",
             return_value=True,
         ) as probe,
         patch(
-            "mempalace.hooks_cli._save_diary_direct",
+            "trimemo.hooks_cli._save_diary_direct",
             side_effect=save,
         ),
         patch(
-            "mempalace.hooks_cli._ingest_transcript",
+            "trimemo.hooks_cli._ingest_transcript",
             side_effect=use_current_route,
         ),
         patch(
-            "mempalace.hooks_cli._maybe_auto_ingest",
+            "trimemo.hooks_cli._maybe_auto_ingest",
             side_effect=use_current_route,
         ),
-        patch("mempalace.hooks_cli._log"),
+        patch("trimemo.hooks_cli._log"),
     ):
         output = _capture_output(
             lambda: hooks_cli.hook_stop(

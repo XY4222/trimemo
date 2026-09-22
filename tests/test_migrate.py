@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mempalace.migrate import (
+from trimemo.migrate import (
     _restore_stale_palace,
     collection_write_roundtrip_works,
     extract_drawers_from_sqlite,
@@ -41,14 +41,14 @@ def test_migrate_aborts_without_confirmation(tmp_path, capsys):
 
     with (
         patch.dict("sys.modules", {"chromadb": mock_chromadb}),
-        patch("mempalace.migrate.detect_chromadb_version", return_value="0.5.x"),
+        patch("trimemo.migrate.detect_chromadb_version", return_value="0.5.x"),
         patch(
-            "mempalace.migrate.extract_drawers_from_sqlite",
+            "trimemo.migrate.extract_drawers_from_sqlite",
             return_value=[{"id": "id1", "document": "doc", "metadata": {"wing": "w", "room": "r"}}],
         ),
         patch("builtins.input", return_value="n"),
-        patch("mempalace.migrate.copy_palace_dir") as mock_backup_copy,
-        patch("mempalace.migrate.shutil.rmtree") as mock_rmtree,
+        patch("trimemo.migrate.copy_palace_dir") as mock_backup_copy,
+        patch("trimemo.migrate.shutil.rmtree") as mock_rmtree,
     ):
         result = migrate(str(palace_dir))
 
@@ -104,7 +104,7 @@ def test_restore_stale_palace_logs_and_swallows_on_failure(tmp_path, capsys):
     stale_path.mkdir()
 
     # Force os.replace to fail deterministically.
-    with patch("mempalace.migrate.os.replace", side_effect=OSError("boom")):
+    with patch("trimemo.migrate.os.replace", side_effect=OSError("boom")):
         _restore_stale_palace(str(palace_path), str(stale_path))
 
     out = capsys.readouterr().out
@@ -210,13 +210,13 @@ def test_migrate_skips_count_on_hnsw_divergence(tmp_path, capsys):
     (palace_dir / "chroma.sqlite3").write_text("db")
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="1.x"),
-        patch("mempalace.backends.chroma.ChromaBackend") as mock_backend,
+        patch("trimemo.migrate.detect_chromadb_version", return_value="1.x"),
+        patch("trimemo.backends.chroma.ChromaBackend") as mock_backend,
         patch(
-            "mempalace.backends.chroma.hnsw_capacity_status",
+            "trimemo.backends.chroma.hnsw_capacity_status",
             return_value={"diverged": True, "message": "test divergence"},
         ),
-        patch("mempalace.migrate.extract_drawers_from_sqlite", return_value=[]),
+        patch("trimemo.migrate.extract_drawers_from_sqlite", return_value=[]),
     ):
         mock_backend.backend_version.return_value = "1.5.8"
         migrate(str(palace_dir), dry_run=True)
@@ -243,13 +243,13 @@ def test_migrate_dry_run_rebuilds_when_collection_is_readable_but_not_writable(t
     ]
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="1.x"),
-        patch("mempalace.backends.chroma.ChromaBackend") as mock_backend,
+        patch("trimemo.migrate.detect_chromadb_version", return_value="1.x"),
+        patch("trimemo.backends.chroma.ChromaBackend") as mock_backend,
         patch(
-            "mempalace.migrate.collection_write_roundtrip_works", return_value=False
+            "trimemo.migrate.collection_write_roundtrip_works", return_value=False
         ) as mock_probe,
         patch(
-            "mempalace.migrate.extract_drawers_from_sqlite", return_value=drawers
+            "trimemo.migrate.extract_drawers_from_sqlite", return_value=drawers
         ) as mock_extract,
     ):
         mock_backend.backend_version.return_value = "1.5.8"
@@ -296,17 +296,17 @@ def test_migrate_cleans_temp_palace_on_chromadb_failure(tmp_path):
     failing_backend.get_collection.side_effect = Exception("unreadable")
     failing_backend.get_or_create_collection.side_effect = RuntimeError("chromadb boom")
 
-    import mempalace.backends.chroma as _chroma_mod
+    import trimemo.backends.chroma as _chroma_mod
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="0.5.x"),
+        patch("trimemo.migrate.detect_chromadb_version", return_value="0.5.x"),
         patch(
-            "mempalace.migrate.extract_drawers_from_sqlite",
+            "trimemo.migrate.extract_drawers_from_sqlite",
             return_value=[{"id": "id1", "document": "doc", "metadata": {"wing": "w", "room": "r"}}],
         ),
         patch("builtins.input", return_value="y"),
-        patch("mempalace.migrate.copy_palace_dir"),
-        patch("mempalace.migrate.tempfile.mkdtemp", side_effect=tracking_mkdtemp),
+        patch("trimemo.migrate.copy_palace_dir"),
+        patch("trimemo.migrate.tempfile.mkdtemp", side_effect=tracking_mkdtemp),
         patch.object(_chroma_mod, "ChromaBackend", return_value=failing_backend),
     ):
         try:
@@ -344,12 +344,12 @@ def test_migrate_prunes_old_pre_migrate_backups(tmp_path, monkeypatch):
     failing_backend.get_collection.side_effect = Exception("unreadable")
     failing_backend.get_or_create_collection.side_effect = RuntimeError("chromadb boom")
 
-    import mempalace.backends.chroma as _chroma_mod
+    import trimemo.backends.chroma as _chroma_mod
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="0.5.x"),
+        patch("trimemo.migrate.detect_chromadb_version", return_value="0.5.x"),
         patch(
-            "mempalace.migrate.extract_drawers_from_sqlite",
+            "trimemo.migrate.extract_drawers_from_sqlite",
             return_value=[{"id": "id1", "document": "doc", "metadata": {"wing": "w", "room": "r"}}],
         ),
         patch("builtins.input", return_value="y"),
@@ -408,12 +408,12 @@ def test_migrate_backup_survives_a_socket_in_the_palace_directory(tmp_path, monk
     failing_backend = MagicMock()
     failing_backend.get_or_create_collection.side_effect = RuntimeError("chromadb boom")
 
-    import mempalace.backends.chroma as _chroma_mod
+    import trimemo.backends.chroma as _chroma_mod
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="0.5.x"),
+        patch("trimemo.migrate.detect_chromadb_version", return_value="0.5.x"),
         patch(
-            "mempalace.migrate.extract_drawers_from_sqlite",
+            "trimemo.migrate.extract_drawers_from_sqlite",
             return_value=[{"id": "id1", "document": "doc", "metadata": {"wing": "w", "room": "r"}}],
         ),
         patch.object(_chroma_mod, "ChromaBackend", return_value=failing_backend),
@@ -467,14 +467,14 @@ def test_migrate_restores_palace_on_swap_failure(tmp_path, capsys):
         return real_os_replace(src, dst)
 
     with (
-        patch("mempalace.migrate.detect_chromadb_version", return_value="0.5.x"),
-        patch("mempalace.backends.chroma.ChromaBackend") as mock_backend_cls,
-        patch("mempalace.migrate.collection_write_roundtrip_works", return_value=False),
-        patch("mempalace.migrate.extract_drawers_from_sqlite", return_value=drawers),
-        patch("mempalace.migrate.confirm_destructive_action", return_value=True),
-        patch("mempalace.migrate.os.replace", side_effect=selective_replace),
+        patch("trimemo.migrate.detect_chromadb_version", return_value="0.5.x"),
+        patch("trimemo.backends.chroma.ChromaBackend") as mock_backend_cls,
+        patch("trimemo.migrate.collection_write_roundtrip_works", return_value=False),
+        patch("trimemo.migrate.extract_drawers_from_sqlite", return_value=drawers),
+        patch("trimemo.migrate.confirm_destructive_action", return_value=True),
+        patch("trimemo.migrate.os.replace", side_effect=selective_replace),
         patch(
-            "mempalace.migrate.shutil.move",
+            "trimemo.migrate.shutil.move",
             side_effect=OSError("fallback move also failed"),
         ),
         pytest.raises(OSError),

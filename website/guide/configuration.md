@@ -18,11 +18,11 @@ Located at `~/.mempalace/config.json`:
 | `palace_path` | `~/.mempalace/palace` | Where the default local palace stores your drawers |
 | `collection_name` | `mempalace_drawers` | Default backend collection name |
 | `people_map` | `{}` | Entity name → AAAK code mappings |
-| `max_backups` | `10` | How many timestamped palace backups to keep before the oldest are pruned. Applies to `mempalace migrate` (`<palace>.pre-migrate.*`) and `mempalace repair max-seq-id` (`chroma.sqlite3.max-seq-id-backup-*`), which each write a full copy every run. Set to `0` to keep every backup (e.g. when an external retention policy manages cleanup). |
+| `max_backups` | `10` | How many timestamped palace backups to keep before the oldest are pruned. Applies to `trimemo migrate` (`<palace>.pre-migrate.*`) and `trimemo repair max-seq-id` (`chroma.sqlite3.max-seq-id-backup-*`), which each write a full copy every run. Set to `0` to keep every backup (e.g. when an external retention policy manages cleanup). |
 
 ## Storage backends
 
-ChromaDB is the default and needs no configuration. MemPalace also ships a
+ChromaDB is the default and needs no configuration. TriMemo also ships a
 pluggable backend contract, exercised across deliberately different substrates
 (an embedded store, an exact-cosine local store, a REST store, and a SQL/JSONB
 store) so the contract is never accidentally shaped around one vendor. Every
@@ -32,18 +32,18 @@ non-default backend is opt-in.
 | ------- | ---- | ------- | :--------: | :-----: | -------------- |
 | `chroma` _(default)_ | Local (embedded) | bundled | – | ✓ | – |
 | `sqlite_exact` | Local (exact) | bundled | – | ✓ | – |
-| `milvus` | Local (Lite) · Server opt-in | `mempalace[milvus]` | ✓ | ✓ | `MEMPALACE_MILVUS_URI` |
+| `milvus` | Local (Lite) · Server opt-in | `trimemo[milvus]` | ✓ | ✓ | `MEMPALACE_MILVUS_URI` |
 | `qdrant` | Server (REST) | bundled | ✓ | ✓ | `MEMPALACE_QDRANT_URL` |
-| `pgvector` | Server (Postgres) | `mempalace[pgvector]` | ✓ | ✓ | `MEMPALACE_PGVECTOR_DSN` |
+| `pgvector` | Server (Postgres) | `trimemo[pgvector]` | ✓ | ✓ | `MEMPALACE_PGVECTOR_DSN` |
 <!-- New backends add one row here and one `### <Backend>` subsection (with its connection variables) below; keep README's compatibility table in sync. -->
 
-Select a backend with `--backend <name>` on any `mempalace` / `mempalace-mcp`
+Select a backend with `--backend <name>` on any `trimemo` / `trimemo-mcp`
 command, `MEMPALACE_BACKEND=<name>` in the environment, or `"backend": "<name>"`
 in `config.json`.
 
 ::: warning Verbatim data leaves your machine on opt-in
 When a server-mode backend points anywhere other than your own local or trusted
-self-hosted service, MemPalace sends and stores verbatim drawer text and
+self-hosted service, TriMemo sends and stores verbatim drawer text and
 metadata there. That is an explicit, deliberate backend choice — never the
 default.
 :::
@@ -66,8 +66,8 @@ palaces. Select with `--backend sqlite_exact`; it has no connection settings.
 ### Milvus
 
 A Milvus backend using `pymilvus`. Install the optional driver with
-`pip install mempalace[milvus]`. When `MEMPALACE_MILVUS_URI` is unset,
-MemPalace uses per-palace Milvus Lite at `<palace>/milvus.db`; set a server or
+`pip install trimemo[milvus]`. When `MEMPALACE_MILVUS_URI` is unset,
+TriMemo uses per-palace Milvus Lite at `<palace>/milvus.db`; set a server or
 Zilliz Cloud URI to use a shared Milvus deployment.
 
 | Variable | Default | Description |
@@ -94,12 +94,12 @@ you control.
 ### Postgres + pgvector
 
 A networked SQL/JSONB backend. Install the driver with
-`pip install mempalace[pgvector]`; the server must have the `vector` extension
+`pip install trimemo[pgvector]`; the server must have the `vector` extension
 available.
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| `MEMPALACE_PGVECTOR_DSN` | `postgresql://localhost:5432/mempalace` | Postgres connection string |
+| `MEMPALACE_PGVECTOR_DSN` | `postgresql://localhost:5432/trimemo` | Postgres connection string |
 | `MEMPALACE_PGVECTOR_NAMESPACE` | _(none)_ | Schema namespace (tenant isolation) |
 | `MEMPALACE_PGVECTOR_SHARED_NAMESPACE` | _(none)_ | Shared table namespace for one palace spanning several machines |
 
@@ -112,7 +112,7 @@ desktop and a server to share one memory store, give every node the same
 shared namespace:
 
 ```bash
-export MEMPALACE_PGVECTOR_DSN=postgresql://user:pass@db.internal:5432/mempalace
+export MEMPALACE_PGVECTOR_DSN=postgresql://user:pass@db.internal:5432/trimemo
 export MEMPALACE_PGVECTOR_SHARED_NAMESPACE=fleet
 ```
 
@@ -122,7 +122,7 @@ drops out of the table name and every node resolves the same tables.
 - Leave it unset for a single-machine palace — naming is unchanged and existing
   palaces need no migration.
 - Setting it on a palace that already has data points at *new*, empty tables;
-  MemPalace refuses to open the palace rather than appear to lose data, so
+  TriMemo refuses to open the palace rather than appear to lose data, so
   choose the namespace before you mine.
 - Every palace that shares a namespace shares its memory, including two palaces
   on the *same* machine. The setting declares "these are one logical palace", so
@@ -138,7 +138,7 @@ server, see [Remote / Team Server](/guide/remote-server).
 
 ## Project Config
 
-Generated by `mempalace init` in your project directory:
+Generated by `trimemo init` in your project directory:
 
 ### `mempalace.yaml`
 
@@ -160,7 +160,7 @@ palace_path: ~/.mempalace/palace
 }
 ```
 
-Wings are auto-detected during `mempalace init` from:
+Wings are auto-detected during `trimemo init` from:
 - Directory names → project wings
 - Detected people in file content → person wings
 - Explicit `--wing` flag on mine commands
@@ -185,8 +185,8 @@ Write your identity file in first person from the AI's perspective. This becomes
 All commands accept `--palace <path>` to override the default location:
 
 ```bash
-mempalace search "query" --palace /tmp/test-palace
-mempalace mine ~/data/ --palace /tmp/test-palace
+trimemo search "query" --palace /tmp/test-palace
+trimemo mine ~/data/ --palace /tmp/test-palace
 ```
 
 The MCP server also accepts `--palace`:

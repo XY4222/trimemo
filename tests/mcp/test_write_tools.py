@@ -15,7 +15,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         result = tool_add_drawer(
             wing="test_wing",
@@ -31,7 +31,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         content = "This is a unique test memory about Rust ownership and borrowing."
         result1 = tool_add_drawer(wing="w", room="r", content=content)
@@ -45,7 +45,7 @@ class TestWriteTools:
         self, monkeypatch, config, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         mock_col = MagicMock()
         mock_col.get.side_effect = RuntimeError("precheck boom")
@@ -61,7 +61,7 @@ class TestWriteTools:
         self, monkeypatch, config, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         mock_col = MagicMock()
         mock_col.get.side_effect = RuntimeError("precheck boom")
@@ -76,7 +76,7 @@ class TestWriteTools:
         self, monkeypatch, config, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         mock_col = MagicMock()
         mock_col.get.return_value = {"ids": ["existing-drawer"]}
@@ -89,7 +89,7 @@ class TestWriteTools:
         mock_col.upsert.assert_not_called()
 
     def test_get_result_ids_normalizes_none_to_empty_list(self):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class DictLikeResult:
             def get(self, key, default=None):
@@ -100,7 +100,7 @@ class TestWriteTools:
 
     def test_add_drawer_fails_when_readback_misses(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class _FakeGetResult:
             ids = []
@@ -123,7 +123,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         header = "# ACME Corp Knowledge Base\n**Project:** Alpha | **Team:** Backend | **Status:** Active\n\n"
         doc1 = (
@@ -143,7 +143,7 @@ class TestWriteTools:
 
     def test_delete_drawer(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_delete_drawer
+        from trimemo.mcp_server import tool_delete_drawer
 
         result = tool_delete_drawer("drawer_proj_backend_aaa")
         assert result["success"] is True
@@ -151,7 +151,7 @@ class TestWriteTools:
 
     def test_delete_drawer_not_found(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_delete_drawer
+        from trimemo.mcp_server import tool_delete_drawer
 
         result = tool_delete_drawer("nonexistent_drawer")
         assert result["success"] is False
@@ -162,8 +162,8 @@ class TestWriteTools:
         """Deleting a drawer purges its source's closets too, so the AAAK
         index keeps no stale pointer at the now-deleted drawer (#2325)."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_delete_drawer
-        from mempalace.palace import get_closets_collection
+        from trimemo.mcp_server import tool_delete_drawer
+        from trimemo.palace import get_closets_collection
 
         closets_col = get_closets_collection(palace_path, create=True)
         closets_col.add(
@@ -193,7 +193,7 @@ class TestWriteTools:
         wrapper swallows the real cause.
         """
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         mock_col = MagicMock()
         mock_col.query.return_value = {
@@ -218,7 +218,7 @@ class TestWriteTools:
 
     def test_check_duplicate(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_check_duplicate
+        from trimemo.mcp_server import tool_check_duplicate
 
         # Exact match text from seeded_collection should be flagged
         result = tool_check_duplicate(
@@ -236,7 +236,7 @@ class TestWriteTools:
         assert result["is_duplicate"] is False
 
     def test_check_duplicate_short_circuits_when_vector_disabled(self, monkeypatch):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server,
@@ -258,7 +258,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_checkpoint
+        from trimemo.mcp_server import tool_checkpoint
 
         result = tool_checkpoint(
             items=[
@@ -274,7 +274,7 @@ class TestWriteTools:
         assert result["diary"]["success"] is True
 
     def test_checkpoint_skips_semantic_duplicates(self, monkeypatch, config, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server,
@@ -300,7 +300,7 @@ class TestWriteTools:
         assert called["add"] is False
 
     def test_checkpoint_reports_malformed_items(self, monkeypatch, config, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -314,7 +314,7 @@ class TestWriteTools:
     ):
         """A non-string content must be reported, never passed to the
         single-item handlers where it would raise deep in sanitization."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         def _explode(*_a, **_k):
             raise AssertionError("handlers must not run for malformed items")
@@ -332,7 +332,7 @@ class TestWriteTools:
     def test_checkpoint_files_when_dedup_check_errors(self, monkeypatch, config, kg):
         """A dedup error is a genuine index failure (content is already
         validated as a string); we still file rather than drop the memory."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server,
@@ -354,7 +354,7 @@ class TestWriteTools:
         assert filed["content"] == "keep me"
 
     def test_checkpoint_reports_malformed_diary(self, monkeypatch, config, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -370,7 +370,7 @@ class TestWriteTools:
         assert any("diary entry" in e.get("error", "") for e in result["errors"])
 
     def test_checkpoint_registered_in_tools(self):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         assert "mempalace_checkpoint" in mcp_server.TOOLS
         assert mcp_server.TOOLS["mempalace_checkpoint"]["handler"] is mcp_server.tool_checkpoint
@@ -384,7 +384,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         _client.close()  # release file handles; a bare del leaks them on Windows (#1128)
-        from mempalace.mcp_server import tool_checkpoint
+        from trimemo.mcp_server import tool_checkpoint
 
         result = tool_checkpoint(
             items=[{"wing": "w", "room": "decisions", "content": "Use PostgreSQL for storage."}],
@@ -404,7 +404,7 @@ class TestWriteTools:
 
     def test_checkpoint_explicit_added_by_overrides_diary(self, monkeypatch):
         """An explicit ``added_by`` wins over the diary ``agent_name`` fallback."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -428,7 +428,7 @@ class TestWriteTools:
     def test_checkpoint_added_by_falls_back_to_checkpoint_label(self, monkeypatch):
         """Neither an explicit ``added_by`` nor a diary ``agent_name`` -> the
         drawer keeps the legacy ``checkpoint`` attribution (backward compatible)."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -455,7 +455,7 @@ class TestWriteTools:
         """#2023: ``added_by`` passes the tools/call schema whitelist (the
         reporter's HTTP MCP transport reuses this dispatcher) and the real
         handler forwards it, for both the explicit value and the diary fallback."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -505,7 +505,7 @@ class TestWriteTools:
     def test_checkpoint_schema_exposes_added_by(self):
         """``added_by`` is declared in the checkpoint tool schema so the
         dispatch whitelist admits it instead of rejecting it as unknown."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         props = mcp_server.TOOLS["mempalace_checkpoint"]["input_schema"]["properties"]
         assert "added_by" in props
@@ -515,7 +515,7 @@ class TestWriteTools:
         """A blank, whitespace-only, non-string, or None explicit ``added_by``
         counts as unspecified, so it defers to the diary ``agent_name`` rather
         than masking it; with no usable diary name it falls to ``checkpoint``."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -551,7 +551,7 @@ class TestWriteTools:
     def test_checkpoint_added_by_uniform_across_items(self, monkeypatch):
         """All items in one checkpoint share a single resolved author (a
         checkpoint is one agent's session save; attribution is resolved once)."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(
             mcp_server, "tool_check_duplicate", lambda *a, **k: {"is_duplicate": False}
@@ -576,7 +576,7 @@ class TestWriteTools:
 
     def test_get_drawer(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_get_drawer
+        from trimemo.mcp_server import tool_get_drawer
 
         result = tool_get_drawer("drawer_proj_backend_aaa")
         assert result["drawer_id"] == "drawer_proj_backend_aaa"
@@ -586,7 +586,7 @@ class TestWriteTools:
 
     def test_get_drawer_not_found(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_get_drawer
+        from trimemo.mcp_server import tool_get_drawer
 
         result = tool_get_drawer("nonexistent_drawer")
         assert "error" in result
@@ -619,7 +619,7 @@ class TestWriteTools:
             ],
         )
 
-        from mempalace.mcp_server import tool_get_drawer
+        from trimemo.mcp_server import tool_get_drawer
 
         result = tool_get_drawer("drawer_leak_probe")
         assert result["drawer_id"] == "drawer_leak_probe"
@@ -632,7 +632,7 @@ class TestWriteTools:
 
     def test_list_drawers(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers()
         assert result["count"] == 4
@@ -642,7 +642,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(wing="project")
         assert result["count"] == 3
@@ -652,7 +652,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(wing="project", room="backend")
         assert result["count"] == 2
@@ -660,7 +660,7 @@ class TestWriteTools:
 
     def test_list_drawers_pagination(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(limit=2, offset=0)
         assert result["count"] == 2
@@ -671,7 +671,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(offset=-5)
         assert result["offset"] == 0
@@ -680,7 +680,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # seeded filed_at values: 2026-01-01..2026-01-04; since is inclusive.
         result = tool_list_drawers(since="2026-01-03")
@@ -693,7 +693,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # before is exclusive: 2026-01-03 keeps only 01 and 02.
         result = tool_list_drawers(before="2026-01-03")
@@ -705,7 +705,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # [since, before): 02 and 03 kept, 01 below, 04 at/above the bound.
         result = tool_list_drawers(since="2026-01-02", before="2026-01-04")
@@ -717,7 +717,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # since inclusive + before exclusive isolates exactly 2026-01-02.
         result = tool_list_drawers(since="2026-01-02", before="2026-01-03")
@@ -728,7 +728,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # project wing = 01,02,03; since 2026-01-02 narrows to 02,03.
         result = tool_list_drawers(wing="project", since="2026-01-02")
@@ -739,7 +739,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # Omitting since/before leaves the full set (regression guard).
         assert tool_list_drawers()["total"] == 4
@@ -748,7 +748,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(since="not-a-date")
         assert "error" in result
@@ -758,7 +758,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         result = tool_list_drawers(before="2026-99-99")
         assert "error" in result
@@ -768,7 +768,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # since must be earlier than before; inverted bounds are a clear error,
         # not a silently empty result.
@@ -781,7 +781,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # A drawer with no filed_at is present unfiltered but excluded once a
         # date bound is active (its age cannot be confirmed in-window).
@@ -800,7 +800,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_drawers
+        from trimemo.mcp_server import tool_list_drawers
 
         # window [01-01, 01-04) keeps 01, 02, 03; pagination runs on that
         # filtered total, not the grand total of 4.
@@ -813,7 +813,7 @@ class TestWriteTools:
 
     def test_update_drawer_content(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer, tool_get_drawer
+        from trimemo.mcp_server import tool_update_drawer, tool_get_drawer
 
         result = tool_update_drawer(
             "drawer_proj_backend_aaa", content="Updated content about auth."
@@ -827,7 +827,7 @@ class TestWriteTools:
         self, monkeypatch, config, palace_path, seeded_collection, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer
+        from trimemo.mcp_server import tool_update_drawer
 
         result = tool_update_drawer("drawer_proj_backend_aaa", wing="new_wing", room="new_room")
         assert result["success"] is True
@@ -840,8 +840,8 @@ class TestWriteTools:
         """Correcting a drawer's content purges its source's closets, which
         otherwise keep quoting the pre-correction text indefinitely (#2325)."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer
-        from mempalace.palace import get_closets_collection
+        from trimemo.mcp_server import tool_update_drawer
+        from trimemo.palace import get_closets_collection
 
         closets_col = get_closets_collection(palace_path, create=True)
         closets_col.add(
@@ -863,8 +863,8 @@ class TestWriteTools:
         """A wing/room move alone leaves the quoted text correct, so it must
         not purge closets the way a content edit does (#2325)."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer
-        from mempalace.palace import get_closets_collection
+        from trimemo.mcp_server import tool_update_drawer
+        from trimemo.palace import get_closets_collection
 
         closets_col = get_closets_collection(palace_path, create=True)
         closets_col.add(
@@ -882,14 +882,14 @@ class TestWriteTools:
 
     def test_update_drawer_not_found(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer
+        from trimemo.mcp_server import tool_update_drawer
 
         result = tool_update_drawer("nonexistent_drawer", content="hello")
         assert result["success"] is False
 
     def test_update_drawer_noop(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_update_drawer
+        from trimemo.mcp_server import tool_update_drawer
 
         result = tool_update_drawer("drawer_proj_backend_aaa")
         assert result["success"] is True
@@ -898,7 +898,7 @@ class TestWriteTools:
     def test_tool_create_tunnel_preserves_hyphenated_wings(self, monkeypatch, tmp_path):
         """Regression for #1504: ``tool_create_tunnel`` stores the wing slug
         verbatim, and both hyphen and underscore queries find the result."""
-        from mempalace import mcp_server, palace_graph
+        from trimemo import mcp_server, palace_graph
 
         tunnel_file = tmp_path / "tunnels.json"
         monkeypatch.setattr(palace_graph, "_get_tunnel_file", lambda *a, **kw: str(tunnel_file))
@@ -926,7 +926,7 @@ class TestWriteTools:
         """Regression for #1473: a ValueError from create_tunnel (e.g. a
         missing room) must be returned to the caller as a clear error,
         not escape and get wrapped as the opaque 'Internal tool error'."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         msg = "Target room 'does-not-exist-probe' does not exist in wing 'wing_minerva'"
 
@@ -948,7 +948,7 @@ class TestWriteTools:
 
     def _seed_hallways(self, monkeypatch, tmp_path):
         """Point hallways resolvers at a tmp file and seed two records."""
-        from mempalace import hallways
+        from trimemo import hallways
 
         hallway_file = tmp_path / "hallways.json"
         monkeypatch.setattr(hallways, "_get_hallway_file", lambda *a, **kw: str(hallway_file))
@@ -980,7 +980,7 @@ class TestWriteTools:
 
     def test_tool_list_hallways_returns_all_without_filter(self, monkeypatch, tmp_path):
         """tool_list_hallways with no wing returns every record."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         seeded = self._seed_hallways(monkeypatch, tmp_path)
         result = mcp_server.tool_list_hallways()
@@ -991,7 +991,7 @@ class TestWriteTools:
 
     def test_tool_list_hallways_filters_by_wing(self, monkeypatch, tmp_path):
         """tool_list_hallways with wing returns only that wing's records."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._seed_hallways(monkeypatch, tmp_path)
         result = mcp_server.tool_list_hallways(wing="wing_a")
@@ -1001,7 +1001,7 @@ class TestWriteTools:
     def test_tool_list_hallways_rejects_invalid_wing_name(self, monkeypatch, tmp_path):
         """Invalid wing names go through _sanitize_optional_name and return a
         structured error rather than crashing — mirrors tool_list_tunnels."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._seed_hallways(monkeypatch, tmp_path)
         # Forward-slash is not a valid name character per sanitize_name.
@@ -1011,7 +1011,7 @@ class TestWriteTools:
 
     def test_tool_delete_hallway_removes_existing_record(self, monkeypatch, tmp_path):
         """tool_delete_hallway removes the record and returns {deleted: True}."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         seeded = self._seed_hallways(monkeypatch, tmp_path)
         target_id = seeded[0]["id"]
@@ -1022,7 +1022,7 @@ class TestWriteTools:
 
     def test_tool_delete_hallway_unknown_id_returns_false(self, monkeypatch, tmp_path):
         """Deleting an ID that doesn't exist returns {deleted: False} without error."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._seed_hallways(monkeypatch, tmp_path)
         result = mcp_server.tool_delete_hallway(hallway_id="hallway_does_not_exist")
@@ -1030,7 +1030,7 @@ class TestWriteTools:
 
     def test_tool_delete_hallway_requires_string_id(self):
         """Missing or non-string hallway_id surfaces a structured error."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         assert mcp_server.tool_delete_hallway(hallway_id="") == {"error": "hallway_id is required"}
         assert mcp_server.tool_delete_hallway(hallway_id=None) == {
@@ -1039,7 +1039,7 @@ class TestWriteTools:
 
     def test_hallway_tools_registered_in_tools_registry(self):
         """Both new tools must appear in the public TOOLS registry so MCP clients can dispatch them."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         assert "mempalace_list_hallways" in mcp_server.TOOLS
         assert "mempalace_delete_hallway" in mcp_server.TOOLS
@@ -1057,7 +1057,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         result = tool_add_drawer(wing="w", room="r", content="Short content well under chunk_size.")
         assert result["success"] is True
@@ -1076,7 +1076,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         oversized = "X" * 10000
         result = tool_add_drawer(wing="w", room="r", content=oversized)
@@ -1116,7 +1116,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         oversized = "Y" * 5000
         r1 = tool_add_drawer(wing="w", room="r", content=oversized)
@@ -1143,7 +1143,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         result = tool_add_drawer(wing="w", room="r", content="Q" * 3500)
         assert result["success"] is True and result["chunks"] > 1
@@ -1165,7 +1165,7 @@ class TestWriteTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         boundary = "Z" * config.chunk_size
         result = tool_add_drawer(wing="w", room="r", content=boundary)
@@ -1182,7 +1182,7 @@ def test_add_drawer_chunked_logical_id_fetches_deletes_and_lists_as_one(
     _client, _col = _get_collection(palace_path, create=True)
     del _client
 
-    from mempalace.mcp_server import (
+    from trimemo.mcp_server import (
         tool_add_drawer,
         tool_delete_drawer,
         tool_get_drawer,
@@ -1223,7 +1223,7 @@ def test_update_drawer_chunked_logical_id_rewrites_group(monkeypatch, config, pa
     _client, _col = _get_collection(palace_path, create=True)
     del _client
 
-    from mempalace.mcp_server import (
+    from trimemo.mcp_server import (
         tool_add_drawer,
         tool_get_drawer,
         tool_list_drawers,
@@ -1264,7 +1264,7 @@ class TestDeleteBySource:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         # Two drawers from a "benchmark" source, one from real user data.
         tool_add_drawer(
@@ -1294,7 +1294,7 @@ class TestDeleteBySource:
         collection, keyed by the same ``source_file`` the drawers use: two for
         the benchmark source, one for the real-client source.
         """
-        from mempalace.palace import get_closets_collection
+        from trimemo.palace import get_closets_collection
 
         closets_col = get_closets_collection(palace_path, create=True)
         closets_col.add(
@@ -1314,7 +1314,7 @@ class TestDeleteBySource:
 
     def test_dry_run_reports_count_without_deleting(self, monkeypatch, config, palace_path, kg):
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import tool_delete_by_source, tool_status
+        from trimemo.mcp_server import tool_delete_by_source, tool_status
 
         result = tool_delete_by_source("results_mempal_hybrid_v4_session_1.jsonl")
         assert result["success"] is True
@@ -1328,8 +1328,8 @@ class TestDeleteBySource:
         """Dry run surfaces the closet blast radius (#1722) without deleting."""
         self._seed(monkeypatch, config, palace_path, kg)
         self._seed_closets(palace_path)
-        from mempalace.mcp_server import tool_delete_by_source
-        from mempalace.palace import get_closets_collection
+        from trimemo.mcp_server import tool_delete_by_source
+        from trimemo.palace import get_closets_collection
 
         result = tool_delete_by_source("results_mempal_hybrid_v4_session_1.jsonl")
         assert result["dry_run"] is True
@@ -1342,7 +1342,7 @@ class TestDeleteBySource:
 
     def test_commit_deletes_only_matching_source(self, monkeypatch, config, palace_path, kg):
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import tool_delete_by_source, tool_status
+        from trimemo.mcp_server import tool_delete_by_source, tool_status
 
         result = tool_delete_by_source("results_mempal_hybrid_v4_session_1.jsonl", dry_run=False)
         assert result["success"] is True
@@ -1356,8 +1356,8 @@ class TestDeleteBySource:
         index keeps no stale pointers at the now-deleted drawers (#1722)."""
         self._seed(monkeypatch, config, palace_path, kg)
         self._seed_closets(palace_path)
-        from mempalace.mcp_server import tool_delete_by_source
-        from mempalace.palace import get_closets_collection
+        from trimemo.mcp_server import tool_delete_by_source
+        from trimemo.palace import get_closets_collection
 
         result = tool_delete_by_source("results_mempal_hybrid_v4_session_1.jsonl", dry_run=False)
         assert result["success"] is True
@@ -1373,7 +1373,7 @@ class TestDeleteBySource:
 
     def test_no_match_is_idempotent_not_error(self, monkeypatch, config, palace_path, kg):
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import tool_delete_by_source, tool_status
+        from trimemo.mcp_server import tool_delete_by_source, tool_status
 
         result = tool_delete_by_source("does/not/exist.jsonl", dry_run=False)
         assert result["success"] is True
@@ -1382,7 +1382,7 @@ class TestDeleteBySource:
 
     def test_empty_source_file_rejected(self, monkeypatch, config, palace_path, kg):
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import tool_delete_by_source
+        from trimemo.mcp_server import tool_delete_by_source
 
         result = tool_delete_by_source("   ", dry_run=False)
         assert result["success"] is False
@@ -1391,7 +1391,7 @@ class TestDeleteBySource:
     def test_non_string_source_rejected(self, monkeypatch, config, palace_path, kg):
         """A non-string source_file must return a clean error, not AttributeError."""
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import tool_delete_by_source
+        from trimemo.mcp_server import tool_delete_by_source
 
         result = tool_delete_by_source(123, dry_run=False)
         assert result["success"] is False
@@ -1403,7 +1403,7 @@ class TestDeleteBySource:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import (
+        from trimemo.mcp_server import (
             tool_add_drawer,
             tool_delete_by_source,
             tool_status,
@@ -1427,7 +1427,7 @@ class TestDeleteBySource:
 
     def test_registered_and_dispatchable(self, monkeypatch, config, palace_path, kg):
         self._seed(monkeypatch, config, palace_path, kg)
-        from mempalace.mcp_server import handle_request
+        from trimemo.mcp_server import handle_request
 
         # Listed in tools/list
         listed = handle_request({"method": "tools/list", "id": 1, "params": {}})

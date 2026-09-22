@@ -1,6 +1,6 @@
 """The thin stdio front end (mempalace.mcp_proxy).
 
-``mempalace-mcp`` is spawned once per agent session and, whenever a hub is
+``trimemo-mcp`` is spawned once per agent session and, whenever a hub is
 running, does nothing but forward JSON-RPC over HTTP. Importing the full
 server to do that costs ~77 MB (chromadb alone is ~61 MB), so a 50-agent
 fleet paid ~3.9 GB to hold proxies that never touch storage. These tests
@@ -16,7 +16,7 @@ import urllib.error
 
 import pytest
 
-from mempalace import mcp_proxy
+from trimemo import mcp_proxy
 
 
 class TestInvocationRouting:
@@ -226,8 +226,8 @@ def test_importing_the_proxy_does_not_import_the_storage_stack():
     the test session has already imported everything.
     """
     code = (
-        "import sys; import mempalace.mcp_proxy; "
-        "print(','.join(m for m in ('chromadb','numpy','mempalace.mcp_server') "
+        "import sys; import trimemo.mcp_proxy; "
+        "print(','.join(m for m in ('chromadb','numpy','trimemo.mcp_server') "
         "if m in sys.modules))"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=120)

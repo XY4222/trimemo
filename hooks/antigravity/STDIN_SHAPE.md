@@ -1,7 +1,7 @@
 # Antigravity hook STDIN / STDOUT contract
 
 This file documents the exact wire format the Antigravity IDE uses
-when invoking the MemPalace hook scripts. All fields are verbatim
+when invoking the TriMemo hook scripts. All fields are verbatim
 from Google's official Antigravity hooks documentation
 (`https://antigravity.google/docs/hooks?app=antigravity`, accessed
 2026-05-27). See [INVESTIGATION.md](INVESTIGATION.md) for the
@@ -12,7 +12,7 @@ provenance audit.
 Hooks receive **JSON on stdin** and must emit **JSON on stdout**.
 Field names are **camelCase**.
 
-Hook execution timeout defaults to 30 seconds. The MemPalace plugin
+Hook execution timeout defaults to 30 seconds. The TriMemo plugin
 sets the Stop hook timeout to 30s and the PreInvocation hook timeout
 to 5s in the rendered `hooks.json`.
 
@@ -43,13 +43,13 @@ to 5s in the rendered `hooks.json`.
 | `decision` | string | If `"continue"`, **forces** the agent to keep running. Anything else allows the stop.                  |
 | `reason`   | string | Optional. If `decision == "continue"`, injected as a system message into the conversation.             |
 
-**MemPalace policy**: the save hook ALWAYS emits `{}` and exits 0. It
+**TriMemo policy**: the save hook ALWAYS emits `{}` and exits 0. It
 NEVER emits `{"decision": "continue"}` — that would force an infinite
 agent loop. There is an explicit refusal in
 `mempal_save_hook_antigravity.sh` to ever construct a stdout JSON
 object containing the literal word `"continue"` in a decision field.
 
-### MemPalace gating
+### TriMemo gating
 
 The save hook short-circuits with `{}` (no save triggered) when ANY
 of the following hold:
@@ -65,10 +65,10 @@ of the following hold:
 9. The transcript file does not exist on disk.
 10. The save counter has not yet hit `count % MEMPAL_SAVE_INTERVAL == 0`.
 11. A pending save is still running for this conversation (less than 1 hour old).
-12. The `mempalace` CLI is not on `$PATH`.
+12. The `trimemo` CLI is not on `$PATH`.
 
 When the modulo gate is hit and validation passes, the hook spawns
-`mempalace mine <transcript-dir> --mode convos --wing <inferred>` in
+`trimemo mine <transcript-dir> --mode convos --wing <inferred>` in
 the background and returns `{}` immediately.
 
 ## PreInvocation event
@@ -86,12 +86,12 @@ the background and returns `{}` immediately.
 |---------------|----------------|--------------------------------------------------------------------------------------------------------|
 | `injectSteps` | array<object>  | Optional. Steps to inject before the model is called. Each step has one of: `{"toolCall": {...}}`, `{"userMessage": "..."}`, `{"ephemeralMessage": "..."}` |
 
-The `ephemeralMessage` form is what the MemPalace wake hook emits — it
+The `ephemeralMessage` form is what the TriMemo wake hook emits — it
 delivers the wake-up text to the model on this turn but does not
 persist into the transcript, so subsequent invocations don't see a
 duplicate.
 
-### MemPalace gating
+### TriMemo gating
 
 The wake hook short-circuits with `{}` (no injection) when ANY of:
 
@@ -100,10 +100,10 @@ The wake hook short-circuits with `{}` (no injection) when ANY of:
    each conversation, mimicking Cursor's `sessionStart` semantics.
 3. The atomic `mkdir`-based loop guard is already taken (this
    conversation already received a wake injection).
-4. `mempalace wake-up --wing <inferred>` exits non-zero, times out
+4. `trimemo wake-up --wing <inferred>` exits non-zero, times out
    (500ms hard cap), or produces empty output.
 
-When the gates pass and `mempalace wake-up` returns text, the hook
+When the gates pass and `trimemo wake-up` returns text, the hook
 emits:
 
 ```json
@@ -129,9 +129,9 @@ contains a `decision` key.
   "error": "",
   "fullyIdle": true,
   "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
-  "workspacePaths": ["/home/me/projects/mempalace"],
-  "transcriptPath": "/home/me/projects/mempalace/.gemini/jetski/transcript.jsonl",
-  "artifactDirectoryPath": "/home/me/projects/mempalace/.gemini/jetski/artifacts"
+  "workspacePaths": ["/home/me/projects/trimemo"],
+  "transcriptPath": "/home/me/projects/trimemo/.gemini/jetski/transcript.jsonl",
+  "artifactDirectoryPath": "/home/me/projects/trimemo/.gemini/jetski/artifacts"
 }
 ```
 
@@ -142,7 +142,7 @@ contains a `decision` key.
 ```
 
 (Side effects: counter `~/.mempalace/hook_state/antigravity_save_count_<id>` is
-incremented; if the modulo gate fires, a background `mempalace mine`
+incremented; if the modulo gate fires, a background `trimemo mine`
 subprocess is spawned with the transcript directory and the inferred
 wing `wing_mempalace`.)
 
@@ -155,9 +155,9 @@ wing `wing_mempalace`.)
   "invocationNum": 1,
   "initialNumSteps": 0,
   "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
-  "workspacePaths": ["/home/me/projects/mempalace"],
-  "transcriptPath": "/home/me/projects/mempalace/.gemini/jetski/transcript.jsonl",
-  "artifactDirectoryPath": "/home/me/projects/mempalace/.gemini/jetski/artifacts"
+  "workspacePaths": ["/home/me/projects/trimemo"],
+  "transcriptPath": "/home/me/projects/trimemo/.gemini/jetski/transcript.jsonl",
+  "artifactDirectoryPath": "/home/me/projects/trimemo/.gemini/jetski/artifacts"
 }
 ```
 
@@ -167,7 +167,7 @@ wing `wing_mempalace`.)
 {
   "injectSteps": [
     {
-      "ephemeralMessage": "<exact verbatim text from `mempalace wake-up --wing wing_mempalace`>"
+      "ephemeralMessage": "<exact verbatim text from `trimemo wake-up --wing wing_mempalace`>"
     }
   ]
 }

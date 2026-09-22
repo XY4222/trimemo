@@ -1,1 +1,1 @@
-# MemPalace scale benchmark suite
+# TriMemo scale benchmark suite

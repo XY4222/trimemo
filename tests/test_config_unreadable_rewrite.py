@@ -15,7 +15,7 @@ import stat
 
 import pytest
 
-from mempalace.config import DEFAULT_PALACE_PATH, MempalaceConfig
+from trimemo.config import DEFAULT_PALACE_PATH, MempalaceConfig
 
 REAL = {
     "palace_path": "/mnt/data/palace",
@@ -265,7 +265,7 @@ def test_the_rename_is_made_durable(tmp_path, monkeypatch):
     """The rename's own durability needs the parent directory synced, which is
     what ``EntityRegistry.save`` does and explains. Nothing observable comes
     out of an fsync, so this asserts the call rather than its effect."""
-    import mempalace.config as config_module
+    import trimemo.config as config_module
 
     synced = []
     monkeypatch.setattr(config_module, "_fsync_directory", lambda d: synced.append(str(d)))
@@ -276,7 +276,7 @@ def test_the_rename_is_made_durable(tmp_path, monkeypatch):
 
 
 def test_a_setter_creates_the_config_directory_for_the_owner_only(tmp_path):
-    """``set_hook_setting`` reaches a machine where ``mempalace init`` never
+    """``set_hook_setting`` reaches a machine where ``trimemo init`` never
     ran. The config it writes holds the user's ``people_map``."""
     directory = tmp_path / "fresh"
     MempalaceConfig(config_dir=str(directory)).set_hook_setting("daemon", True)
@@ -413,7 +413,7 @@ def test_the_temporary_file_is_synced(tmp_path, monkeypatch):
     """The rename publishes whatever the temporary file holds. Syncing the
     directory makes the rename survive a crash; syncing the file is what makes
     the bytes it publishes survive one."""
-    from mempalace import config as config_mod
+    from trimemo import config as config_mod
 
     _config_file(tmp_path).write_text(json.dumps(REAL))
     real_fsync = os.fsync
@@ -514,7 +514,7 @@ def test_a_failed_write_in_place_keeps_the_finished_copy(tmp_path, monkeypatch, 
         raise OSError(errno.EIO, "Input/output error")
 
     monkeypatch.setattr(os, "replace", refused)
-    from mempalace import config as config_mod
+    from trimemo import config as config_mod
 
     monkeypatch.setattr(config_mod, "_write_json_in_place", dies)
 
@@ -659,7 +659,7 @@ def test_the_symlink_probe_raises_when_it_cannot_tell(tmp_path):
     put a regular file where the link was. Nothing reaches it that way through
     a setter, since a config this process cannot ``lstat`` fails its read first
     and the setter declines before writing, so this calls the probe itself."""
-    from mempalace.config import _write_target
+    from trimemo.config import _write_target
 
     locked = tmp_path / "locked"
     locked.mkdir()

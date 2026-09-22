@@ -3,7 +3,7 @@
 #
 # Idempotent installer for the Antigravity plugin. Copies
 # .antigravity-plugin/* and hooks/antigravity/{lib,*.sh} into the
-# install directory (default ~/.gemini/config/plugins/mempalace/),
+# install directory (default ~/.gemini/config/plugins/trimemo/),
 # renders hooks.json.tmpl into hooks.json with absolute paths, and
 # leaves the result in a state Antigravity will discover on next
 # launch.
@@ -21,14 +21,14 @@
 # Re-running the installer produces a byte-identical install dir.
 # Files are only written when their content differs from what is
 # already on disk (cmp gate). The user's ~/.gemini/config/plugins/
-# directory is never touched outside the mempalace/ subdirectory.
+# directory is never touched outside the trimemo/ subdirectory.
 #
 # === Uninstall safety ===
 #
 # Uninstall removes the install dir entirely IFF it is the
-# mempalace/ plugin directory. We match by basename of the install
+# trimemo/ plugin directory. We match by basename of the install
 # dir, never by substring search, so a user who has a sibling plugin
-# at ~/.gemini/config/plugins/mempalace-foo/ is unaffected.
+# at ~/.gemini/config/plugins/trimemo-foo/ is unaffected.
 #
 # === set -e ===
 #
@@ -46,7 +46,7 @@ PLUGIN_SRC="$REPO_ROOT/.antigravity-plugin"
 HOOKS_SRC="$REPO_ROOT/hooks/antigravity"
 
 # ── Defaults ─────────────────────────────────────────────────────────
-INSTALL_DIR_DEFAULT="$HOME/.gemini/config/plugins/mempalace"
+INSTALL_DIR_DEFAULT="$HOME/.gemini/config/plugins/trimemo"
 INSTALL_DIR=""
 DRY_RUN=0
 UNINSTALL=0
@@ -59,7 +59,7 @@ Usage: install.sh [--install-dir DIR] [--dry-run] [--uninstall] [--log-level LEV
 
 Options:
   --install-dir DIR   Plugin install directory.
-                      Default: ~/.gemini/config/plugins/mempalace
+                      Default: ~/.gemini/config/plugins/trimemo
   --dry-run           Show what would happen without writing anything.
   --uninstall         Remove the installed plugin.
   --log-level LEVEL   debug | info | warn | error. Default: info.
@@ -240,14 +240,14 @@ copy_file() {
 #
 # We DO NOT remove the install dir by string-substring match against
 # the path. We require the install dir's basename to be exactly
-# "mempalace" — that way an unrelated sibling like
-# ~/.gemini/config/plugins/mempalace-foo/ is left alone, and a
+# "trimemo" — that way an unrelated sibling like
+# ~/.gemini/config/plugins/trimemo-foo/ is left alone, and a
 # malformed --install-dir like ~ or / cannot wipe the user's home.
 do_uninstall() {
     local base
     base="$(basename "$INSTALL_DIR")"
-    if [ "$base" != "mempalace" ]; then
-        log error "refusing to uninstall: install dir basename is '$base', expected 'mempalace'"
+    if [ "$base" != "trimemo" ]; then
+        log error "refusing to uninstall: install dir basename is '$base', expected 'trimemo'"
         log error "(safety guard: prevents accidental wipe of unrelated directories)"
         return 1
     fi
@@ -261,8 +261,8 @@ do_uninstall() {
         log error "refusing to uninstall: $INSTALL_DIR has no plugin.json"
         return 1
     fi
-    if ! grep -q '"name"[[:space:]]*:[[:space:]]*"mempalace"' "$INSTALL_DIR/plugin.json" 2>/dev/null; then
-        log error "refusing to uninstall: $INSTALL_DIR/plugin.json is not a mempalace plugin"
+    if ! grep -q '"name"[[:space:]]*:[[:space:]]*"trimemo"' "$INSTALL_DIR/plugin.json" 2>/dev/null; then
+        log error "refusing to uninstall: $INSTALL_DIR/plugin.json is not a trimemo plugin"
         return 1
     fi
     if [ "$DRY_RUN" -eq 1 ]; then
@@ -288,10 +288,10 @@ if [ ! -d "$HOOKS_SRC" ]; then
     exit 1
 fi
 
-# Soft-check that mempalace-mcp is on PATH; warn but do not fail.
-if ! command -v mempalace-mcp >/dev/null 2>&1; then
-    log warn "mempalace-mcp is not on PATH; the MCP server will fail to start until it is."
-    log warn "  fix: 'uv tool install mempalace' or 'pip install mempalace'"
+# Soft-check that trimemo-mcp is on PATH; warn but do not fail.
+if ! command -v trimemo-mcp >/dev/null 2>&1; then
+    log warn "trimemo-mcp is not on PATH; the MCP server will fail to start until it is."
+    log warn "  fix: 'uv tool install trimemo' or 'pip install trimemo'"
 fi
 
 # Soft-check ~/.gemini exists; if missing, Antigravity isn't installed.
@@ -304,8 +304,8 @@ log info "install dir: $INSTALL_DIR"
 
 # ── Install: directories ─────────────────────────────────────────────
 run mkdir -p "$INSTALL_DIR" \
-    "$INSTALL_DIR/skills/mempalace" \
-    "$INSTALL_DIR/skills/mempalace-recall" \
+    "$INSTALL_DIR/skills/trimemo" \
+    "$INSTALL_DIR/skills/trimemo-recall" \
     "$INSTALL_DIR/rules" \
     "$INSTALL_DIR/hooks" \
     "$INSTALL_DIR/hooks/lib"
@@ -316,21 +316,21 @@ copy_file "$PLUGIN_SRC/mcp_config.json" "$INSTALL_DIR/mcp_config.json"
 copy_file "$PLUGIN_SRC/README.md"       "$INSTALL_DIR/README.md"
 
 # ── Install: skills (real files, no symlinks at the discovery path) ──
-copy_file "$PLUGIN_SRC/skills/mempalace/SKILL.md" \
-    "$INSTALL_DIR/skills/mempalace/SKILL.md"
-copy_file "$PLUGIN_SRC/skills/mempalace-recall/SKILL.md" \
-    "$INSTALL_DIR/skills/mempalace-recall/SKILL.md"
+copy_file "$PLUGIN_SRC/skills/trimemo/SKILL.md" \
+    "$INSTALL_DIR/skills/trimemo/SKILL.md"
+copy_file "$PLUGIN_SRC/skills/trimemo-recall/SKILL.md" \
+    "$INSTALL_DIR/skills/trimemo-recall/SKILL.md"
 
 # ── Install: optional recall rule ────────────────────────────────────
 #
 # Antigravity discovers markdown rules under the plugin's rules/
 # directory. This one is recall-only and intentionally lightweight —
-# it complements the mempalace-recall skill. Shipping it as a plugin
+# it complements the trimemo-recall skill. Shipping it as a plugin
 # rule (not an always-on global rule) keeps it scoped to recall-
-# relevant turns, honouring MemPalace's "memory should feel instant"
+# relevant turns, honouring TriMemo's "memory should feel instant"
 # budget.
-copy_file "$PLUGIN_SRC/rules/mempalace-recall.md" \
-    "$INSTALL_DIR/rules/mempalace-recall.md"
+copy_file "$PLUGIN_SRC/rules/trimemo-recall.md" \
+    "$INSTALL_DIR/rules/trimemo-recall.md"
 
 # ── Install: hooks ───────────────────────────────────────────────────
 copy_file "$HOOKS_SRC/lib/common.sh"                    "$INSTALL_DIR/hooks/lib/common.sh"

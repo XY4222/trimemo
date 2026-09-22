@@ -1,6 +1,6 @@
-# MemPalace Shared-Brain Coordination Protocol
+# TriMemo Shared-Brain Coordination Protocol
 
-The canonical protocol for agents sharing one MemPalace hub — memory
+The canonical protocol for agents sharing one TriMemo hub — memory
 discipline plus the logstream coordination layer (RFC 003). Like
 `recall-protocol.md`, this file is the single source of truth: skills,
 rules, and system prompts should link here or copy the System-Prompt
@@ -41,13 +41,13 @@ stable.
   (`antigravity2`) to split windows — that is what topic is for.
 
 Render the identity into instructions with
-`mempalace rules --host <host> --harness <harness> --project <example>`.
+`trimemo rules --host <host> --harness <harness> --project <example>`.
 The block tells the agent to compose `host:harness:<project>` from the
 current workspace; `--project` is the example name in the e.g. line.
 
 Flat names (`mac-claude`) still route if someone writes them. After a
 cutover, sweep the old inbox once
-(`mempalace logstream list --to-agent mac-claude`) and stop. Do not keep
+(`trimemo logstream list --to-agent mac-claude`) and stop. Do not keep
 the old name in the prompt.
 
 ## Topic Routing
@@ -64,7 +64,7 @@ one undifferentiated inbox:
   every event that omitted one.
 - Filter with `topic=<topic-name>` in `mempalace_event_list`,
   `mempalace_event_wait`, or `--topic <topic-name>` in
-  `mempalace logstream watch` only for a wait you have advertised.
+  `trimemo logstream watch` only for a wait you have advertised.
 - `mempalace_event_ack` inherits the target event's `topic` by default
   (or accepts an explicit override).
 
@@ -97,7 +97,7 @@ one undifferentiated inbox:
 5. If blocked or unable to produce a patch, still reply:
    `type=task.reply` with `status=blocked` or `failed` and verbatim
    notes. Silence is the only unrecoverable failure.
-6. Claiming a task **is** a watch trigger. Arm `mempalace logstream watch`
+6. Claiming a task **is** a watch trigger. Arm `trimemo logstream watch`
    (see below) for review feedback, verification results, acceptance, or
    the next sequence task. Re-arm after every wake.
 
@@ -138,19 +138,19 @@ processed.
 | Mode | Use when | How |
 |---|---|---|
 | **Inbox sweep** | Entering collaborative mode, and before any long task | No cursor: `EVENT INBOX to:<you>` (newest-first). Resume: `mempalace_event_list` with `to_agent=<you>`, `since_event_id=<last seen>`, `preview=true` (omit `order`) |
-| **Background watcher** | You want to be woken while you work | `mempalace logstream watch` as a background process — see below |
+| **Background watcher** | You want to be woken while you work | `trimemo logstream watch` as a background process — see below |
 | **Long-poll** | Actively waiting on one known correlation, in-turn | `mempalace_event_wait` with `correlation_id` + `to_agent=<you>` |
 | **Push (SSE)** | Persistent processes: daemons, dashboards, live viewers | `GET /logstream/stream` — live-tail filters, same envelope, `since_event_id` resume |
 | **Declared-idle** | Turn-based agents that stop existing between prompts | You cannot watch. Say so, publish your cursor, and let the requester ping you |
 
 ### The background watcher
 
-`mempalace logstream watch` is the mode most agents want. It blocks until
+`trimemo logstream watch` is the mode most agents want. It blocks until
 something you care about arrives, prints it, and exits — so any harness that
 can run a background process and react to its exit gets woken:
 
 ```bash
-mempalace logstream watch \
+trimemo logstream watch \
   --agent mac:claude:myapp \
   --type task.request --type task.reply --type patch.ready \
   --json
@@ -226,7 +226,7 @@ before:
   state-file cursor persists across relaunches, so events arriving in the
   re-arm gap are caught, not lost.
 - **Remote MCP clients** loop on `mempalace_event_wait` and carry
-  `since_event_id`. Do not run local `mempalace logstream watch` unless this
+  `since_event_id`. Do not run local `trimemo logstream watch` unless this
   machine owns the palace or a deliberately synchronized replica.
 
 ### Harness permission prompts stall the loop silently
@@ -237,9 +237,9 @@ is looking at. The observable symptom from the other side is an agent that
 claimed a task and went quiet — indistinguishable from a crash until someone
 walks over to the screen. A four-second round trip becomes minutes or hours.
 
-For unattended coordination, have the operator allowlist the mempalace MCP
+For unattended coordination, have the operator allowlist the trimemo MCP
 tools (at minimum the event append/ack tools and `mempalace_patch_submit`)
-and the `mempalace logstream watch` command in the harness's permission
+and the `trimemo logstream watch` command in the harness's permission
 settings. Until that is done, treat yourself as semi-attended: expect your
 writes to wait on a human, and say so when you announce your watch.
 
@@ -328,22 +328,22 @@ re-rendering. The runtime identity is `host:harness:<project>` from the
 current workspace:
 
 ```bash
-mempalace rules --host mac --harness claude --project myapp
+trimemo rules --host mac --harness claude --project myapp
 # tool names for the 3-tool server: add --mcp light
 ```
 
 The CLI reads a packaged copy of this snippet
-(`mempalace/instructions/shared_brain_rules.md`) that is test-pinned to
+(`trimemo/instructions/shared_brain_rules.md`) that is test-pinned to
 this file, so the two cannot drift.
 
 ```text
-## MemPalace shared brain
+## TriMemo shared brain
 
-You share a MemPalace hub with other agents. Your agent identity is
+You share a TriMemo hub with other agents. Your agent identity is
 host:harness:project — on this machine <HOST>:<HARNESS>:<project>, where
 <project> is the current workspace/repo name (lowercase, e.g.
 <HOST>:<HARNESS>:<PROJECT>). Use that composed identity as
-from_agent/created_by in every MemPalace call. Sessions in the same
+from_agent/created_by in every TriMemo call. Sessions in the same
 project share ONE identity (one knowledge scope); put per-session
 detail like PID in event metadata, not in the identity. Never
 impersonate another agent. Never mint a second harness suffix to split
@@ -374,11 +374,11 @@ Coordination (logstream):
   events are ordered by append order, so a peer's event can arrive
   already "older" than a timestamp cursor and be skipped forever. '*'
   broadcasts match automatically.
-- Arm mempalace logstream watch (and re-arm after every wake) when any
+- Arm trimemo logstream watch (and re-arm after every wake) when any
   of these happen — not before: (1) the user asked you to listen or
   coordinate, (2) you ack a task with status=claimed, (3) you delegate
   (append a task.request). Command:
-  `mempalace logstream watch --agent <HOST>:<HARNESS>:<project>
+  `trimemo logstream watch --agent <HOST>:<HARNESS>:<project>
   --type task.request --type task.reply --type patch.ready --json`
   Use --agent, not --to-agent: it also excludes your own events. The
   CLI defaults a sanitized --state-file from --agent. Treat exit 0 as
@@ -393,11 +393,11 @@ Coordination (logstream):
   to_agent=*) naming your filter and cursor so others know you are
   listening. If you cannot watch, say so and publish the cursor —
   never claim a watch you do not have.
-- Acks: mempalace_event_ack (CLI: `mempalace logstream ack`) — it
+- Acks: mempalace_event_ack (CLI: `trimemo logstream ack`) — it
   fills type=event.ack and the ack_of link; don't hand-roll event.ack
   appends. Acks inherit the target event's topic.
 - If your harness gates shell commands or MCP writes behind approval
-  prompts, ask the operator to allowlist the mempalace tools and the
+  prompts, ask the operator to allowlist the trimemo tools and the
   watch command: an unnoticed prompt stalls the loop silently, and to
   your peers it looks like "claimed but gone quiet".
 - Topics: write topic=<lane> on named workstreams (e.g. auth-v2). Do

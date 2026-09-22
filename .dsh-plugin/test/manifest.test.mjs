@@ -15,10 +15,10 @@ test('the bundle manifest points at its patch layer', () => {
   assert.ok(pkg.files.includes('cordis.patch.yml'))
 })
 
-test('the patch inserts exactly the three mempalace rows', () => {
+test('the patch inserts exactly the three trimemo rows', () => {
   assert.deepEqual(
     rows.map((row) => row.id),
-    ['mempalace-recall', 'mempalace-autosave', 'mempalace-mcp'],
+    ['trimemo-recall', 'trimemo-autosave', 'trimemo-mcp'],
   )
 })
 
@@ -36,7 +36,7 @@ test("every row naming this package resolves through the package's own exports",
 })
 
 test('the MCP row serves the palace tools under the name the recall prompt teaches', async () => {
-  assert.match(patch, /name: '@deepseek-ai\/dsh-mcp-client'\n\s+config:\n\s+serverName: mempalace\n\s+transport: stdio\n\s+command: mempalace-light-mcp\n/)
+  assert.match(patch, /name: '@deepseek-ai\/dsh-mcp-client'\n\s+config:\n\s+serverName: trimemo\n\s+transport: stdio\n\s+command: trimemo-light-mcp\n/)
   const { DEFAULT_SEARCH_TOOL } = await import(pathToFileURL(path.join(root, 'lib/palace.js')).href)
   assert.equal(DEFAULT_SEARCH_TOOL, 'mcp__mempalace__palace_query')
 })

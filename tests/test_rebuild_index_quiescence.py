@@ -4,8 +4,8 @@ before opening ChromaDB or entering the snapshot/rebuild path.
 
 import pytest
 
-from mempalace import repair
-from mempalace import palace
+from trimemo import repair
+from trimemo import palace
 
 
 def test_rebuild_index_refuses_before_backend_open_when_writer_lease_unavailable(

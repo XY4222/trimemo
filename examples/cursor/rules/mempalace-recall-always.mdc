@@ -1,9 +1,9 @@
 ---
-description: Always-on MemPalace recall — search the palace before answering about past work, people, projects, or prior decisions.
+description: Always-on TriMemo recall — search the palace before answering about past work, people, projects, or prior decisions.
 alwaysApply: true
 ---
 
-# MemPalace recall (always on)
+# TriMemo recall (always on)
 
 This is the aggressive variant of the recall rule: `alwaysApply: true`
 loads it into every conversation in scope, on every turn, regardless of

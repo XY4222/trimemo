@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-import mempalace.backends.chroma as chroma
+import trimemo.backends.chroma as chroma
 
 
 pytestmark = pytest.mark.skipif(

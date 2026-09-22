@@ -4,13 +4,13 @@ Covers:
 
 * `plugin.json` matches the verified-minimal Antigravity schema
   (`{"name": "..."}`, no fabricated fields).
-* `mcp_config.json` registers `mempalace-mcp` under the `mcpServers`
+* `mcp_config.json` registers `trimemo-mcp` under the `mcpServers`
   key with the verified shape from
   https://antigravity.google/docs/mcp.
 * `hooks.json.tmpl` is valid JSON, references both hook scripts via
   the `__PLUGIN_DIR__` placeholder, and pins per-event timeouts
   inside the safety bounds.
-* `skills/mempalace/SKILL.md` exists as a real file (no symlinks) and
+* `skills/trimemo/SKILL.md` exists as a real file (no symlinks) and
   carries the required YAML frontmatter (`description`).
 
 These are contract tests — they fail as soon as anyone changes the
@@ -31,16 +31,16 @@ PLUGIN_DIR = REPO_ROOT / ".antigravity-plugin"
 PLUGIN_JSON = PLUGIN_DIR / "plugin.json"
 MCP_CONFIG = PLUGIN_DIR / "mcp_config.json"
 HOOKS_TMPL = PLUGIN_DIR / "hooks.json.tmpl"
-SKILL_MD = PLUGIN_DIR / "skills" / "mempalace" / "SKILL.md"
+SKILL_MD = PLUGIN_DIR / "skills" / "trimemo" / "SKILL.md"
 PLUGIN_README = PLUGIN_DIR / "README.md"
 
 # Recall layer (mirrors the Cursor branch's recall skill + rule + shared protocol)
-RECALL_SKILL_MD = PLUGIN_DIR / "skills" / "mempalace-recall" / "SKILL.md"
-RECALL_RULE_MD = PLUGIN_DIR / "rules" / "mempalace-recall.md"
+RECALL_SKILL_MD = PLUGIN_DIR / "skills" / "trimemo-recall" / "SKILL.md"
+RECALL_RULE_MD = PLUGIN_DIR / "rules" / "trimemo-recall.md"
 SHARED_PROTOCOL = REPO_ROOT / "integrations" / "shared" / "recall-protocol.md"
 INSTALL_SH = REPO_ROOT / "hooks" / "antigravity" / "install.sh"
 SHARED_PROTOCOL_REF = (
-    "https://github.com/MemPalace/mempalace/blob/main/integrations/shared/recall-protocol.md"
+    "https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md"
 )
 
 EXPECTED_HOOKS = {
@@ -65,7 +65,7 @@ def test_plugin_dir_exists() -> None:
 
 
 def test_plugin_json_minimal_schema() -> None:
-    """plugin.json must be `{"name": "mempalace"}` exactly — no fabricated fields.
+    """plugin.json must be `{"name": "trimemo"}` exactly — no fabricated fields.
 
     The third-party "antigravity-plugins" community skill at
     ~/.gemini/skills/antigravity-plugins/SKILL.md documents a
@@ -75,25 +75,25 @@ def test_plugin_json_minimal_schema() -> None:
     """
     data = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))
     assert isinstance(data, dict), "plugin.json must be a JSON object"
-    assert data == {"name": "mempalace"}, (
-        f"plugin.json must equal {{'name': 'mempalace'}} (verified shape); "
+    assert data == {"name": "trimemo"}, (
+        f"plugin.json must equal {{'name': 'trimemo'}} (verified shape); "
         f"got {data!r}. The `permissions` field documented in the third-party "
         "antigravity-plugins community skill is fabricated; do not add it."
     )
 
 
 def test_mcp_config_registers_mempalace_mcp() -> None:
-    """mcp_config.json must register the mempalace stdio server."""
+    """mcp_config.json must register the trimemo stdio server."""
     data = json.loads(MCP_CONFIG.read_text(encoding="utf-8"))
     assert isinstance(data, dict)
     assert "mcpServers" in data, "missing top-level mcpServers key"
     servers = data["mcpServers"]
     assert isinstance(servers, dict)
-    assert "mempalace" in servers, "mcpServers.mempalace not registered"
-    entry = servers["mempalace"]
+    assert "trimemo" in servers, "mcpServers.mempalace not registered"
+    entry = servers["trimemo"]
     assert isinstance(entry, dict)
-    assert entry.get("command") == "mempalace-mcp", (
-        f"mcpServers.mempalace.command must be 'mempalace-mcp'; got {entry.get('command')!r}"
+    assert entry.get("command") == "trimemo-mcp", (
+        f"mcpServers.mempalace.command must be 'trimemo-mcp'; got {entry.get('command')!r}"
     )
 
 
@@ -129,7 +129,7 @@ def test_hooks_template_event_present(event: str) -> None:
     """Each expected event has exactly one entry pointing at the right script with bounded timeout."""
     data = json.loads(HOOKS_TMPL.read_text(encoding="utf-8"))
     bounds = EXPECTED_HOOKS[event]
-    # Outer keys are hook namespace names, e.g. "mempalace-save".
+    # Outer keys are hook namespace names, e.g. "trimemo-save".
     matching = [
         (ns, payload[event])
         for ns, payload in data.items()
@@ -254,7 +254,7 @@ def test_shared_protocol_exists() -> None:
     """
     assert SHARED_PROTOCOL.is_file(), f"missing: {SHARED_PROTOCOL}"
     body = SHARED_PROTOCOL.read_text(encoding="utf-8")
-    assert "MemPalace Recall Protocol" in body, "shared protocol must carry its canonical title"
+    assert "TriMemo Recall Protocol" in body, "shared protocol must carry its canonical title"
 
 
 def test_recall_skill_exists() -> None:
@@ -270,7 +270,7 @@ def test_recall_skill_has_required_frontmatter() -> None:
     """The recall skill must carry YAML frontmatter with a non-empty description.
 
     Antigravity's skill loader uses `description` for progressive
-    disclosure, exactly like the ops `mempalace` skill.
+    disclosure, exactly like the ops `trimemo` skill.
     """
     body = RECALL_SKILL_MD.read_text(encoding="utf-8")
     assert body.startswith("---\n"), "recall SKILL.md must begin with YAML frontmatter"
@@ -317,7 +317,7 @@ def test_recall_rule_is_plain_markdown_not_mdc() -> None:
     plain-markdown shape so nobody copies the Cursor `.mdc` verbatim.
     """
     assert RECALL_RULE_MD.suffix == ".md", "Antigravity rule must use the .md extension"
-    assert not (RECALL_RULE_MD.parent / "mempalace-recall.mdc").exists(), (
+    assert not (RECALL_RULE_MD.parent / "trimemo-recall.mdc").exists(), (
         "an .mdc rule leaked in; Antigravity rules are plain .md"
     )
     body = RECALL_RULE_MD.read_text(encoding="utf-8")
@@ -334,25 +334,25 @@ def test_recall_rule_references_shared_protocol() -> None:
 
 
 def test_installer_creates_rules_dir() -> None:
-    """install.sh must create the skills/mempalace-recall and rules dirs."""
+    """install.sh must create the skills/trimemo-recall and rules dirs."""
     body = INSTALL_SH.read_text(encoding="utf-8")
     assert '"$INSTALL_DIR/rules"' in body, "install.sh mkdir block must create the rules/ directory"
-    assert '"$INSTALL_DIR/skills/mempalace-recall"' in body, (
-        "install.sh mkdir block must create the skills/mempalace-recall/ directory"
+    assert '"$INSTALL_DIR/skills/trimemo-recall"' in body, (
+        "install.sh mkdir block must create the skills/trimemo-recall/ directory"
     )
 
 
 def test_installer_copies_recall_skill() -> None:
     """install.sh must copy the recall skill into the install dir."""
     body = INSTALL_SH.read_text(encoding="utf-8")
-    assert "skills/mempalace-recall/SKILL.md" in body, (
-        "install.sh must copy_file the mempalace-recall skill"
+    assert "skills/trimemo-recall/SKILL.md" in body, (
+        "install.sh must copy_file the trimemo-recall skill"
     )
 
 
 def test_installer_copies_recall_rule() -> None:
     """install.sh must copy the recall rule into the install dir."""
     body = INSTALL_SH.read_text(encoding="utf-8")
-    assert "rules/mempalace-recall.md" in body, (
-        "install.sh must copy_file the mempalace-recall rule"
+    assert "rules/trimemo-recall.md" in body, (
+        "install.sh must copy_file the trimemo-recall rule"
     )

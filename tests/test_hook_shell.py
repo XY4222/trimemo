@@ -2,7 +2,7 @@ import json
 import subprocess
 import sys
 
-from mempalace import hook_shell
+from trimemo import hook_shell
 
 
 def test_normalize_transcript_path_preserves_windows_drive_and_segments():
@@ -44,7 +44,7 @@ def test_parse_precompact_cli_outputs_sentinel_and_normalized_path():
     }
 
     result = subprocess.run(
-        [sys.executable, "-m", "mempalace.hook_shell", "parse-precompact"],
+        [sys.executable, "-m", "trimemo.hook_shell", "parse-precompact"],
         input=json.dumps(payload),
         text=True,
         capture_output=True,
@@ -77,7 +77,7 @@ def test_count_human_messages_reads_utf8_transcripts_tolerantly(tmp_path):
     assert hook_shell.count_human_messages(str(transcript)) == 1
 
     result = subprocess.run(
-        [sys.executable, "-m", "mempalace.hook_shell", "count-human-messages", str(transcript)],
+        [sys.executable, "-m", "trimemo.hook_shell", "count-human-messages", str(transcript)],
         text=True,
         capture_output=True,
         check=True,
@@ -88,7 +88,7 @@ def test_count_human_messages_reads_utf8_transcripts_tolerantly(tmp_path):
 
 def test_parse_stop_cli_fails_loud_on_malformed_nonempty_stdin():
     result = subprocess.run(
-        [sys.executable, "-m", "mempalace.hook_shell", "parse-stop"],
+        [sys.executable, "-m", "trimemo.hook_shell", "parse-stop"],
         input="not-json garbage",
         text=True,
         capture_output=True,
@@ -102,7 +102,7 @@ def test_parse_stop_cli_fails_loud_on_malformed_nonempty_stdin():
 
 def test_parse_precompact_cli_fails_loud_on_malformed_nonempty_stdin():
     result = subprocess.run(
-        [sys.executable, "-m", "mempalace.hook_shell", "parse-precompact"],
+        [sys.executable, "-m", "trimemo.hook_shell", "parse-precompact"],
         input="not-json garbage",
         text=True,
         capture_output=True,
@@ -116,7 +116,7 @@ def test_parse_precompact_cli_fails_loud_on_malformed_nonempty_stdin():
 
 def test_parse_stop_cli_treats_empty_stdin_as_empty_payload():
     result = subprocess.run(
-        [sys.executable, "-m", "mempalace.hook_shell", "parse-stop"],
+        [sys.executable, "-m", "trimemo.hook_shell", "parse-stop"],
         input="",
         text=True,
         capture_output=True,

@@ -3,12 +3,12 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from mempalace.miner import process_file
-from mempalace.palace import (
+from trimemo.miner import process_file
+from trimemo.palace import (
     get_closets_collection,
     get_collection,
 )
-from mempalace.searcher import (
+from trimemo.searcher import (
     _candidate_pool_limits,
     _dedupe_rendered_hits,
     _enrich_closet_hits,
@@ -234,11 +234,11 @@ def test_search_promotes_distinct_results_from_wider_pool_and_fetches_source_onc
     }
 
     with patch(
-        "mempalace.searcher.get_collection",
+        "trimemo.searcher.get_collection",
         return_value=drawers_col,
     ):
         with patch(
-            "mempalace.searcher.get_closets_collection",
+            "trimemo.searcher.get_closets_collection",
             return_value=closets_col,
         ):
             result = search_memories(

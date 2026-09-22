@@ -7,10 +7,10 @@ rollout tracked in #1963.
 
 The policy applies to:
 
-- `mempalace mine`;
-- `mempalace sweep`;
-- `mempalace sync`;
-- the optional post-setup mine run by `mempalace init`.
+- `trimemo mine`;
+- `trimemo sweep`;
+- `trimemo sync`;
+- the optional post-setup mine run by `trimemo init`.
 
 ## Policies
 
@@ -36,17 +36,17 @@ which cannot cold-start the daemon.
 
 Force daemon execution:
 
-    mempalace mine ./project --daemon
+    trimemo mine ./project --daemon
 
 Force direct execution:
 
-    mempalace mine ./project --direct
+    trimemo mine ./project --direct
 
 The flags are mutually exclusive and override environment/config policy.
 
 Background execution:
 
-    mempalace mine ./project --background
+    trimemo mine ./project --background
 
 `--background` is valid when the selected route is the daemon. A direct route
 with `--background` exits with a configuration error.

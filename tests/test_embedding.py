@@ -1,6 +1,6 @@
 import pytest
 
-import mempalace.embedding as embedding
+import trimemo.embedding as embedding
 
 
 @pytest.fixture(autouse=True)
@@ -91,21 +91,21 @@ def test_cuda_missing_warns_with_gpu_extra(monkeypatch, caplog):
     monkeypatch.setattr("onnxruntime.get_available_providers", lambda: ["CPUExecutionProvider"])
 
     assert embedding._resolve_providers("cuda") == (["CPUExecutionProvider"], "cpu")
-    assert "mempalace[gpu]" in caplog.text
+    assert "trimemo[gpu]" in caplog.text
 
 
 def test_coreml_missing_warns_with_coreml_extra(monkeypatch, caplog):
     monkeypatch.setattr("onnxruntime.get_available_providers", lambda: ["CPUExecutionProvider"])
 
     assert embedding._resolve_providers("coreml") == (["CPUExecutionProvider"], "cpu")
-    assert "mempalace[coreml]" in caplog.text
+    assert "trimemo[coreml]" in caplog.text
 
 
 def test_dml_missing_warns_with_dml_extra(monkeypatch, caplog):
     monkeypatch.setattr("onnxruntime.get_available_providers", lambda: ["CPUExecutionProvider"])
 
     assert embedding._resolve_providers("dml") == (["CPUExecutionProvider"], "cpu")
-    assert "mempalace[dml]" in caplog.text
+    assert "trimemo[dml]" in caplog.text
 
 
 def test_unknown_device_warns_once(monkeypatch, caplog):
@@ -233,7 +233,7 @@ def test_resolve_embeddinggemma_batch_size_falls_back_on_config_error(monkeypatc
         def __init__(self, *a, **kw):
             raise RuntimeError("config load failed")
 
-    monkeypatch.setattr("mempalace.config.MempalaceConfig", ExplodingConfig)
+    monkeypatch.setattr("trimemo.config.MempalaceConfig", ExplodingConfig)
 
     assert embedding._resolve_embeddinggemma_batch_size() == embedding._EMBEDDINGGEMMA_BATCH_SIZE
 
@@ -345,7 +345,7 @@ def test_embed_texts_returns_plain_python_floats(monkeypatch):
     numpy array, or a list of numpy arrays" once chroma began declaring
     ``requires_explicit_embeddings`` and routing through EmbeddingCollection.
     """
-    from mempalace.backends import embedding_wrapper as ew
+    from trimemo.backends import embedding_wrapper as ew
 
     monkeypatch.setattr(
         embedding, "get_embedding_function", lambda *_, **__: _NumpyEmbeddingFunction()
@@ -365,9 +365,9 @@ def test_embedding_collection_upsert_accepts_numpy_backed_vectors(tmp_path, monk
     Asserting on float types alone would not catch a future ChromaDB tightening
     its accepted shapes, so drive an actual upsert + read-back.
     """
-    from mempalace.backends.chroma import ChromaBackend
-    from mempalace.backends.base import PalaceRef
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.backends.chroma import ChromaBackend
+    from trimemo.backends.base import PalaceRef
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
 
     monkeypatch.setattr(
         embedding, "get_embedding_function", lambda *_, **__: _NumpyEmbeddingFunction()
@@ -401,7 +401,7 @@ def test_embed_texts_handles_plain_sequence_embedders(monkeypatch):
     """
     from decimal import Decimal
 
-    from mempalace.backends import embedding_wrapper as ew
+    from trimemo.backends import embedding_wrapper as ew
 
     class _PlainSequenceEmbeddingFunction:
         def __call__(self, input):
@@ -426,7 +426,7 @@ def test_embed_texts_short_circuits_on_empty_input(monkeypatch):
     loading the EF is the expensive part — on the ONNX default it spins up a
     native session. Guards the early return so it cannot be refactored away.
     """
-    from mempalace.backends import embedding_wrapper as ew
+    from trimemo.backends import embedding_wrapper as ew
 
     def _explode(*_, **__):
         raise AssertionError("get_embedding_function must not be called for an empty batch")

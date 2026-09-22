@@ -1,6 +1,6 @@
 name: Publish to PyPI
 
-# Publishes mempalace to PyPI via Trusted Publishing (OIDC — no stored token).
+# Publishes trimemo to PyPI via Trusted Publishing (OIDC — no stored token).
 #
 # Triggers:
 #   * release: published — the normal path (drafting + publishing a GitHub
@@ -18,8 +18,8 @@ name: Publish to PyPI
 # uploads a tag that isn't on main or doesn't match the version manifest.
 #
 # One-time setup required before the first run (see docs/RELEASING.md):
-#   1. PyPI → Manage project `mempalace` → Publishing → Add a trusted publisher:
-#        Owner: MemPalace   Repository: mempalace
+#   1. PyPI → Manage project `trimemo` → Publishing → Add a trusted publisher:
+#        Owner: TriMemo   Repository: trimemo
 #        Workflow: publish.yml   Environment: pypi
 #   2. GitHub → repo Settings → Environments → New environment `pypi`,
 #      add yourself as a Required reviewer (this is the manual approval gate).
@@ -45,7 +45,7 @@ jobs:
     # approved, and scopes the OIDC trust on the PyPI side.
     environment:
       name: pypi
-      url: https://pypi.org/p/mempalace
+      url: https://pypi.org/p/trimemo
     permissions:
       contents: read # checkout
       id-token: write # mint the short-lived OIDC token for Trusted Publishing
@@ -103,10 +103,10 @@ jobs:
           set -euo pipefail
           # version.py is the source of truth (per CLAUDE.md); version-guard.yml
           # separately enforces that pyproject + the three plugin manifests agree.
-          py_version=$(grep -E '^__version__' mempalace/version.py | cut -d'"' -f2)
+          py_version=$(grep -E '^__version__' trimemo/version.py | cut -d'"' -f2)
           tag_version="${TAG#v}"
           if [[ "$tag_version" != "$py_version" ]]; then
-            echo "::error::tag $TAG does not match mempalace/version.py ($py_version). Bump the version files before releasing."
+            echo "::error::tag $TAG does not match trimemo/version.py ($py_version). Bump the version files before releasing."
             exit 1
           fi
           echo "Tag $TAG matches manifest version $py_version — OK."

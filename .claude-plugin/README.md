@@ -1,4 +1,4 @@
-# MemPalace Claude Code Plugin
+# TriMemo Claude Code Plugin
 
 A Claude Code plugin that gives your AI a persistent memory system. Mine projects and conversations into a searchable palace backed by ChromaDB, with 45 MCP tools, auto-save hooks, and 5 guided commands.
 
@@ -11,47 +11,47 @@ A Claude Code plugin that gives your AI a persistent memory system. Mine project
 ### Claude Code Marketplace
 
 ```bash
-claude plugin marketplace add MemPalace/mempalace
-claude plugin install --scope user mempalace
+claude plugin marketplace add TriMemo/trimemo
+claude plugin install --scope user trimemo
 ```
 
 ### Local Clone
 
 ```bash
-claude plugin add /path/to/mempalace
+claude plugin add /path/to/trimemo
 ```
 
 ## Post-Install Setup
 
-After installing the plugin, run the init command to complete setup (installs the `mempalace` package via `uv tool` or `pip`, configures MCP, etc.):
+After installing the plugin, run the init command to complete setup (installs the `trimemo` package via `uv tool` or `pip`, configures MCP, etc.):
 
 ```
-/mempalace:init
+/trimemo:init
 ```
 
 ## Available Slash Commands
 
 | Command | Description |
 |---------|-------------|
-| `/mempalace:help` | Show available tools, skills, and architecture |
-| `/mempalace:init` | Set up MemPalace -- install, configure MCP, onboard |
-| `/mempalace:search` | Search your memories across the palace |
-| `/mempalace:mine` | Mine projects and conversations into the palace |
-| `/mempalace:status` | Show palace overview -- wings, rooms, drawer counts |
+| `/trimemo:help` | Show available tools, skills, and architecture |
+| `/trimemo:init` | Set up TriMemo -- install, configure MCP, onboard |
+| `/trimemo:search` | Search your memories across the palace |
+| `/trimemo:mine` | Mine projects and conversations into the palace |
+| `/trimemo:status` | Show palace overview -- wings, rooms, drawer counts |
 
 ## Hooks
 
-MemPalace registers three hooks that run automatically:
+TriMemo registers three hooks that run automatically:
 
 - **Stop** -- Saves conversation context every 15 messages.
 - **SessionEnd** -- Runs one final save in the background on a clean exit, so short sessions that never hit the Stop interval or a compaction are still captured.
 - **PreCompact** -- Preserves important memories before context compaction.
 
-Set the `MEMPAL_DIR` environment variable to a directory path to automatically run `mempalace mine` on that directory during each save trigger.
+Set the `MEMPAL_DIR` environment variable to a directory path to automatically run `trimemo mine` on that directory during each save trigger.
 
 ## MCP Server
 
-The plugin automatically configures a local MCP server with 45 tools for storing, searching, managing memories, and coordinating agent tasks. No manual MCP setup is required -- `/mempalace:init` handles everything.
+The plugin automatically configures a local MCP server with 45 tools for storing, searching, managing memories, and coordinating agent tasks. No manual MCP setup is required -- `/trimemo:init` handles everything.
 
 ## Full Documentation
 

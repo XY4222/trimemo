@@ -1,8 +1,8 @@
-# Format coverage — `mempalace mine --mode extract`
+# Format coverage — `trimemo mine --mode extract`
 
-**Shipped in mempalace 3.3.6 (PR #1555).**
-**Module:** `mempalace/format_miner.py`
-**CLI entry:** `mempalace/cli.py` — `cmd_mine` dispatcher routes `--mode extract` here.
+**Shipped in trimemo 3.3.6 (PR #1555).**
+**Module:** `trimemo/format_miner.py`
+**CLI entry:** `trimemo/cli.py` — `cmd_mine` dispatcher routes `--mode extract` here.
 **Tests:** `tests/test_format_miner.py` — covers all 14 fringe cases plus orchestrator behavior. See the file for the current test inventory (the count drifts as polish PRs land).
 
 ---
@@ -12,9 +12,9 @@
 Adds a third miner alongside the existing two:
 
 ```
-mempalace mine <dir>                  → miner.py        (project files: code, docs, notes)
-mempalace mine <dir> --mode convos    → convo_miner.py  (chat exports)
-mempalace mine <dir> --mode extract   → format_miner.py (binary office documents)   ← NEW
+trimemo mine <dir>                  → miner.py        (project files: code, docs, notes)
+trimemo mine <dir> --mode convos    → convo_miner.py  (chat exports)
+trimemo mine <dir> --mode extract   → format_miner.py (binary office documents)   ← NEW
 ```
 
 Supported formats and the transformer each routes through:
@@ -135,7 +135,7 @@ Returning `True` causes `extract_text` to short-circuit to `SKIP_CLOUD_ONLY` bef
 
 ## CLI integration
 
-One-line addition to `mempalace/cli.py` in `cmd_mine`:
+One-line addition to `trimemo/cli.py` in `cmd_mine`:
 
 ```python
 def cmd_mine(args):
@@ -199,7 +199,7 @@ Anti-regression assertion: **zero raw `\rtf1` / `\ansi` control codes leak into 
 ## Backwards compatibility
 
 - **No changes to existing miners.** `miner.py` and `convo_miner.py` are not touched.
-- **No new required dependencies.** MarkItDown and striprtf are optional extras (`pip install markitdown striprtf` or `pip install mempalace[extract]` if declared as such in `pyproject.toml`). MarkItDown requires Python ≥ 3.10; striprtf works on 3.6+. Recommended pyproject entries use environment markers so 3.9 users automatically get only striprtf:
+- **No new required dependencies.** MarkItDown and striprtf are optional extras (`pip install markitdown striprtf` or `pip install trimemo[extract]` if declared as such in `pyproject.toml`). MarkItDown requires Python ≥ 3.10; striprtf works on 3.6+. Recommended pyproject entries use environment markers so 3.9 users automatically get only striprtf:
   ```toml
   [project.optional-dependencies]
   extract = [
@@ -208,8 +208,8 @@ Anti-regression assertion: **zero raw `\rtf1` / `\ansi` control codes leak into 
   ]
   ```
 - **No on-disk format changes.** Drawers / closets / halls have the exact same shape regardless of which miner produced them.
-- **No migration step.** Users who already have a palace mined from the other modes can run `mempalace mine --mode extract ~/docs/` and the new drawers land in the same palace, same wing, same room conventions.
-- **Optional `--max-file-size` flag** can be added to `mempalace mine` so users with legitimate large files (e.g. scanned books) can raise the cap from the 500 MB default.
+- **No migration step.** Users who already have a palace mined from the other modes can run `trimemo mine --mode extract ~/docs/` and the new drawers land in the same palace, same wing, same room conventions.
+- **Optional `--max-file-size` flag** can be added to `trimemo mine` so users with legitimate large files (e.g. scanned books) can raise the cap from the 500 MB default.
 
 ---
 

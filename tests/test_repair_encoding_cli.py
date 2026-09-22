@@ -31,7 +31,7 @@ class _ReconfigurableStringIO(io.StringIO):
 def test_reconfigures_stdio_to_utf8_on_windows():
     """This entry point must apply the same Windows stdio fix as the others.
 
-    ``mempalace/_stdio.py`` states the rule: every console entry point that
+    ``trimemo/_stdio.py`` states the rule: every console entry point that
     touches stdio needs it. This one prints verbatim drawer text, so it needs
     it more than most -- the characters it exists to repair are exactly the
     ones the legacy console codepage cannot encode.

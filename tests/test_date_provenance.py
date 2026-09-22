@@ -7,9 +7,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from mempalace import miner, searcher
-from mempalace.backends.base import LexicalHit, LexicalResult
-from mempalace.palace import get_collection
+from trimemo import miner, searcher
+from trimemo.backends.base import LexicalHit, LexicalResult
+from trimemo.palace import get_collection
 
 FILED_AT = "2026-09-06T12:00:00"
 CONTENT_DATE = "2020-01-02"
@@ -217,7 +217,7 @@ def test_mining_records_content_date_source(
             path, tmp_path, col, "archive", [], "test", False, min_chunk_size=1
         )
     else:
-        from mempalace.format_miner import _file_chunks_locked
+        from trimemo.format_miner import _file_chunks_locked
 
         # Test the format miner's filing seam with already-extracted text;
         # no office-format parser or optional dependency is required.
@@ -267,7 +267,7 @@ def test_metadata_builder_does_not_guess_source_for_legacy_callers():
 
 
 def test_light_search_preserves_provenance_and_filing_recency(date_search):
-    from mempalace.mcp_light_server import _enrich_search_results
+    from trimemo.mcp_light_server import _enrich_search_results
 
     result = date_search(
         {"filed_at": FILED_AT, "content_date": CONTENT_DATE, "content_date_source": "filename"}

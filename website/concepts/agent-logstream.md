@@ -1,13 +1,13 @@
 # Agent Logstream
 
-MemPalace is a memory system first — but agents sharing one palace also need to
+TriMemo is a memory system first — but agents sharing one palace also need to
 *coordinate*: delegate work to each other, wait for replies, and hand off
 patches without a human relaying messages between machines. The **logstream**
 is that coordination layer (RFC 003).
 
-It is a small append-only event log served by the same MemPalace hub that
+It is a small append-only event log served by the same TriMemo hub that
 serves memory, stored next to the palace as `logstream.sqlite3`. It follows
-the same promises as everything else in MemPalace:
+the same promises as everything else in TriMemo:
 
 - **Local-first** — lives inside your palace directory, reachable over
   loopback, LAN, or tailnet exactly like the rest of the hub. No cloud queue,
@@ -28,7 +28,7 @@ optional verbatim body:
 {
   "id": "evt_20260702T032443_02ce0c31acdb",
   "type": "patch.ready",
-  "stream": "project/mempalace",
+  "stream": "project/trimemo",
   "room": "patches",
   "from_agent": "windows-codex",
   "to_agent": "mac-codex",
@@ -69,7 +69,7 @@ For the common case, use the task interface instead of constructing the raw
 request envelope:
 
 ```bash
-mempalace task create --project myapp \
+trimemo task create --project myapp \
   --from-agent mac-claude --to-agent windows-codex \
   --goal "Fix the flaky test." --branch fix/flaky-test \
   --base-commit 2668053 --done "Focused tests pass and a patch is submitted."
@@ -77,7 +77,7 @@ mempalace task create --project myapp \
 
 It creates the canonical request and prints a short, ready-to-paste wake-up
 line. The complete task remains verbatim in the logstream. The
-`mempalace-task` skill guides preview, creation, claiming, delivery, and loop
+`trimemo-task` skill guides preview, creation, claiming, delivery, and loop
 closure. Remote shared-brain clients call `mempalace_task_create` through MCP;
 the CLI form operates on the local palace. The primitives below remain
 available for custom integrations.
@@ -121,14 +121,14 @@ for schemas.
 The same operations are available from the shell:
 
 ```bash
-mempalace logstream append --type task.request --stream project/myapp \
+trimemo logstream append --type task.request --stream project/myapp \
   --room delegation --from-agent mac --to-agent windows \
   --correlation-id task_123 --body "Please fix the flaky test."
 
-mempalace logstream wait --correlation-id task_123 --type patch.ready \
+trimemo logstream wait --correlation-id task_123 --type patch.ready \
   --timeout-ms 300000 --json
 
-mempalace artifact get art_... | git apply --3way
+trimemo artifact get art_... | git apply --3way
 ```
 
 `--json` makes every command scriptable; `wait` exits `2` on timeout so
@@ -172,7 +172,7 @@ So there are two different parameters, and only one of them is a cursor:
 | Mode | Best for | Mechanism |
 |---|---|---|
 | Inbox sweep | Session start, pre-task checks | No cursor: newest-first (`EVENT INBOX` or list without `since_event_id`). Resume: `mempalace_event_list` + `to_agent` + `since_event_id`, `preview=true` (omit `order`) |
-| Background watcher | Being woken while you work | `mempalace logstream watch`, run as a background process |
+| Background watcher | Being woken while you work | `trimemo logstream watch`, run as a background process |
 | Long-poll | Waiting on one correlation, in-turn | `mempalace_event_wait` — 60s default, 300s max, returns `timed_out` rather than erroring |
 | Server-Sent Events | Daemons, dashboards, live viewers | `GET /logstream/stream`, live-tail filters and `since_event_id` resume |
 | Declared-idle | Turn-based agents with no background loop | Publish your cursor and say you need a ping |
@@ -184,7 +184,7 @@ owns both, adds the filters a watcher needs, and exits on a match so a harness
 can treat process exit as "you have mail":
 
 ```bash
-mempalace logstream watch \
+trimemo logstream watch \
   --agent mac:claude:myapp \
   --type task.request --type task.reply --type patch.ready \
   --json
@@ -230,7 +230,7 @@ not have — a requester who believes an agent is listening stops looking for a
 human to nudge.
 
 For the full protocol, see the
-[coordination protocol](https://github.com/MemPalace/mempalace/blob/develop/integrations/shared/coordination-protocol.md).
+[coordination protocol](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/coordination-protocol.md).
 
 ## Coordination vs. memory
 

@@ -5,7 +5,7 @@
 #   1. Counts stop invocations per conversation_id (each stop ≈ one
 #      assistant turn ≈ roughly one user message — see plan rationale).
 #   2. Every SAVE_INTERVAL stops, returns a followup_message telling
-#      the agent to file the session into MemPalace and write a diary
+#      the agent to file the session into TriMemo and write a diary
 #      entry. Cursor auto-submits that as the next user message.
 #   3. On the next stop, loop_count > 0 so we let the agent finish
 #      without re-firing — Cursor's loop_count is the equivalent of
@@ -16,9 +16,9 @@
 # === WHY THE FOLLOWUP FIRES BY DEFAULT (differs from the Claude hook) ===
 #
 # The Claude Code hook (hooks/mempal_save_hook.sh) is SILENT by default:
-# its background `mempalace mine --mode convos` captures the verbatim
+# its background `trimemo mine --mode convos` captures the verbatim
 # transcript on its own, and the LLM-driven diary nudge is opt-IN behind
-# MEMPAL_VERBOSE. That works because mempalace/normalize.py has a Claude
+# MEMPAL_VERBOSE. That works because trimemo/normalize.py has a Claude
 # Code JSONL parser.
 #
 # Cursor is different. Cursor's transcript format is undocumented (see
@@ -163,7 +163,7 @@ _mempal_build_followup() {
 import json, sys
 wing = sys.argv[1] if len(sys.argv) > 1 else "cursor_session"
 msg = (
-    "MemPalace save checkpoint. Call mempalace_checkpoint ONCE with: "
+    "TriMemo save checkpoint. Call mempalace_checkpoint ONCE with: "
     "items=[{wing: " + wing + ", room: <short topic>, content: <verbatim "
     "quote>}, ...] for the key topics, decisions, and verbatim quotes from "
     "this session; and diary={agent_name: cursor-ide, wing: " + wing + ", "
@@ -225,7 +225,7 @@ mempal_log "stop" "$MEMPAL_CONV_ID" "TRIGGERING SAVE at counter=$NEXT"
 #
 # IMPORTANT (Cursor caveat): the --mode convos mine is BEST-EFFORT for
 # Cursor. Cursor's transcript format is undocumented and
-# mempalace/normalize.py has no Cursor parser, so this call does not
+# trimemo/normalize.py has no Cursor parser, so this call does not
 # yet produce clean verbatim conversation drawers — at best it ingests
 # raw bytes. The verbatim-capture guarantee for Cursor is carried by
 # the followup_message below, which drives the agent to file its own
@@ -234,25 +234,25 @@ mempal_log "stop" "$MEMPAL_CONV_ID" "TRIGGERING SAVE at counter=$NEXT"
 #
 # Both run with stdout/stderr appended to the cursor log and are
 # backgrounded so a slow mine cannot push the hook past its
-# Cursor-configured timeout. `command -v mempalace` gates so a user
+# Cursor-configured timeout. `command -v trimemo` gates so a user
 # without the CLI on PATH (e.g. a fresh GUI-launched session) does
 # not see a noisy error.
-if command -v mempalace >/dev/null 2>&1; then
+if command -v trimemo >/dev/null 2>&1; then
     if mempal_is_valid_transcript "$MEMPAL_TRANSCRIPT" \
         && [ -f "$MEMPAL_TRANSCRIPT" ]; then
-        ( mempalace mine "$(dirname "$MEMPAL_TRANSCRIPT")" --mode convos \
+        ( trimemo mine "$(dirname "$MEMPAL_TRANSCRIPT")" --mode convos \
             >> "$MEMPAL_CURSOR_LOG" 2>&1 ) &
     elif [ -n "$MEMPAL_TRANSCRIPT" ]; then
         mempal_log "stop" "$MEMPAL_CONV_ID" \
             "skipping invalid transcript path: $MEMPAL_TRANSCRIPT"
     fi
     if [ -n "$MEMPAL_DIR" ] && [ -d "$MEMPAL_DIR" ]; then
-        ( mempalace mine "$MEMPAL_DIR" --mode projects \
+        ( trimemo mine "$MEMPAL_DIR" --mode projects \
             >> "$MEMPAL_CURSOR_LOG" 2>&1 ) &
     fi
 else
     mempal_log "stop" "$MEMPAL_CONV_ID" \
-        "mempalace CLI not on PATH; skipping background mine"
+        "trimemo CLI not on PATH; skipping background mine"
 fi
 
 # The followup is the load-bearing verbatim path for Cursor (see header),

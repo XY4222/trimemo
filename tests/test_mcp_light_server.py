@@ -1,10 +1,10 @@
 """
-test_mcp_light_server.py — Integration tests for Lightweight MemPalace MCP Server.
+test_mcp_light_server.py — Integration tests for Lightweight TriMemo MCP Server.
 """
 
 import json
-from mempalace import mcp_light_server, mcp_server
-from mempalace.palace_graph import invalidate_graph_cache
+from trimemo import mcp_light_server, mcp_server
+from trimemo.palace_graph import invalidate_graph_cache
 
 
 def _patch_light_server(monkeypatch, config, kg):
@@ -29,7 +29,7 @@ class TestLightMcpProtocol:
         }
         res = mcp_light_server.handle_light_request(req)
         assert res["id"] == 1
-        assert res["result"]["serverInfo"]["name"] == "mempalace-light"
+        assert res["result"]["serverInfo"]["name"] == "trimemo-light"
         assert "tools" in res["result"]["capabilities"]
 
     def test_tools_list_default(self, monkeypatch, config, kg):
@@ -217,8 +217,8 @@ class TestPalaceCoordinate:
     def test_task_create_and_event_list(self, monkeypatch, config, kg):
         _patch_light_server(monkeypatch, config, kg)
         cmd = (
-            "TASK CREATE project:mempalace from:windows:antigravity:mempalace "
-            'to:windows:claude:mempalace goal:"Implement PQL query engine" '
+            "TASK CREATE project:trimemo from:windows:antigravity:trimemo "
+            'to:windows:claude:trimemo goal:"Implement PQL query engine" '
             'branch:feat/pql base:e4f5a6b7 done:"All unit tests pass"'
         )
         req = {
@@ -236,8 +236,8 @@ class TestPalaceCoordinate:
 
         # Append a second event
         second_cmd = (
-            "EVENT APPEND type:status stream:project/mempalace room:status "
-            'from:windows:claude:mempalace to:windows:antigravity:mempalace body:"Task acknowledged"'
+            "EVENT APPEND type:status stream:project/trimemo room:status "
+            'from:windows:claude:trimemo to:windows:antigravity:trimemo body:"Task acknowledged"'
         )
         second_res = mcp_light_server.handle_light_request(
             {
@@ -258,7 +258,7 @@ class TestPalaceCoordinate:
             "method": "tools/call",
             "params": {
                 "name": "palace_coordinate",
-                "arguments": "EVENT LIST stream:project/mempalace limit:10",
+                "arguments": "EVENT LIST stream:project/trimemo limit:10",
             },
         }
         list_res = mcp_light_server.handle_light_request(list_req)
@@ -275,7 +275,7 @@ class TestPalaceCoordinate:
             "method": "tools/call",
             "params": {
                 "name": "palace_coordinate",
-                "arguments": "EVENT INBOX to:windows:claude:mempalace",
+                "arguments": "EVENT INBOX to:windows:claude:trimemo",
             },
         }
         inbox_res = mcp_light_server.handle_light_request(inbox_req)
@@ -291,7 +291,7 @@ class TestPalaceCoordinate:
             "method": "tools/call",
             "params": {
                 "name": "palace_coordinate",
-                "arguments": f"EVENT LIST stream:project/mempalace since_id:{task_event['id']}",
+                "arguments": f"EVENT LIST stream:project/trimemo since_id:{task_event['id']}",
             },
         }
         resume_res = mcp_light_server.handle_light_request(resume_req)
@@ -306,7 +306,7 @@ class TestPalaceCoordinate:
             "method": "tools/call",
             "params": {
                 "name": "palace_coordinate",
-                "arguments": f"EVENT LIST stream:project/mempalace ORDER DESC since_id:{task_event['id']}",
+                "arguments": f"EVENT LIST stream:project/trimemo ORDER DESC since_id:{task_event['id']}",
             },
         }
         desc_res = mcp_light_server.handle_light_request(desc_req)

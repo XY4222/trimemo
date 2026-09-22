@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
-from mempalace.backends import LexicalHit, LexicalResult
-from mempalace.searcher import (
+from trimemo.backends import LexicalHit, LexicalResult
+from trimemo.searcher import (
     _aligned_query_ids,
     _finalize_candidate_hits,
     _query_drawers_with_filter_fallback,
@@ -52,11 +52,11 @@ def test_vector_results_use_parent_for_chunks_and_stored_id_for_singles():
     }
 
     with patch(
-        "mempalace.searcher.get_collection",
+        "trimemo.searcher.get_collection",
         return_value=drawers_col,
     ):
         with patch(
-            "mempalace.searcher.get_closets_collection",
+            "trimemo.searcher.get_closets_collection",
             side_effect=RuntimeError("no closets"),
         ):
             result = search_memories(
@@ -196,11 +196,11 @@ def test_vector_drawer_id_round_trips_to_complete_chunked_drawer(
     }
 
     with patch(
-        "mempalace.searcher.get_collection",
+        "trimemo.searcher.get_collection",
         return_value=search_col,
     ):
         with patch(
-            "mempalace.searcher.get_closets_collection",
+            "trimemo.searcher.get_closets_collection",
             side_effect=RuntimeError("no closets"),
         ):
             result = search_memories(
@@ -213,7 +213,7 @@ def test_vector_drawer_id_round_trips_to_complete_chunked_drawer(
     hit = result["results"][0]
     assert hit["drawer_id"] == parent_id
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     with patch.object(
         mcp_server,
@@ -359,11 +359,11 @@ def test_cli_scoped_search_uses_existing_filter_fallback(capsys):
     ]
 
     with patch(
-        "mempalace.searcher.resolve_backend_name",
+        "trimemo.searcher.resolve_backend_name",
         return_value="sqlite_exact",
     ):
         with patch(
-            "mempalace.searcher._open_collection_or_explain",
+            "trimemo.searcher._open_collection_or_explain",
             return_value=drawers_col,
         ):
             search(

@@ -1,7 +1,7 @@
 """
 test_mcp_mine.py — Tests for the ``mempalace_mine`` MCP tool (#1662).
 
-Mining was previously CLI-only (``mempalace mine``); non-Claude-Code MCP clients
+Mining was previously CLI-only (``trimemo mine``); non-Claude-Code MCP clients
 (Desktop Commander, LM Studio, Aionui) had no MCP-callable mine. ``tool_mine``
 wraps the same in-process miners the CLI uses — projects / convos / extract —
 synchronously, mirroring the ``tool_sync`` contract.
@@ -23,7 +23,7 @@ import pytest
 
 
 def _patch(monkeypatch, config):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_config", config)
 
@@ -37,7 +37,7 @@ def _write(path, text):
 
 
 def test_registered_in_tools():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert "mempalace_mine" in mcp_server.TOOLS
     entry = mcp_server.TOOLS["mempalace_mine"]
@@ -49,7 +49,7 @@ def test_registered_in_tools():
 
 
 def test_no_palace_returns_structured_error(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     class _EmptyConfig:
         palace_path = ""
@@ -62,7 +62,7 @@ def test_no_palace_returns_structured_error(monkeypatch):
 
 
 def test_invalid_mode_returns_structured_error(monkeypatch, config, tmp_dir):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "src")
@@ -73,7 +73,7 @@ def test_invalid_mode_returns_structured_error(monkeypatch, config, tmp_dir):
 
 
 def test_missing_source_dir_returns_structured_error(monkeypatch, config):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     result = mcp_server.tool_mine(source="/nonexistent/path/xyz")
@@ -85,7 +85,7 @@ def test_missing_source_dir_returns_structured_error(monkeypatch, config):
 
 
 def test_dry_run_projects_returns_success_and_output(monkeypatch, config, tmp_dir):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -105,7 +105,7 @@ def test_convos_mode_files_drawers(monkeypatch, config, tmp_dir):
     Proves the tool eliminates the gap rather than masking it — after a real
     convos mine the palace collection actually holds the drawers.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "convos")
@@ -140,7 +140,7 @@ def test_convos_mode_accepts_a_single_file(monkeypatch, config, tmp_dir):
     single-file form unreachable in the configuration most users run, and every
     hook transcript ingest fails.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "one-session.txt")
@@ -170,7 +170,7 @@ def test_projects_mode_still_rejects_a_file(monkeypatch, config, tmp_dir):
     this, the fix for #2281 would pass just as well if the precondition were
     dropped entirely.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "notes.md")
@@ -184,7 +184,7 @@ def test_projects_mode_still_rejects_a_file(monkeypatch, config, tmp_dir):
 def test_stdout_captured_not_leaked_to_fd(monkeypatch, config, tmp_dir, capfd):
     """Miner stdout must land in ``output``, never on the real fd-1 JSON-RPC
     channel. ``tool_mine`` redirects fd 1 around the in-process miner."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "convos")
@@ -208,7 +208,7 @@ def test_fd_redirect_unavailable_falls_back_to_python_capture(monkeypatch):
     copy while rejecting a later ``os.dup2`` to a temporary-file descriptor.
     The documented Python-only fallback must cover that setup failure too.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     calls = []
 
@@ -232,7 +232,7 @@ def test_fd_redirect_unavailable_falls_back_to_python_capture(monkeypatch):
 
 def test_fd_restore_failure_remains_fail_closed(monkeypatch):
     """Once fd 1 was redirected, a failed restore becomes a fatal transport error."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     calls = 0
 
@@ -253,7 +253,7 @@ def test_fd_restore_failure_remains_fail_closed(monkeypatch):
 
 def test_callback_flush_failure_still_restores_fd(monkeypatch):
     """A failed post-callback flush cannot skip protocol-fd restoration."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     flushes = 0
     dup2_calls = []
@@ -283,7 +283,7 @@ def test_callback_flush_failure_still_restores_fd(monkeypatch):
 
 def test_tool_mine_does_not_swallow_fatal_stdout_restore_failure(monkeypatch, config, tmp_dir):
     """The normal tool error contract cannot continue after protocol-fd loss."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -301,8 +301,8 @@ def test_tool_mine_does_not_swallow_fatal_stdout_restore_failure(monkeypatch, co
 def test_mine_already_running_surfaces_structured_error(monkeypatch, config, tmp_dir):
     """A held palace lock (MineAlreadyRunning) surfaces as a structured
     already-running error, mirroring tool_sync."""
-    from mempalace import mcp_server
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo import mcp_server
+    from trimemo.palace import MineAlreadyRunning
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -312,7 +312,7 @@ def test_mine_already_running_surfaces_structured_error(monkeypatch, config, tmp
     def _boom(*args, **kwargs):
         raise MineAlreadyRunning("held by pid 999")
 
-    monkeypatch.setattr("mempalace.miner.mine", _boom)
+    monkeypatch.setattr("trimemo.miner.mine", _boom)
     result = mcp_server.tool_mine(source=src, mode="projects")
     assert result["success"] is False
     assert result.get("error_class") == "LockHeldByOtherProcess"
@@ -321,7 +321,7 @@ def test_mine_already_running_surfaces_structured_error(monkeypatch, config, tmp
 def test_large_output_is_tail_truncated(monkeypatch, config, tmp_dir):
     """A very large miner summary is tail-trimmed (and flagged, never silently)
     so the MCP response stays bounded."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -331,7 +331,7 @@ def test_large_output_is_tail_truncated(monkeypatch, config, tmp_dir):
         print("X" * 5000)
         return None
 
-    monkeypatch.setattr("mempalace.miner.mine", _chatty)
+    monkeypatch.setattr("trimemo.miner.mine", _chatty)
     result = mcp_server.tool_mine(source=src, mode="projects")
     assert result["success"] is True
     assert result["output_truncated"] is True
@@ -341,7 +341,7 @@ def test_large_output_is_tail_truncated(monkeypatch, config, tmp_dir):
 def test_import_error_outside_extract_is_not_mislabeled(monkeypatch, config, tmp_dir):
     """An ImportError outside extract mode is a real bug, not a missing extra —
     it must not be labelled MissingDependency."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -350,7 +350,7 @@ def test_import_error_outside_extract_is_not_mislabeled(monkeypatch, config, tmp
     def _broken(*args, **kwargs):
         raise ImportError("no module named 'totally_internal'")
 
-    monkeypatch.setattr("mempalace.miner.mine", _broken)
+    monkeypatch.setattr("trimemo.miner.mine", _broken)
     result = mcp_server.tool_mine(source=src, mode="projects")
     assert result["success"] is False
     assert result.get("error_class") == "ImportError"
@@ -359,7 +359,7 @@ def test_import_error_outside_extract_is_not_mislabeled(monkeypatch, config, tmp
 
 def test_extract_missing_dependency_is_named(monkeypatch, config, tmp_dir):
     """extract mode surfaces a MissingDependency error pointing at the extra."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "docs")
@@ -368,18 +368,18 @@ def test_extract_missing_dependency_is_named(monkeypatch, config, tmp_dir):
     def _no_extra(*args, **kwargs):
         raise ImportError("No module named 'markitdown'")
 
-    monkeypatch.setattr("mempalace.format_miner.mine_formats", _no_extra)
+    monkeypatch.setattr("trimemo.format_miner.mine_formats", _no_extra)
     result = mcp_server.tool_mine(source=src, mode="extract")
     assert result["success"] is False
     assert result.get("error_class") == "MissingDependency"
-    assert "mempalace[extract]" in result["error"]
+    assert "trimemo[extract]" in result["error"]
 
 
 def test_system_exit_from_miner_does_not_kill_server(monkeypatch, config, tmp_dir):
     """miner.mine turns Ctrl-C into sys.exit(130); in-process that SystemExit
     would escape the protocol loop (which only catches Exception) and kill the
     server. tool_mine converts it to a structured error instead."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -388,7 +388,7 @@ def test_system_exit_from_miner_does_not_kill_server(monkeypatch, config, tmp_di
     def _exit(*args, **kwargs):
         raise SystemExit(130)
 
-    monkeypatch.setattr("mempalace.miner.mine", _exit)
+    monkeypatch.setattr("trimemo.miner.mine", _exit)
     result = mcp_server.tool_mine(source=src, mode="projects")
     assert result["success"] is False
     assert result.get("error_class") == "Interrupted"
@@ -397,7 +397,7 @@ def test_system_exit_from_miner_does_not_kill_server(monkeypatch, config, tmp_di
 def test_generic_exception_carries_error_class(monkeypatch, config, tmp_dir):
     """An unexpected miner failure is surfaced with its exception type so the
     caller can distinguish error kinds."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     _patch(monkeypatch, config)
     src = os.path.join(tmp_dir, "proj")
@@ -406,7 +406,7 @@ def test_generic_exception_carries_error_class(monkeypatch, config, tmp_dir):
     def _boom(*args, **kwargs):
         raise RuntimeError("disk gone")
 
-    monkeypatch.setattr("mempalace.miner.mine", _boom)
+    monkeypatch.setattr("trimemo.miner.mine", _boom)
     result = mcp_server.tool_mine(source=src, mode="projects")
     assert result["success"] is False
     assert "mine failed" in result["error"]

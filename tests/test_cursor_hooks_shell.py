@@ -618,7 +618,7 @@ class TestInferWing:
 
     def test_lowercases_uppercase_basename(self):
         # Cursor on macOS often hands us /Users/<user>/Projects/MyApp.
-        # The wing scoping in MemPalace's MCP tools is case-sensitive,
+        # The wing scoping in TriMemo's MCP tools is case-sensitive,
         # so the wake hook and save hook must produce identical wings
         # for the same workspace — lowercasing is the simplest
         # contract.

@@ -1,0 +1,1 @@
+{"lang": "zz-test-cache", "label": "zz-test-cache", "terms": {}, "cli": {}, "aaak": {"instruction": "test"}, "entity": {"candidate_pattern": "[A-Z][a-z]+", "multi_word_pattern": "[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+", "person_verb_patterns": ["\\b{name}\\s+ranxx\\b"], "pronoun_patterns": [], "dialogue_patterns": [], "project_verb_patterns": [], "stopwords": []}}

@@ -1,4 +1,4 @@
-"""Tests for `mempalace rules` — the canonical shared-brain rules renderer."""
+"""Tests for `trimemo rules` — the canonical shared-brain rules renderer."""
 
 import re
 import subprocess
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from mempalace.instructions_cli import (
+from trimemo.instructions_cli import (
     MCP_LIGHT_SUBSTITUTIONS,
     SHARED_BRAIN_RULES_FILE,
     apply_mcp_shape,
@@ -81,17 +81,17 @@ class TestSharedBrainRulesTemplate:
 
 class TestRenderSharedBrainRules:
     def test_substitutes_tuple_everywhere(self):
-        rendered = render_shared_brain_rules("windows", "grok", "mempalace")
+        rendered = render_shared_brain_rules("windows", "grok", "trimemo")
         assert "<HOST>" not in rendered
         assert "<HARNESS>" not in rendered
         assert "<PROJECT>" not in rendered
         assert "windows:grok:<project>" in rendered
-        assert "windows:grok:mempalace" in rendered
+        assert "windows:grok:trimemo" in rendered
         # The default names the 45-tool server the plugins and skills register.
         assert "mempalace_event_list" in rendered
         assert "palace_coordinate EVENT LIST" not in rendered
 
-        light = render_shared_brain_rules("windows", "grok", "mempalace", mcp="light")
+        light = render_shared_brain_rules("windows", "grok", "trimemo", mcp="light")
         assert "palace_coordinate EVENT LIST" in light
 
     def test_light_mcp_swaps_tool_tokens_only(self):
@@ -99,8 +99,8 @@ class TestRenderSharedBrainRules:
         light = render_shared_brain_rules("mac", "claude", "myapp", mcp="light")
         assert "palace_coordinate EVENT LIST" in light
         assert "mempalace_event_list" not in light
-        assert "mempalace logstream watch" in light
-        assert "mempalace logstream watch" in full
+        assert "trimemo logstream watch" in light
+        assert "trimemo logstream watch" in full
         assert _strip_tool_tokens(full) == _strip_tool_tokens(light)
 
     def test_apply_mcp_shape_rejects_unknown(self):
@@ -110,21 +110,21 @@ class TestRenderSharedBrainRules:
     def test_wrapped_in_sync_markers(self):
         rendered = render_shared_brain_rules("aero", "opencode", "myapp")
         lines = rendered.splitlines()
-        assert lines[0].startswith("<!-- mempalace-shared-brain:start")
-        assert lines[-1] == "<!-- mempalace-shared-brain:end -->"
+        assert lines[0].startswith("<!-- trimemo-shared-brain:start")
+        assert lines[-1] == "<!-- trimemo-shared-brain:end -->"
         assert "canonical source" in lines[0]
         assert "--host aero --harness opencode --project myapp" in lines[0]
 
     @pytest.mark.parametrize(
         "bad",
-        ["", "   ", "two words", "tab\tid", "x-->", "a{b}", "Windows", "grok:tui", "MemPalace"],
+        ["", "   ", "two words", "tab\tid", "x-->", "a{b}", "Windows", "grok:tui", "TriMemo"],
     )
     def test_rejects_non_token_components(self, bad):
         """Each component is a lowercase token; colons join them, they are not inside them."""
         with pytest.raises(ValueError):
-            render_shared_brain_rules(bad, "grok", "mempalace")
+            render_shared_brain_rules(bad, "grok", "trimemo")
         with pytest.raises(ValueError):
-            render_shared_brain_rules("windows", bad, "mempalace")
+            render_shared_brain_rules("windows", bad, "trimemo")
         with pytest.raises(ValueError):
             render_shared_brain_rules("windows", "grok", bad)
 
@@ -135,22 +135,22 @@ class TestRulesCli:
             [
                 sys.executable,
                 "-m",
-                "mempalace.cli",
+                "trimemo.cli",
                 "rules",
                 "--host",
                 "windows",
                 "--harness",
                 "codex",
                 "--project",
-                "mempalace",
+                "trimemo",
             ],
             capture_output=True,
             text=True,
         )
         assert result.returncode == 0
-        assert "windows:codex:mempalace" in result.stdout
+        assert "windows:codex:trimemo" in result.stdout
         assert "<HOST>" not in result.stdout
-        assert "mempalace-shared-brain:start" in result.stdout
+        assert "trimemo-shared-brain:start" in result.stdout
         assert "mempalace_event_list" in result.stdout
         assert "palace_coordinate EVENT LIST" not in result.stdout
 
@@ -159,7 +159,7 @@ class TestRulesCli:
             [
                 sys.executable,
                 "-m",
-                "mempalace.cli",
+                "trimemo.cli",
                 "rules",
                 "--host",
                 "mac",
@@ -182,14 +182,14 @@ class TestRulesCli:
             [
                 sys.executable,
                 "-m",
-                "mempalace.cli",
+                "trimemo.cli",
                 "rules",
                 "--host",
                 "two words",
                 "--harness",
                 "grok",
                 "--project",
-                "mempalace",
+                "trimemo",
             ],
             capture_output=True,
             text=True,

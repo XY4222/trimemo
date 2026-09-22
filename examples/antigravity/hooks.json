@@ -1,19 +1,19 @@
 {
-  "mempalace-save": {
+  "trimemo-save": {
     "Stop": [
       {
         "type": "command",
-        "command": "/ABSOLUTE/PATH/TO/mempalace/hooks/antigravity/mempal_save_hook_antigravity.sh",
+        "command": "/ABSOLUTE/PATH/TO/trimemo/hooks/antigravity/mempal_save_hook_antigravity.sh",
         "timeout": 30
       }
     ]
   },
 
-  "mempalace-wake": {
+  "trimemo-wake": {
     "PreInvocation": [
       {
         "type": "command",
-        "command": "/ABSOLUTE/PATH/TO/mempalace/hooks/antigravity/mempal_wake_hook_antigravity.sh",
+        "command": "/ABSOLUTE/PATH/TO/trimemo/hooks/antigravity/mempal_wake_hook_antigravity.sh",
         "timeout": 5
       }
     ]

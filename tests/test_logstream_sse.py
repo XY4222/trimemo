@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from mempalace import mcp_server as mcp
+from trimemo import mcp_server as mcp
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def http_server(patched_palace):
 def _append(body="hello", correlation_id="task_sse", type="task.request", topic=None):
     result = mcp.tool_event_append(
         type=type,
-        stream="project/mempalace",
+        stream="project/trimemo",
         room="delegation",
         topic=topic,
         from_agent="mac-claude",
@@ -206,7 +206,7 @@ class TestSSEStream:
             _append(body="post-connect")  # ensure the stream has data to emit
             conn, resp = _open_stream(
                 port,
-                query="?stream=project/mempalace",
+                query="?stream=project/trimemo",
                 headers={"Authorization": "Bearer s3cret"},
             )
             try:
@@ -270,7 +270,7 @@ class TestLockFreeDispatch:
             "mempalace_event_append",
             {
                 "type": "task.request",
-                "stream": "project/mempalace",
+                "stream": "project/trimemo",
                 "room": "delegation",
                 "from_agent": "mac-claude",
                 "correlation_id": "task_lockfree",

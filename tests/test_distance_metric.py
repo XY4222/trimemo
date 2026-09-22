@@ -14,9 +14,9 @@ import types
 
 import pytest
 
-from mempalace.backends.base import BaseBackend, BaseCollection
-from mempalace.backends.chroma import ChromaCollection
-from mempalace.searcher import (
+from trimemo.backends.base import BaseBackend, BaseCollection
+from trimemo.backends.chroma import ChromaCollection
+from trimemo.searcher import (
     _distance_to_similarity,
     _hybrid_rank,
     _metric_for_collection,
@@ -148,7 +148,7 @@ def test_real_embeddingcollection_delegates_metric_not_shadowed():
     # the real EmbeddingCollection subclass it resolves directly and
     # __getattr__ never fires. Without an explicit override the wrapper would
     # report the base "cosine" default and mask a wrapped non-cosine backend.
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
 
     class _Inner(BaseCollection):
         distance_metric = "l2"

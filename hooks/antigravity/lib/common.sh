@@ -49,19 +49,19 @@ MEMPAL_AGY_LOG="$MEMPAL_STATE_DIR/antigravity_hook.log"
 
 # ── Python interpreter resolution ─────────────────────────────────────
 #
-# The hooks run mempalace as `"$MEMPAL_PYTHON_BIN" -m mempalace`, so the
-# resolved interpreter MUST be one that has the mempalace package
+# The hooks run trimemo as `"$MEMPAL_PYTHON_BIN" -m trimemo`, so the
+# resolved interpreter MUST be one that has the trimemo package
 # importable. The single most common install path —
-# `uv tool install mempalace` (and `pipx install`) — puts the
-# `mempalace` / `mempalace-mcp` *console scripts* on PATH inside an
+# `uv tool install trimemo` (and `pipx install`) — puts the
+# `trimemo` / `trimemo-mcp` *console scripts* on PATH inside an
 # ISOLATED environment whose interpreter is NOT the system `python3`.
 # So naively resolving `command -v python3` lands on a system Python
-# that can't import mempalace, the `-m mempalace` probe fails, and
+# that can't import trimemo, the `-m trimemo` probe fails, and
 # mining silently never fires. (This bit a real user on PR #1633.)
 #
 # Resolution order — first hit wins:
 #   1. $MEMPAL_PYTHON                         — explicit operator override
-#   2. shebang of the mempalace-mcp / mempalace console script on PATH
+#   2. shebang of the trimemo-mcp / trimemo console script on PATH
 #        — pip/uv write these with an absolute-path shebang pointing at
 #          the exact interpreter that owns the package. This is the SAME
 #          console script mcp_config.json launches, so if the MCP server
@@ -74,10 +74,10 @@ MEMPAL_AGY_LOG="$MEMPAL_STATE_DIR/antigravity_hook.log"
 # Steps 2-4 are pure string parsing + stat (no Python subprocess), so
 # resolution stays cheap enough to run at source time on every hook
 # fire, including gated-out / kill-switched ones. We deliberately do
-# NOT run an `import mempalace` probe here: building that import pays
+# NOT run an `import trimemo` probe here: building that import pays
 # the chromadb/onnx cold-start cost, which a recent perf fix
 # (df295bd) moved OFF the hook foreground on purpose. The downstream
-# `-m mempalace --version` probe (backgrounded in the save hook,
+# `-m trimemo --version` probe (backgrounded in the save hook,
 # subprocessed in the wake hook) is the safety net that catches a
 # shebang interpreter whose package is genuinely broken.
 mempal_resolve_python() {
@@ -88,9 +88,9 @@ mempal_resolve_python() {
         return 0
     fi
 
-    # 2. Derive the interpreter from a mempalace console-script shebang.
+    # 2. Derive the interpreter from a trimemo console-script shebang.
     local script_path shebang interp
-    for script_path in mempalace-mcp mempalace; do
+    for script_path in trimemo-mcp trimemo; do
         script_path="$(command -v "$script_path" 2>/dev/null || true)"
         [ -n "$script_path" ] || continue
         [ -r "$script_path" ] || continue
@@ -164,7 +164,7 @@ mempal_expand_home() {
 
 # Print the config directory, resolved the way mempalace.config does (#148):
 # $MEMPALACE_CONFIG_DIR, then a ~/.mempalace that holds a real install, then
-# $XDG_CONFIG_HOME/mempalace (absolute values only), then ~/.config/mempalace.
+# $XDG_CONFIG_HOME/trimemo (absolute values only), then ~/.config/mempalace.
 # Both environment values have a leading "~" expanded first, as in Python.
 mempal_config_dir() {
     case "${MEMPALACE_CONFIG_DIR:-}" in
@@ -183,11 +183,11 @@ mempal_config_dir() {
     xdg="$(mempal_expand_home "${XDG_CONFIG_HOME:-}")"
     case "$xdg" in
         /*|[A-Za-z]:[\\/]*)
-            printf '%s\n' "$xdg/mempalace"
+            printf '%s\n' "$xdg/trimemo"
             return
             ;;
     esac
-    printf '%s\n' "$HOME/.config/mempalace"
+    printf '%s\n' "$HOME/.config/trimemo"
 }
 
 mempal_kill_switch_tripped() {

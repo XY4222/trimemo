@@ -1,15 +1,15 @@
-"""test_encoding_hardening.py — UTF-8 round-trip for files MemPalace owns.
+"""test_encoding_hardening.py — UTF-8 round-trip for files TriMemo owns.
 
 Regression coverage for finding #51 (dialect.py open() calls omit
 encoding=) and #84 (config.py reads config.json via the OS locale codepage
 while writing it as UTF-8).
 
-The real defect is an ASYMMETRY: MemPalace writes JSON as UTF-8 (config.py's
+The real defect is an ASYMMETRY: TriMemo writes JSON as UTF-8 (config.py's
 save paths already pin encoding="utf-8"), but the read paths omit encoding=,
 so on a non-UTF-8-locale process (German Windows = cp1252) the UTF-8 bytes are
 decoded as cp1252 -> mojibake. We reproduce this deterministically on any
 platform by:
-  1. writing the file as real UTF-8 *bytes* on disk (what MemPalace does), and
+  1. writing the file as real UTF-8 *bytes* on disk (what TriMemo does), and
   2. forcing encoding-less text opens to default to cp1252 (what a German
      Windows process does).
 A read path that pins encoding="utf-8" survives; one that relies on the locale
@@ -21,8 +21,8 @@ import json
 
 import pytest
 
-from mempalace.config import MempalaceConfig
-from mempalace.dialect import Dialect
+from trimemo.config import MempalaceConfig
+from trimemo.dialect import Dialect
 
 UMLAUT_NAME = "Müller"
 
@@ -67,7 +67,7 @@ class TestDialectConfigEncoding:
 
         Unlike save_config's ensure_ascii=True output (which escapes umlauts to
         codec-agnostic ASCII), this writes the umlaut as raw UTF-8 bytes — the
-        case a hand-edited config or a non-mempalace writer produces. Without the
+        case a hand-edited config or a non-trimemo writer produces. Without the
         read-path encoding fix it decodes as cp1252 and the umlaut is mangled, so
         this test genuinely fails pre-fix (it is not a passes-either-way check).
         """

@@ -3,8 +3,8 @@
 #
 # Antigravity fires the Stop event each time the agent's execution loop
 # terminates. We use it to background-mine the active conversation
-# transcript every Nth save into the user's MemPalace, and to write a
-# diary checkpoint via `mempalace mine --mode convos`.
+# transcript every Nth save into the user's TriMemo, and to write a
+# diary checkpoint via `trimemo mine --mode convos`.
 #
 # Mirrors the Claude Code (hooks/mempal_save_hook.sh) and Codex
 # (.codex-plugin/hooks/mempal-hook.sh) integrations as closely as the
@@ -202,7 +202,7 @@ mempal_log "stop" "$CONVERSATION_ID" "TRIGGERING SAVE wing=$WING transcript_dir=
 # The foreground returns immediately after spawning, so the hook's
 # stdout (`{}`) reaches Antigravity within milliseconds.
 #
-# Why the probe must NOT run in the foreground: `mempalace --version`
+# Why the probe must NOT run in the foreground: `trimemo --version`
 # is NOT cheap. Building the `mine` argument parser imports
 # `mempalace.miner` (-> palace -> backends -> chromadb/onnx) before
 # argparse ever processes `--version`, so the probe pays the full
@@ -216,23 +216,23 @@ mempal_log "stop" "$CONVERSATION_ID" "TRIGGERING SAVE wing=$WING transcript_dir=
 # shell that owns the mine — no sibling-PID `wait` hazard, no polling
 # loop.
 #
-# We invoke mempalace as `"$MEMPAL_PYTHON_BIN" -m mempalace` rather than
-# the bare `mempalace` console script so a user with the package
+# We invoke trimemo as `"$MEMPAL_PYTHON_BIN" -m trimemo` rather than
+# the bare `trimemo` console script so a user with the package
 # installed only inside a venv (and the venv's bin/ not on the hook's
 # PATH, e.g. `uv tool install` in some distributions, or a manually
 # managed virtualenv) still hits a working mine. MEMPAL_PYTHON honours
-# user override; sees ``mempalace/__main__.py`` which dispatches to
+# user override; sees ``trimemo/__main__.py`` which dispatches to
 # ``mempalace.cli:main`` — identical to the console script.
 mempal_log "stop" "$CONVERSATION_ID" "spawning background mine wing=$WING transcript_dir=$TRANSCRIPT_DIR"
 (
-    if "$MEMPAL_PYTHON_BIN" -m mempalace --version >/dev/null 2>&1; then
-        "$MEMPAL_PYTHON_BIN" -m mempalace mine "$TRANSCRIPT_DIR" \
+    if "$MEMPAL_PYTHON_BIN" -m trimemo --version >/dev/null 2>&1; then
+        "$MEMPAL_PYTHON_BIN" -m trimemo mine "$TRANSCRIPT_DIR" \
             --mode convos \
             --wing "$WING" \
             >> "$MEMPAL_AGY_LOG" 2>&1 < /dev/null
         mempal_log "stop" "$CONVERSATION_ID" "background mine finished wing=$WING"
     else
-        mempal_log "stop" "$CONVERSATION_ID" "ERROR: mempalace is not runnable via $MEMPAL_PYTHON_BIN -m mempalace; install mempalace or set MEMPAL_PYTHON"
+        mempal_log "stop" "$CONVERSATION_ID" "ERROR: trimemo is not runnable via $MEMPAL_PYTHON_BIN -m trimemo; install trimemo or set MEMPAL_PYTHON"
     fi
     rm -f "$PENDING_FILE" 2>/dev/null
 ) >/dev/null 2>&1 < /dev/null &

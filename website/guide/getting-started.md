@@ -3,20 +3,20 @@
 ## Installation
 
 We recommend [`uv`](https://docs.astral.sh/uv/) — `uv tool install` puts
-the `mempalace` CLI in an isolated environment on your PATH:
+the `trimemo` CLI in an isolated environment on your PATH:
 
 ```bash
-uv tool install mempalace
+uv tool install trimemo
 ```
 
-If you prefer pip, `pip install mempalace` still works.
+If you prefer pip, `pip install trimemo` still works.
 
 Android / Termux uses Android's Python wheel platform rather than Linux's.
-Follow the [Termux guide](/guide/termux) to run MemPalace in a Debian PRoot
+Follow the [Termux guide](/guide/termux) to run TriMemo in a Debian PRoot
 container instead of attempting a native install.
 
 ::: danger Security Warning
-The domain `mempalace.tech` is a **brand-squatting site** not affiliated with this project. It is known to run ad-redirects and potential malware. The official MemPalace distribution is only available via this [GitHub repository](https://github.com/MemPalace/mempalace) and [PyPI](https://pypi.org/project/mempalace/). Never install binaries or scripts from unofficial domains.
+The domain `mempalace.tech` is a **brand-squatting site** not affiliated with this project. It is known to run ad-redirects and potential malware. The official TriMemo distribution is only available via this [GitHub repository](https://github.com/MemPalace/trimemo) and [PyPI](https://pypi.org/project/trimemo/). Never install binaries or scripts from unofficial domains.
 :::
 
 ### Requirements
@@ -31,7 +31,7 @@ No API key required for the core local workflow. After installation, the main st
 
 ```bash
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 ```
 
@@ -41,13 +41,13 @@ Three steps: **init**, **mine**, **search**.
 
 ### 1. Initialize Your Palace
 
-`mempalace init` requires a project directory to scan. Pass a path,
+`trimemo init` requires a project directory to scan. Pass a path,
 or `.` to use the current directory.
 
 ```bash
-mempalace init ~/projects/myapp
+trimemo init ~/projects/myapp
 # or, from inside the project:
-mempalace init .
+trimemo init .
 ```
 
 This scans your project directory and:
@@ -60,13 +60,13 @@ This scans your project directory and:
 
 ```bash
 # Mine project files (code, docs, notes)
-mempalace mine ~/projects/myapp
+trimemo mine ~/projects/myapp
 
 # Mine conversation exports (Claude, ChatGPT, Slack)
-mempalace mine ~/chats/ --mode convos
+trimemo mine ~/chats/ --mode convos
 
 # Mine with auto-classification into memory types
-mempalace mine ~/chats/ --mode convos --extract general
+trimemo mine ~/chats/ --mode convos --extract general
 ```
 
 Two mining modes plus one extraction strategy:
@@ -77,20 +77,20 @@ Two mining modes plus one extraction strategy:
 ### 3. Search
 
 ```bash
-mempalace search "why did we switch to GraphQL"
+trimemo search "why did we switch to GraphQL"
 ```
 
 That gives you a working local memory index.
 
 ## What Happens Next
 
-After the one-time setup, you don't run MemPalace commands manually. Your AI uses it for you through [MCP integration](/guide/mcp-integration), the bundled Codex plugin, or a [Claude Code plugin](/guide/claude-code).
+After the one-time setup, you don't run TriMemo commands manually. Your AI uses it for you through [MCP integration](/guide/mcp-integration), the bundled Codex plugin, or a [Claude Code plugin](/guide/claude-code).
 
 Ask your AI anything:
 
 > *"What did we decide about auth last month?"*
 
-It calls `mempalace_search` automatically, gets verbatim results, and answers you. You never type `mempalace search` again.
+It calls `mempalace_search` automatically, gets verbatim results, and answers you. You never type `trimemo search` again.
 
 ## Next Steps
 

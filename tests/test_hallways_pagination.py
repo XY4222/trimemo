@@ -15,7 +15,7 @@ paginated ``get(where={"wing": wing}, limit=, offset=)``:
 from unittest.mock import MagicMock, patch
 
 with patch.dict("sys.modules", {"chromadb": MagicMock()}):
-    from mempalace import hallways as hallways_mod
+    from trimemo import hallways as hallways_mod
 
 
 def _use_tmp_hallway_file(monkeypatch, tmp_path):

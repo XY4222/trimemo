@@ -1,13 +1,13 @@
-# Contributing to MemPalace
+# Contributing to TriMemo
 
-Thanks for wanting to help. MemPalace is open source and we welcome contributions of all sizes — from typo fixes to new features.
+Thanks for wanting to help. TriMemo is open source and we welcome contributions of all sizes — from typo fixes to new features.
 
 ## Getting Started
 
 ```bash
 # Fork the repo on GitHub first, then clone your fork
 git clone https://github.com/<your-username>/mempalace.git
-cd mempalace
+cd trimemo
 git remote add upstream https://github.com/MemPalace/mempalace.git
 
 # Recommended: uv (https://docs.astral.sh/uv/) handles the venv for you
@@ -67,7 +67,7 @@ See [benchmarks/README.md](benchmarks/README.md) for data download instructions 
 ## Project Structure
 
 ```
-mempalace/          ← core package (see mempalace/README.md for module guide)
+trimemo/          ← core package (see trimemo/README.md for module guide)
 benchmarks/         ← reproducible benchmark runners
 hooks/              ← Claude Code auto-save hooks
 examples/           ← usage examples
@@ -104,7 +104,7 @@ assets/             ← logo + brand
 
 ## Good First Issues
 
-Check the [Issues](https://github.com/MemPalace/mempalace/issues) tab. Great starting points:
+Check the [Issues](https://github.com/MemPalace/trimemo/issues) tab. Great starting points:
 
 - **New chat formats**: Add import support for Cursor, Copilot, or other AI tool exports
 - **Room detection**: Improve pattern matching in `room_detector_local.py`

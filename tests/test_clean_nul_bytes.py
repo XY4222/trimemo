@@ -20,7 +20,7 @@ file covers the chokepoint fix that closes that gap: replace, not reject, so
 a NUL-containing chunk doesn't abort or corrupt an otherwise-good mine.
 """
 
-from mempalace.config import strip_nul_bytes
+from trimemo.config import strip_nul_bytes
 
 
 # ── Unit tests ─────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ class TestSanitizeContentStillRejectsNuls:
     """
 
     def test_sanitize_content_rejects_nul(self):
-        from mempalace.config import sanitize_content
+        from trimemo.config import sanitize_content
 
         import pytest
 
@@ -109,7 +109,7 @@ class TestBackendChokepointStripsNulBytes:
 
     @staticmethod
     def _collection():
-        from mempalace.backends.chroma import ChromaCollection
+        from trimemo.backends.chroma import ChromaCollection
 
         fake = _CapturingCollection()
         return fake, ChromaCollection(fake)

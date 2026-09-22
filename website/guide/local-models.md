@@ -1,13 +1,13 @@
 # Local Models
 
-MemPalace works with any local LLM — Llama, Mistral, or any offline model. Since local models generally don't speak MCP yet, there are two approaches.
+TriMemo works with any local LLM — Llama, Mistral, or any offline model. Since local models generally don't speak MCP yet, there are two approaches.
 
 ## Wake-Up Command
 
 Load your world into the model's context:
 
 ```bash
-mempalace wake-up > context.txt
+trimemo wake-up > context.txt
 # Paste context.txt into your local model's system prompt
 ```
 
@@ -17,7 +17,7 @@ This gives your local model a bounded wake-up context, typically around **~600-9
 
 For project-specific context:
 ```bash
-mempalace wake-up --wing driftwood > context.txt
+trimemo wake-up --wing driftwood > context.txt
 ```
 
 ## CLI Search
@@ -25,7 +25,7 @@ mempalace wake-up --wing driftwood > context.txt
 Query on demand, feed results into your prompt:
 
 ```bash
-mempalace search "auth decisions" > results.txt
+trimemo search "auth decisions" > results.txt
 # Include results.txt in your prompt
 ```
 
@@ -56,7 +56,7 @@ prompt = f"Context from memory:\n{context}\n\nUser: What did we decide about aut
 Use [AAAK dialect](/concepts/aaak-dialect) to compress wake-up context further:
 
 ```bash
-mempalace compress --wing myapp --dry-run
+trimemo compress --wing myapp --dry-run
 ```
 
 AAAK is readable by any LLM that reads text — Claude, GPT, Gemini, Llama, Mistral — without a decoder.

@@ -126,7 +126,7 @@ def _drawer_ids(col):
 
 class TestSyncPalace:
     def test_dry_run_classifies_correctly(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         report = sync_palace(
             palace_path=synced_world["palace_path"],
@@ -150,7 +150,7 @@ class TestSyncPalace:
             del client
 
     def test_apply_removes_gitignored_and_missing(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         report = sync_palace(
             palace_path=synced_world["palace_path"],
@@ -172,7 +172,7 @@ class TestSyncPalace:
             del client
 
     def test_dry_run_does_not_touch_collection(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         client, col = _open_drawers(synced_world["palace_path"])
         before = _drawer_ids(col)
@@ -193,7 +193,7 @@ class TestSyncPalace:
 
     def test_wing_scope_filters(self, tmp_dir, palace_path):
         """A drawer in another wing must survive a wing-scoped sync."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         (repo_path / "build").mkdir(parents=True)
@@ -243,7 +243,7 @@ class TestSyncPalace:
             del client
 
     def test_no_source_file_drawers_preserved_on_apply(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         sync_palace(
             palace_path=synced_world["palace_path"],
@@ -257,7 +257,7 @@ class TestSyncPalace:
             del client
 
     def test_out_of_scope_drawers_preserved(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         sync_palace(
             palace_path=synced_world["palace_path"],
@@ -272,7 +272,7 @@ class TestSyncPalace:
 
     def test_negated_gitignore_rules_respected(self, tmp_dir, palace_path):
         """`!build/keep.py` must un-ignore one specific file under build/."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         (repo_path / "build").mkdir(parents=True)
@@ -325,7 +325,7 @@ class TestSyncPalace:
 
     def test_nested_gitignore_layers(self, tmp_dir, palace_path):
         """Subdir .gitignore can deny what root allows."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         (repo_path / "vendor").mkdir(parents=True)
@@ -370,7 +370,7 @@ class TestSyncPalace:
 
     def test_closet_purge_runs_on_apply(self, synced_world):
         """Closets pointing at removed sources must also disappear."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         # Seed a closet referencing the to-be-pruned ignored.py source.
         client = chromadb.PersistentClient(path=synced_world["palace_path"])
@@ -412,7 +412,7 @@ class TestSyncPalace:
             del client
 
     def test_handles_empty_palace(self, palace_path):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         client = chromadb.PersistentClient(path=palace_path)
         client.get_or_create_collection("mempalace_drawers", metadata={"hnsw:space": "cosine"})
@@ -423,7 +423,7 @@ class TestSyncPalace:
         assert report["removed_drawers"] == 0
 
     def test_emits_wal_entries_on_apply(self, synced_world):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         seen = []
 
@@ -457,7 +457,7 @@ class TestSyncPalace:
         Deleting them forces full re-mine + re-embed of the transcript on the
         next miner run, even though the transcript content has not changed.
         """
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         repo_path.mkdir(parents=True)
@@ -531,7 +531,7 @@ class TestSyncPalace:
         tautology of round-1's classifier-based test where ancestor walks
         loaded the same matcher chain regardless of which root was picked.
         """
-        from mempalace.sync import _auto_detect_project_roots
+        from trimemo.sync import _auto_detect_project_roots
 
         outer = Path(tmp_dir) / "outer"
         inner = outer / "inner"
@@ -577,7 +577,7 @@ class TestSyncPalace:
     def test_apply_with_empty_project_dirs_raises(self, palace_path):
         """Round-2 P1: `project_dirs=[]` (empty list) with apply must raise,
         not silently classify everything as out_of_scope."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         client = chromadb.PersistentClient(path=palace_path)
         client.get_or_create_collection("mempalace_drawers", metadata={"hnsw:space": "cosine"})
@@ -597,15 +597,15 @@ class TestSyncPalace:
         """F7 regression: closets-collection-missing logs a warning."""
         import logging
 
-        from mempalace import sync as sync_mod
-        from mempalace.sync import sync_palace
+        from trimemo import sync as sync_mod
+        from trimemo.sync import sync_palace
 
         def boom(*args, **kwargs):
             raise RuntimeError("simulated missing closets collection")
 
         monkeypatch.setattr(sync_mod, "get_closets_collection", boom)
 
-        with caplog.at_level(logging.WARNING, logger="mempalace.sync"):
+        with caplog.at_level(logging.WARNING, logger="trimemo.sync"):
             sync_palace(
                 palace_path=synced_world["palace_path"],
                 project_dirs=[synced_world["repo_path"]],
@@ -624,10 +624,10 @@ class TestSyncPalace:
         cannot fake-pass — the assertion below verifies the patched explode
         actually ran before the cache was cleared.
         """
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         # Reconfigure to point at synced_world.
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
         import json
 
         cfg_dir = Path(synced_world["palace_path"]).parent / "cfg_for_cache_test"
@@ -644,7 +644,7 @@ class TestSyncPalace:
             called["n"] += 1
             raise RuntimeError("simulated mid-apply failure")
 
-        monkeypatch.setattr("mempalace.sync.sync_palace", explode)
+        monkeypatch.setattr("trimemo.sync.sync_palace", explode)
 
         # tool_sync's broad except catches RuntimeError → returns structured error.
         result = mcp_server.tool_sync(
@@ -660,7 +660,7 @@ class TestSyncPalace:
 
     def test_sync_report_keys_stable(self, synced_world):
         """Regression: SyncReport schema must not silently drop a field."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         report = sync_palace(
             palace_path=synced_world["palace_path"],
@@ -685,7 +685,7 @@ class TestSyncPalace:
 
     def test_batch_size_boundary(self, tmp_dir, palace_path):
         """`_delete_in_batches` correctness at batch_size smaller than dataset."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         repo_path.mkdir(parents=True)
@@ -737,7 +737,7 @@ class TestSyncPalace:
 
     def test_apply_is_idempotent(self, synced_world):
         """Round-3: a second apply on the same palace must be a no-op."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         first = sync_palace(
             palace_path=synced_world["palace_path"],
@@ -759,7 +759,7 @@ class TestSyncPalace:
         """Round-3: a drawer whose source_file metadata is relative is upstream
         corruption (miner writes absolute paths). Sync must NOT guess at
         path resolution; it routes the drawer to `no_source` and leaves it."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         client = chromadb.PersistentClient(path=palace_path)
         col = client.get_or_create_collection(
@@ -804,7 +804,7 @@ class TestSyncPalace:
     def test_overlapping_project_dirs_picks_longest(self, tmp_dir, palace_path):
         """`_resolve_project_root` longest-prefix matching: nested project
         dirs both contain the source; the deeper (longer) one wins."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         outer = Path(tmp_dir) / "outer"
         inner = outer / "inner"
@@ -848,7 +848,7 @@ class TestSyncPalace:
 
     def test_apply_without_scope_raises(self, palace_path):
         """F6: apply=True with both wing=None AND project_dirs=None refuses."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         # Empty palace; we never reach delete code, but the guard must fire
         # before any work.
@@ -875,8 +875,8 @@ class TestSyncPalace:
         import fcntl
         import hashlib
 
-        from mempalace.palace import MineAlreadyRunning
-        from mempalace.sync import sync_palace
+        from trimemo.palace import MineAlreadyRunning
+        from trimemo.sync import sync_palace
 
         palace_path = synced_world["palace_path"]
         resolved = os.path.realpath(os.path.expanduser(palace_path))
@@ -914,7 +914,7 @@ class TestSyncPalace:
         source side, _resolve_project_root would mis-bucket every drawer
         as out_of_scope. This test pins symmetric resolution.
         """
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         real_root = Path(tmp_dir) / "real"
         (real_root / "build").mkdir(parents=True)
@@ -963,8 +963,8 @@ class TestSyncPalace:
         cost one _classify_drawer invocation, not N. Verifies the perf
         optimisation actually short-circuits without changing behaviour.
         """
-        from mempalace import sync as sync_mod
-        from mempalace.sync import sync_palace
+        from trimemo import sync as sync_mod
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         (repo_path / "build").mkdir(parents=True)
@@ -1019,7 +1019,7 @@ class TestSyncPalace:
         source files, not N. Wraps the real collection so chromadb still
         does the work; only the call count is intercepted.
         """
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo_path = Path(synced_world["repo_path"])
         palace_path = synced_world["palace_path"]
@@ -1065,7 +1065,7 @@ class TestSyncPalace:
 
         monkeypatch.setattr(sync_mod, "get_closets_collection", wrapped_get_closets)
 
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         report = sync_palace(
             palace_path=palace_path,
@@ -1099,7 +1099,7 @@ class TestSyncPalace:
         top of the main loop, the cache lookup would route the sentinel
         to gitignored and delete it.
         """
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo_path = Path(tmp_dir) / "repo"
         (repo_path / "build").mkdir(parents=True)
@@ -1162,7 +1162,7 @@ class TestSyncPalace:
         roots are alphabetically deterministic; otherwise overlapping nested
         scope choice depends on argv order.
         """
-        from mempalace.sync import _normalize_project_dirs
+        from trimemo.sync import _normalize_project_dirs
 
         result = _normalize_project_dirs(["/tmp/zzz", "/tmp/aaa"])
         names = [p.name for p in result]
@@ -1178,13 +1178,13 @@ class TestSyncMcpTool:
     """T2: `mempalace_sync` MCP entry point must keep apply polarity stable."""
 
     def _patch(self, monkeypatch, config, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_config", config)
         monkeypatch.setattr(mcp_server, "_get_kg", lambda: kg)
 
     def test_default_is_dry_run(self, monkeypatch, config, palace_path, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._patch(monkeypatch, config, kg)
         client = chromadb.PersistentClient(path=palace_path)
@@ -1200,7 +1200,7 @@ class TestSyncMcpTool:
     def test_success_true_on_dry_run(self, monkeypatch, config, palace_path, kg):
         """Round-4: success path returns `success: True` for API symmetry
         with the structured-error branches that all return `success: False`."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         self._patch(monkeypatch, config, kg)
         client = chromadb.PersistentClient(path=palace_path)
@@ -1212,10 +1212,10 @@ class TestSyncMcpTool:
         assert report.get("dry_run") is True
 
     def test_apply_true_is_destructive(self, monkeypatch, config, synced_world, kg):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         # Rebuild config to point at synced_world's palace.
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
         import json
 
         cfg_dir = Path(synced_world["palace_path"]).parent / "cfg_for_mcp_test"
@@ -1235,7 +1235,7 @@ class TestSyncMcpTool:
         """Round-3: tool_sync must keep the {success:False,error:...} contract
         even on the early `_no_palace` short-circuit, not return the bare
         legacy `{error,hint}` dict."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class _EmptyConfig:
             palace_path = ""
@@ -1253,7 +1253,7 @@ class TestSyncMcpTool:
     ):
         """Round-2 P0: tool_sync must return {success: False, error: ...}
         rather than letting ValueError propagate to the MCP client."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         client = chromadb.PersistentClient(path=palace_path)
         client.get_or_create_collection("mempalace_drawers", metadata={"hnsw:space": "cosine"})
@@ -1271,8 +1271,8 @@ class TestSyncMcpTool:
         import fcntl
         import hashlib
 
-        from mempalace import mcp_server
-        from mempalace.config import MempalaceConfig
+        from trimemo import mcp_server
+        from trimemo.config import MempalaceConfig
         import json
 
         # Wire MCP config at synced_world.
@@ -1307,10 +1307,10 @@ class TestSyncCli:
     """T1: `cmd_sync` argparse + dispatch wrapper round-trip."""
 
     def test_dry_run_default_no_mutation(self, monkeypatch, tmp_dir, synced_world, capsys):
-        from mempalace import cli
+        from trimemo import cli
 
         argv = [
-            "mempalace",
+            "trimemo",
             "--palace",
             synced_world["palace_path"],
             "sync",
@@ -1330,10 +1330,10 @@ class TestSyncCli:
             del client
 
     def test_apply_flag_deletes(self, monkeypatch, tmp_dir, synced_world, capsys):
-        from mempalace import cli
+        from trimemo import cli
 
         argv = [
-            "mempalace",
+            "trimemo",
             "--palace",
             synced_world["palace_path"],
             "sync",
@@ -1363,7 +1363,7 @@ class TestSyncCli:
     def test_cli_emits_wal_on_apply(self, monkeypatch, synced_world):
         """F8 regression: cmd_sync must wire `_wal_log` so CLI deletes are
         audited. Without this, scripted CLI invocations leave no trail."""
-        from mempalace import cli, wal
+        from trimemo import cli, wal
 
         seen = []
         original = wal._wal_log
@@ -1375,7 +1375,7 @@ class TestSyncCli:
         monkeypatch.setattr(wal, "_wal_log", recording_wal)
 
         argv = [
-            "mempalace",
+            "trimemo",
             "--palace",
             synced_world["palace_path"],
             "sync",
@@ -1392,10 +1392,10 @@ class TestSyncCli:
 
     def test_apply_without_scope_exits_2(self, monkeypatch, synced_world, capsys):
         """F6 + F8 CLI hardening: --apply with no scope exits non-zero."""
-        from mempalace import cli
+        from trimemo import cli
 
         argv = [
-            "mempalace",
+            "trimemo",
             "--palace",
             synced_world["palace_path"],
             "sync",
@@ -1426,7 +1426,7 @@ class TestServiceRunSyncReport:
         tests (not the whole module at collection time), so the import is a cached
         no-op by the time run_sync runs and its report output stays capturable.
         """
-        import mempalace.mcp_server  # noqa: F401
+        import trimemo.mcp_server  # noqa: F401
 
         yield
 
@@ -1449,8 +1449,8 @@ class TestServiceRunSyncReport:
         return report
 
     def test_dry_run_renders_full_report(self, monkeypatch, tmp_dir, capsys):
-        import mempalace.sync as sync_module
-        from mempalace import service
+        import trimemo.sync as sync_module
+        from trimemo import service
 
         palace = os.path.join(tmp_dir, "palace")
         os.makedirs(palace)
@@ -1483,8 +1483,8 @@ class TestServiceRunSyncReport:
         assert "Deleted:" not in out
 
     def test_apply_renders_removed_counts(self, monkeypatch, tmp_dir, capsys):
-        import mempalace.sync as sync_module
-        from mempalace import service
+        import trimemo.sync as sync_module
+        from trimemo import service
 
         palace = os.path.join(tmp_dir, "palace")
         os.makedirs(palace)
@@ -1539,7 +1539,7 @@ class TestUnresolvedSources:
         del client
 
     def _classify(self, tmp_dir, palace_path, source_file, root=None):
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True, exist_ok=True)
@@ -1558,7 +1558,7 @@ class TestUnresolvedSources:
         file of its own in that directory. A deletion leaves the neighbours
         where they were, so this must keep pruning or the feature stops
         doing the job #1252 asked for."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1583,7 +1583,7 @@ class TestUnresolvedSources:
         away partway through it. A neighbour read while it was still there
         must not corroborate a drawer settled afterwards, or one early
         reading condemns every drawer read after it."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1615,7 +1615,7 @@ class TestUnresolvedSources:
         verdict are read again. A volume can return inside one pass as well
         as leave inside it; a neighbour read at the end must not condemn
         drawers whose own reading was taken while the volume was away."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1665,7 +1665,7 @@ class TestUnresolvedSources:
         identity of the filesystem each source was mined from, which is not
         recorded anywhere; `develop` removes them in this state as well.
         """
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         data = repo / "data"
@@ -1687,7 +1687,7 @@ class TestUnresolvedSources:
         """Registry rows are kept without the file being looked at, so one
         says nothing about what is on disk. Letting a sentinel vouch for its
         directory would corroborate from a path that may never have existed."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1731,7 +1731,7 @@ class TestUnresolvedSources:
         a symlink and a missing file filed through the real path name the
         same directory and still do not meet, which keeps rather than
         removes."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         real = repo / "real"
@@ -1778,7 +1778,7 @@ class TestUnresolvedSources:
         owner. The neighbour is reached by `os.stat`, which needs only the
         execute bit, so a verdict here does not depend on a permission the
         old code never asked for either."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         execonly = repo / "execonly"
@@ -1811,7 +1811,7 @@ class TestUnresolvedSources:
         platform rather than needing permission bits that CI may not honour."""
         import os as os_module
 
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1859,7 +1859,7 @@ class TestUnresolvedSources:
         blocker = repo / "notadir"
         blocker.write_text("I am a file\n")
 
-        from mempalace.sync import _classify_drawer
+        from trimemo.sync import _classify_drawer
 
         report = self._classify(tmp_dir, palace_path, blocker / "f.py")
         assert report["unresolved"] == 1, report
@@ -1920,7 +1920,7 @@ class TestUnresolvedSources:
         source = locked / "f.py"
         source.write_text("# x\n")
         os.chmod(locked, 0o000)
-        from mempalace.sync import _classify_drawer
+        from trimemo.sync import _classify_drawer
 
         try:
             report = self._classify(tmp_dir, palace_path, source)
@@ -1945,7 +1945,7 @@ class TestUnresolvedSources:
         for a project marker. Up to 3.13 that probe raises on a directory the
         process may not enter, which ended the run before a single drawer was
         classified."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         locked = repo / "locked"
@@ -1969,7 +1969,7 @@ class TestUnresolvedSources:
     ):
         """The same guard as the test above, reached without permission bits
         so it also runs as root and on Windows, where those tests skip."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -1994,7 +1994,7 @@ class TestUnresolvedSources:
         """A marker found on an ancestor whose path will not resolve must end
         the walk. Climbing past it would register a higher ancestor as the
         root and widen what the run treats as in scope."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         outer = Path(tmp_dir) / "outer"
         inner = outer / "inner"
@@ -2027,7 +2027,7 @@ class TestUnresolvedSources:
         bucket."""
         import itertools
 
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         alone = repo / "alone"
@@ -2064,7 +2064,7 @@ class TestUnresolvedSources:
         """A path the platform cannot encode is not a proven absence either.
         `Path.resolve` raises ValueError on an embedded NUL before any probe
         runs, which used to end the run at that drawer."""
-        from mempalace.sync import _classify_drawer
+        from trimemo.sync import _classify_drawer
 
         root = Path(tmp_dir) / "repo"
         root.mkdir(parents=True)
@@ -2077,7 +2077,7 @@ class TestUnresolvedSources:
     ):
         """The end the issue is about: --apply must delete the provably
         deleted file's drawer and leave the unreachable one alone."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         (repo / "onvolume").mkdir(parents=True)
@@ -2150,7 +2150,7 @@ class TestUnresolvedSources:
     def test_whole_project_root_gone_removes_nothing(self, tmp_dir, palace_path):
         """The mount-point case at full size: the project root itself is not
         there, so no drawer under it can be proven stale."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         mount_point = Path(tmp_dir) / "mnt"
         repo = mount_point / "proj"
@@ -2182,7 +2182,7 @@ class TestUnresolvedSources:
 
     def test_cli_prints_the_unresolved_count(self, monkeypatch, tmp_dir, palace_path, capsys):
         """A count the operator never sees is not a report."""
-        from mempalace import cli
+        from trimemo import cli
 
         repo = Path(tmp_dir) / "repo"
         (repo / "onvolume").mkdir(parents=True)
@@ -2193,7 +2193,7 @@ class TestUnresolvedSources:
 
         monkeypatch.setattr(
             "sys.argv",
-            ["mempalace", "--palace", palace_path, "sync", str(repo), "--wing", "demo"],
+            ["trimemo", "--palace", palace_path, "sync", str(repo), "--wing", "demo"],
         )
         cli.main()
 
@@ -2214,7 +2214,7 @@ class TestUnresolvedSources:
         ``tool_add_drawer`` stores its caller's string verbatim, so these
         spellings arrive without anything being corrupt.
         """
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         data = repo / "data"
@@ -2259,7 +2259,7 @@ class TestUnresolvedSources:
         order and keep under the other. Here the first neighbour goes away
         mid-pass and the second does not, and the deletion is still
         established."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -2302,7 +2302,7 @@ class TestUnresolvedSources:
         """A neighbour corroborates by being read as a file, not by failing
         to be read as gone. Those are different answers, and a directory
         that stops answering partway through a pass produces the second."""
-        from mempalace import sync as sync_mod
+        from trimemo import sync as sync_mod
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -2337,7 +2337,7 @@ class TestUnresolvedSources:
         ``removable_ids``. Pin that on the apply path, beside a drawer that
         really is removable, so the run is deleting while it holds this one
         back."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -2377,7 +2377,7 @@ class TestUnresolvedSources:
         under. A symlink out of the project keeps the link's own spelling in
         `source_file`, so it lands beside sources that are in scope, and its
         target can outlive the directory it appears to sit in."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         data = repo / "data"
@@ -2407,7 +2407,7 @@ class TestUnresolvedSources:
         leaves nothing to corroborate with, and reads exactly like the
         directory's contents being away, so `develop` prunes those drawers
         and this does not."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         module = repo / "module"
@@ -2432,7 +2432,7 @@ class TestUnresolvedSources:
         a report. `unresolved` arrives from the classify pass and from the
         settle, and both have to reach `unresolved_by_source`, counted per
         drawer the way `by_source` counts removals."""
-        from mempalace.sync import sync_palace
+        from trimemo.sync import sync_palace
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -2466,7 +2466,7 @@ class TestUnresolvedSources:
     ):
         """Five paths are printed and the remainder is stated. A list that
         stops at five without saying so reads as the whole set."""
-        from mempalace import cli
+        from trimemo import cli
 
         repo = Path(tmp_dir) / "repo"
         repo.mkdir(parents=True)
@@ -2482,7 +2482,7 @@ class TestUnresolvedSources:
 
         monkeypatch.setattr(
             "sys.argv",
-            ["mempalace", "--palace", palace_path, "sync", str(repo), "--wing", "demo"],
+            ["trimemo", "--palace", palace_path, "sync", str(repo), "--wing", "demo"],
         )
         cli.main()
 

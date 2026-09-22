@@ -1,7 +1,7 @@
 """Smoke tests for i18n dictionaries + Dialect integration."""
 
-from mempalace.i18n import load_lang, t, available_languages
-from mempalace.dialect import Dialect
+from trimemo.i18n import load_lang, t, available_languages
+from trimemo.dialect import Dialect
 
 
 def test_all_languages_load():
@@ -90,7 +90,7 @@ def test_from_config_defaults_to_english(tmp_path):
 
 def test_de_entity_section_loads():
     """German entity section loads all pattern lists non-empty."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     p = get_entity_patterns(("de",))
     assert p["candidate_patterns"], "de: empty candidate_patterns"
@@ -105,7 +105,7 @@ def test_de_entity_section_loads():
 
 def test_es_entity_section_loads():
     """Spanish entity section loads all pattern lists non-empty."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     p = get_entity_patterns(("es",))
     assert p["candidate_patterns"], "es: empty candidate_patterns"
@@ -120,7 +120,7 @@ def test_es_entity_section_loads():
 
 def test_fr_entity_section_loads():
     """French entity section loads all pattern lists non-empty."""
-    from mempalace.i18n import get_entity_patterns
+    from trimemo.i18n import get_entity_patterns
 
     p = get_entity_patterns(("fr",))
     assert p["candidate_patterns"], "fr: empty candidate_patterns"
@@ -137,12 +137,12 @@ def test_direct_address_key_is_singular_string_for_all_locales():
     """Schema invariant: any locale declaring direct-address uses the singular
     ``direct_address_pattern`` (str), never the plural ``direct_address_patterns`` (list).
 
-    The loader at ``mempalace/i18n/__init__.py:209-210`` only reads the singular key;
+    The loader at ``trimemo/i18n/__init__.py:209-210`` only reads the singular key;
     the plural form is the output schema of the merged dict, not the input schema.
     Declaring the plural form in a locale file silently drops every direct-address
     pattern in that locale after load.
     """
-    from mempalace.i18n import _load_entity_section, available_languages
+    from trimemo.i18n import _load_entity_section, available_languages
 
     for lang in available_languages():
         section = _load_entity_section(lang)
@@ -166,7 +166,7 @@ def test_direct_address_key_is_singular_string_for_all_locales():
 
 def test_get_stopwords_default_reads_current_language():
     """Without a lang argument, reads the regex.stop_words of the loaded lang."""
-    from mempalace.i18n import get_stopwords
+    from trimemo.i18n import get_stopwords
 
     load_lang("en")
     sw = get_stopwords()
@@ -177,7 +177,7 @@ def test_get_stopwords_default_reads_current_language():
 
 def test_get_stopwords_explicit_lang_loads_without_mutating_global():
     """Passing lang loads that locale directly and does not touch _current_lang."""
-    from mempalace.i18n import current_lang, get_stopwords
+    from trimemo.i18n import current_lang, get_stopwords
 
     load_lang("en")
     before = current_lang()
@@ -189,7 +189,7 @@ def test_get_stopwords_explicit_lang_loads_without_mutating_global():
 
 def test_get_stopwords_lowercases_entries():
     """Regex stop_words are returned lowercased so callers can cheaply match."""
-    from mempalace.i18n import get_stopwords
+    from trimemo.i18n import get_stopwords
 
     en = get_stopwords("en")
     assert all(w == w.lower() for w in en)
@@ -197,14 +197,14 @@ def test_get_stopwords_lowercases_entries():
 
 def test_get_stopwords_unknown_lang_returns_empty_set():
     """Unknown locale codes must not crash — return empty set so search degrades cleanly."""
-    from mempalace.i18n import get_stopwords
+    from trimemo.i18n import get_stopwords
 
     assert get_stopwords("xx-YY") == set()
 
 
 def test_get_stopwords_every_locale_has_nonempty_set():
     """Every shipped locale declares regex.stop_words as a non-empty string."""
-    from mempalace.i18n import available_languages, get_stopwords
+    from trimemo.i18n import available_languages, get_stopwords
 
     for lang in available_languages():
         sw = get_stopwords(lang)

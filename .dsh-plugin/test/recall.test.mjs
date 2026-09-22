@@ -35,11 +35,11 @@ test('parseWakeup drops CLI hints, never stored words that mention them', () => 
     '=====',
     '## L0 — IDENTITY\nNo identity configured. Create ~/.mempalace/identity.txt',
     '',
-    '## L1 — No palace found. Run: mempalace mine <dir>',
+    '## L1 — No palace found. Run: trimemo mine <dir>',
   ].join('\n')
   assert.equal(recall.parseWakeup(empty), '')
 
-  const busy = 'Wake-up text (~9 tokens):\n=====\n## L0 — IDENTITY\nI am Atlas.\n\n## Palace is busy — another MemPalace process holds the write lock.\n'
+  const busy = 'Wake-up text (~9 tokens):\n=====\n## L0 — IDENTITY\nI am Atlas.\n\n## Palace is busy — another TriMemo process holds the write lock.\n'
   assert.equal(recall.parseWakeup(busy), '## L0 — IDENTITY\nI am Atlas.')
 
   const quoted = WAKEUP.replace('chose the append-only', 'fixed "No palace found" being shown for a locked palace; chose the append-only')
@@ -54,11 +54,11 @@ test('the first model call of a session waits for its memory and gets it', async
   host.emit('agent/session-start', { agent, source: 'startup' })
   const prompt = render(await assemble())
 
-  assert.match(prompt, /^## MemPalace memory\n\nYour stored memory for wing `my_project`/)
+  assert.match(prompt, /^## TriMemo memory\n\nYour stored memory for wing `my_project`/)
   assert.match(prompt, /I am Atlas, working with Igor\./)
   assert.match(prompt, /`mcp__mempalace__palace_query`, passing a PQL `query` such as `FIND "terms" LIMIT 5` to search every wing/)
   assert.match(prompt, /`FIND "terms" IN my_project LIMIT 5` for this wing only/)
-  assert.deepEqual(host.spawns[0].argv, ['/usr/local/bin/mempalace', 'wake-up', '--wing', 'my_project'])
+  assert.deepEqual(host.spawns[0].argv, ['/usr/local/bin/trimemo', 'wake-up', '--wing', 'my_project'])
 })
 
 test('pointed at the full server, the memory section gives plain wing guidance instead of PQL', async () => {
@@ -178,8 +178,8 @@ test('a hung CLI is cut off at the timeout', async () => {
 
 test('the spawn spec is fully explicit, and Python is told to speak UTF-8', async () => {
   const host = createHost({ reply: wakeUp(WAKEUP) })
-  recall.apply(host.ctx, { command: 'python', commandArgs: ['-m', 'mempalace'], env: { MEMPALACE_PALACE_PATH: '/p' } })
-  const workspace = await mkdtemp(path.join(tmpdir(), 'mempalace-dsh-'))
+  recall.apply(host.ctx, { command: 'python', commandArgs: ['-m', 'trimemo'], env: { MEMPALACE_PALACE_PATH: '/p' } })
+  const workspace = await mkdtemp(path.join(tmpdir(), 'trimemo-dsh-'))
   const cwd = path.join(workspace, 'My-Project')
   await mkdir(cwd)
   try {
@@ -188,7 +188,7 @@ test('the spawn spec is fully explicit, and Python is told to speak UTF-8', asyn
     await assemble()
 
     const [spec] = host.spawns
-    assert.deepEqual(spec.argv, ['/usr/local/bin/python', '-m', 'mempalace', 'wake-up', '--wing', 'my_project'])
+    assert.deepEqual(spec.argv, ['/usr/local/bin/python', '-m', 'trimemo', 'wake-up', '--wing', 'my_project'])
     assert.equal(spec.cwd, cwd)
     assert.deepEqual(spec.stdio, { stdin: 'ignore', stdout: { maxBytes: 1048576 }, stderr: { maxBytes: 65536 } })
     assert.equal(spec.graceMs, 2000)
@@ -202,7 +202,7 @@ test('the spawn spec is fully explicit, and Python is told to speak UTF-8', asyn
 test('a workspace that no longer exists still gets memory, read from the home directory', async () => {
   const host = createHost({ reply: wakeUp(WAKEUP) })
   recall.apply(host.ctx, {})
-  const { agent, assemble } = createAgent({ cwd: path.join(tmpdir(), 'mempalace-dsh-gone', 'Moved-Project') })
+  const { agent, assemble } = createAgent({ cwd: path.join(tmpdir(), 'trimemo-dsh-gone', 'Moved-Project') })
   host.emit('agent/session-start', { agent, source: 'startup' })
 
   assert.match(render(await assemble()), /I am Atlas/)
@@ -287,7 +287,7 @@ test('unloading the plugin cancels a wake-up still running, without warning abou
 })
 
 test('the project wing follows the miner: mempalace.yaml, then the normalised directory name', async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'mempalace-dsh-'))
+  const root = await mkdtemp(path.join(tmpdir(), 'trimemo-dsh-'))
   try {
     const bare = path.join(root, 'Claude Code-Plugin')
     const configured = path.join(root, 'configured')

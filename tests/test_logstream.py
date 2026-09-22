@@ -1,7 +1,7 @@
 """
 test_logstream.py — Tests for the RFC 003 agent coordination logstream.
 
-Covers the durable SQLite core in mempalace/logstream.py: schema init,
+Covers the durable SQLite core in trimemo/logstream.py: schema init,
 append/list round trips, structured filters, cursor semantics, wait
 (immediate, timeout, and cross-thread), exact artifact storage, ack
 immutability, and size-limit errors.
@@ -14,7 +14,7 @@ import threading
 
 import pytest
 
-from mempalace.logstream import (
+from trimemo.logstream import (
     DEFAULT_MAX_ARTIFACT_BYTES,
     DEFAULT_MAX_BODY_BYTES,
     MAX_WAIT_TIMEOUT_MS,
@@ -34,7 +34,7 @@ def _append(ls, **overrides):
     """Append a minimal valid event, overridable per test."""
     fields = {
         "type": "task.request",
-        "stream": "project/mempalace",
+        "stream": "project/trimemo",
         "room": "delegation",
         "from_agent": "mac-codex",
         "to_agent": "windows-codex",
@@ -82,7 +82,7 @@ class TestInit:
 
         reopened = Logstream(db_path=db_path)
         try:
-            events = reopened.list_events(stream="project/mempalace")
+            events = reopened.list_events(stream="project/trimemo")
             assert [e["id"] for e in events] == [evt["id"]]
         finally:
             reopened.close()
@@ -103,7 +103,7 @@ class TestAppendList:
         assert evt["id"].startswith("evt_")
         assert evt["created_at"].endswith("Z")
 
-        events = logstream.list_events(stream="project/mempalace")
+        events = logstream.list_events(stream="project/trimemo")
         assert len(events) == 1
         stored = events[0]
         assert stored == evt
@@ -126,7 +126,7 @@ class TestAppendList:
 
     def test_events_are_ordered_by_append_order(self, logstream):
         ids = [_append(logstream, body=f"event {i}")["id"] for i in range(5)]
-        events = logstream.list_events(stream="project/mempalace", limit=10)
+        events = logstream.list_events(stream="project/trimemo", limit=10)
         assert [e["id"] for e in events] == ids
         assert [e["seq"] for e in events] == sorted(e["seq"] for e in events)
 
@@ -184,7 +184,7 @@ class TestFilters:
         return logstream
 
     def test_filter_by_stream(self, seeded):
-        assert len(seeded.list_events(stream="project/mempalace")) == 2
+        assert len(seeded.list_events(stream="project/trimemo")) == 2
         assert len(seeded.list_events(stream="shared_agent_brain")) == 1
 
     def test_filter_by_room(self, seeded):
@@ -212,7 +212,7 @@ class TestFilters:
 
     def test_combined_filters(self, seeded):
         events = seeded.list_events(
-            stream="project/mempalace", type="patch.ready", to_agent="mac-codex"
+            stream="project/trimemo", type="patch.ready", to_agent="mac-codex"
         )
         assert len(events) == 1
         assert events[0]["status"] == "ready"
@@ -306,7 +306,7 @@ class TestWait:
 
 
 class TestArtifacts:
-    PATCH = "diff --git a/mempalace/searcher.py b/mempalace/searcher.py\n+fixed\n"
+    PATCH = "diff --git a/trimemo/searcher.py b/trimemo/searcher.py\n+fixed\n"
 
     def test_put_get_preserves_exact_content(self, logstream):
         content = self.PATCH + "trailing spaces  \n\ttabs\nunicode ✓\n"
@@ -382,7 +382,7 @@ class TestPatchContentWarnings:
         result = logstream.submit_patch(
             content="diff --git a/x b/x\n+truncated",
             from_agent="windows-codex",
-            stream="project/mempalace",
+            stream="project/trimemo",
         )
         assert any("trailing newline" in w for w in result["artifact"]["warnings"])
 
@@ -425,7 +425,7 @@ class TestSubmitPatch:
         result = logstream.submit_patch(
             content=TestArtifacts.PATCH,
             from_agent="windows-codex",
-            stream="project/mempalace",
+            stream="project/trimemo",
             to_agent="mac-codex",
             correlation_id="task_123",
             branch="feat/shared-brain-dogfood",
@@ -448,7 +448,7 @@ class TestSubmitPatch:
             logstream.submit_patch(
                 content=f"diff --git a/f{i} b/f{i}\n",
                 from_agent="windows-codex",
-                stream="project/mempalace",
+                stream="project/trimemo",
                 correlation_id=f"task_{i}",
             )
         for event in logstream.list_events(type="patch.ready"):
@@ -501,7 +501,7 @@ class TestWatchFilters:
 
     def _event(self, **overrides):
         base = {
-            "stream": "project/mempalace",
+            "stream": "project/trimemo",
             "room": "delegation",
             "type": "task.request",
             "status": "open",
@@ -513,7 +513,7 @@ class TestWatchFilters:
         return base
 
     def test_normalize_treats_blank_as_absent_not_impossible(self):
-        from mempalace.logstream import normalize_watch_values
+        from trimemo.logstream import normalize_watch_values
 
         assert normalize_watch_values(None) is None
         assert normalize_watch_values("a") == {"a"}
@@ -529,7 +529,7 @@ class TestWatchFilters:
         broadcasts are broadcasts — so without the exclusion a watcher wakes
         itself every time it posts a status.
         """
-        from mempalace.logstream import event_matches_watch
+        from trimemo.logstream import event_matches_watch
 
         own = self._event(from_agent="mac-claude", to_agent="*")
         assert not event_matches_watch(
@@ -542,7 +542,7 @@ class TestWatchFilters:
         )
 
     def test_exclusion_beats_a_direct_address(self):
-        from mempalace.logstream import event_matches_watch
+        from trimemo.logstream import event_matches_watch
 
         addressed = self._event(from_agent="noisy", to_agent="mac-claude")
         assert not event_matches_watch(
@@ -550,19 +550,19 @@ class TestWatchFilters:
         )
 
     def test_multi_valued_field_is_an_or(self):
-        from mempalace.logstream import event_matches_watch
+        from trimemo.logstream import event_matches_watch
 
         evt = self._event(type="patch.ready")
         assert event_matches_watch(evt, types={"task.request", "patch.ready"})
         assert not event_matches_watch(evt, types={"task.request", "status.update"})
 
     def test_absent_filter_matches_anything(self):
-        from mempalace.logstream import event_matches_watch
+        from trimemo.logstream import event_matches_watch
 
         assert event_matches_watch(self._event(), types=None, streams=None)
 
     def test_pushdown_only_takes_single_valued_filters(self):
-        from mempalace.logstream import pushdown_watch_filters
+        from trimemo.logstream import pushdown_watch_filters
 
         spec = {"types": {"task.request"}, "streams": {"a", "b"}, "rooms": None}
         pushed = pushdown_watch_filters(spec)
@@ -628,7 +628,7 @@ class TestWatchEvents:
 
 class TestWatchCursorFile:
     def test_roundtrip(self, tmp_path):
-        from mempalace.logstream import read_watch_cursor, write_watch_cursor
+        from trimemo.logstream import read_watch_cursor, write_watch_cursor
 
         path = str(tmp_path / "nested" / "cursor.json")
         write_watch_cursor(path, "evt_abc", agent="mac-claude")
@@ -637,7 +637,7 @@ class TestWatchCursorFile:
     def test_missing_or_corrupt_file_is_not_fatal(self, tmp_path):
         """A truncated state file costs a replay; refusing to start costs
         every event after it."""
-        from mempalace.logstream import read_watch_cursor
+        from trimemo.logstream import read_watch_cursor
 
         assert read_watch_cursor(str(tmp_path / "absent.json")) is None
         corrupt = tmp_path / "corrupt.json"
@@ -646,7 +646,7 @@ class TestWatchCursorFile:
         assert read_watch_cursor(None) is None
 
     def test_write_leaves_no_temp_file_behind(self, tmp_path):
-        from mempalace.logstream import write_watch_cursor
+        from trimemo.logstream import write_watch_cursor
 
         path = str(tmp_path / "cursor.json")
         write_watch_cursor(path, "evt_abc")
@@ -659,7 +659,7 @@ class TestWatchCursorFile:
         AttributeError, which would stop the watcher from starting — the
         exact opposite of the recovery contract.
         """
-        from mempalace.logstream import read_watch_cursor
+        from trimemo.logstream import read_watch_cursor
 
         for payload in ("null", "[]", '"evt_abc"', "42"):
             path = tmp_path / f"cursor_{abs(hash(payload))}.json"
@@ -668,7 +668,7 @@ class TestWatchCursorFile:
 
     def test_conditions_distinguish_absent_empty_and_corrupt(self, tmp_path):
         """ "No cursor" is four facts; only ``absent`` may start at the tip."""
-        from mempalace.logstream import (
+        from trimemo.logstream import (
             WATCH_STATE_ABSENT,
             WATCH_STATE_CORRUPT,
             WATCH_STATE_EMPTY,
@@ -705,7 +705,7 @@ class TestWatchCursorFile:
         momentarily unreachable checkpoint into a fake first run and skips
         every event since the stored cursor.
         """
-        from mempalace.logstream import (
+        from trimemo.logstream import (
             WATCH_STATE_ABSENT,
             WATCH_STATE_CORRUPT,
             read_watch_state,
@@ -738,7 +738,7 @@ class TestWatchCursorFile:
         For the first checkpoint of a fresh watch it costs a skip instead, so
         that one must surface the failure.
         """
-        from mempalace.logstream import write_watch_cursor
+        from trimemo.logstream import write_watch_cursor
 
         target = str(tmp_path / "sub" / "cursor.json")
 
@@ -867,7 +867,7 @@ class TestTopicAndOrder:
         res = logstream.submit_patch(
             content="diff --git a/a b/b\n",
             from_agent="agent-a",
-            stream="project/mempalace",
+            stream="project/trimemo",
             topic="fast-path",
         )
         assert res["event"]["topic"] == "fast-path"
@@ -917,7 +917,7 @@ class TestTopicAndOrder:
             logstream.list_events(before_event_id="evt_nope")
 
     def test_watch_topic_spec_and_matching(self):
-        from mempalace.logstream import (
+        from trimemo.logstream import (
             event_matches_watch,
             pushdown_watch_filters,
             sanitize_watch_spec,

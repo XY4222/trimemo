@@ -1,5 +1,5 @@
-from mempalace.backends.qdrant import _QdrantConfig, _QdrantRESTClient
-from mempalace.version import __version__
+from trimemo.backends.qdrant import _QdrantConfig, _QdrantRESTClient
+from trimemo.version import __version__
 
 
 class _FakeResponse:
@@ -14,7 +14,7 @@ class _FakeResponse:
 
 
 def test_qdrant_rest_client_sends_versioned_user_agent(monkeypatch):
-    import mempalace.backends.qdrant as qdrant
+    import trimemo.backends.qdrant as qdrant
 
     captured = {}
 
@@ -29,6 +29,6 @@ def test_qdrant_rest_client_sends_versioned_user_agent(monkeypatch):
     client = _QdrantRESTClient(_QdrantConfig(url="https://qdrant.example.invalid", timeout=7.5))
 
     assert client.request("GET", "/collections") == {}
-    assert captured["user_agent"] == f"mempalace/{__version__}"
+    assert captured["user_agent"] == f"trimemo/{__version__}"
     assert captured["content_type"] == "application/json"
     assert captured["timeout"] == 7.5

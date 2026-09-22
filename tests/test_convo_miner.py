@@ -8,13 +8,13 @@ from pathlib import Path
 import chromadb
 import pytest
 
-from mempalace.convo_miner import (
+from trimemo.convo_miner import (
     _is_ai_tool_path,
     _register_file,
     _resolve_wing,
     mine_convos,
 )
-from mempalace.palace import (
+from trimemo.palace import (
     NORMALIZE_VERSION,
     MineAlreadyRunning,
     file_already_mined,
@@ -127,9 +127,9 @@ def test_mine_convos_rebuilds_stale_drawers_after_schema_bump(capsys):
     silently purges them and refiles — no manual erase required.
 
     This is what makes the strip_noise upgrade apply to existing corpora:
-    users just run `mempalace mine` again and old noise-filled drawers get
+    users just run `trimemo mine` again and old noise-filled drawers get
     replaced with clean ones."""
-    from mempalace.palace import NORMALIZE_VERSION
+    from trimemo.palace import NORMALIZE_VERSION
 
     tmpdir = tempfile.mkdtemp()
     try:
@@ -216,7 +216,7 @@ def _hold_palace_lock_in_child(palace_path, ready_flag, release_flag):
     import os as _os
     import time as _time
 
-    from mempalace.palace import mine_palace_lock as _mpl
+    from trimemo.palace import mine_palace_lock as _mpl
 
     with _mpl(palace_path):
         open(ready_flag, "w").close()
@@ -308,7 +308,7 @@ def test_mine_convos_dry_run_bypasses_palace_lock(tmp_path, monkeypatch):
 
 # ── _is_ai_tool_path / _resolve_wing — wing_api auto-routing ───────────
 #
-# When a user runs `mempalace mine --mode convos` against a directory
+# When a user runs `trimemo mine --mode convos` against a directory
 # inside a known AI-tool storage path (Claude Code's
 # ~/.claude/projects/, OpenAI Codex's ~/.codex/, Google Gemini CLI's
 # ~/.gemini/), the wing auto-defaults to "wing_api" rather than the
@@ -854,7 +854,7 @@ def test_mine_convos_reprocesses_legacy_drawer_without_stored_mtime(capsys):
         # Simulate a pre-existing drawer from before source_mtime existed.
         client = chromadb.PersistentClient(path=palace_path)
         col = client.get_or_create_collection("mempalace_drawers")
-        from mempalace.palace import NORMALIZE_VERSION
+        from trimemo.palace import NORMALIZE_VERSION
 
         col.upsert(
             ids=["drawer_legacy_session_1"],
@@ -896,7 +896,7 @@ def test_register_file_sentinel_includes_source_mtime():
         client = chromadb.PersistentClient(path=palace_path)
         col = client.get_or_create_collection("mempalace_drawers")
 
-        _register_file(col, str(tiny_file), "test", "mempalace", "exchange")
+        _register_file(col, str(tiny_file), "test", "trimemo", "exchange")
 
         mined = prefetch_mined_set(col, extract_mode="exchange")
         assert str(tiny_file) in mined
@@ -939,7 +939,7 @@ def test_file_conversation_exchange_extra_metadata_cannot_clobber_canonical():
     PR #1915 review: ``metadata.update(extra_metadata)`` let a caller
     silently overwrite ``wing`` / ``filed_at`` / etc.
     """
-    from mempalace.convo_miner import file_conversation_exchange
+    from trimemo.convo_miner import file_conversation_exchange
 
     col = _RecordingCollection()
     file_conversation_exchange(
@@ -961,7 +961,7 @@ def test_file_conversation_exchange_invalid_wing_falls_back_to_wing_general():
     wing_general fallback instead of an error: live filing losing turns
     over a config typo would violate the 100%-recall promise.
     """
-    from mempalace.convo_miner import file_conversation_exchange
+    from trimemo.convo_miner import file_conversation_exchange
 
     col = _RecordingCollection()
     file_conversation_exchange(col, **_exchange_kwargs(wing="../escape"))
@@ -971,7 +971,7 @@ def test_file_conversation_exchange_invalid_wing_falls_back_to_wing_general():
 
 
 def test_file_conversation_exchange_invalid_room_falls_back_to_conversations():
-    from mempalace.convo_miner import file_conversation_exchange
+    from trimemo.convo_miner import file_conversation_exchange
 
     col = _RecordingCollection()
     file_conversation_exchange(col, **_exchange_kwargs(room="a/b"))

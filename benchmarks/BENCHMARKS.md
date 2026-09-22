@@ -64,7 +64,7 @@ Both are real. Both are reproducible. Neither is the whole picture alone.
 > The table is kept here as a historical record of how the comparison
 > was originally framed. Public-facing pages (`README.md`,
 > `mempalaceofficial.com`) no longer present this table, per issue
-> [#875](https://github.com/MemPalace/mempalace/issues/875). For a fair
+> [#875](https://github.com/MemPalace/trimemo/issues/875). For a fair
 > head-to-head, run the same metric on the same split.
 
 | # | System | R@5 (retrieval recall, unless noted) | LLM Required | Which LLM | Notes |
@@ -343,7 +343,7 @@ The palace classifies each question into one of 5 halls. Pass 1 searches only wi
 
 ```bash
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 mkdir -p /tmp/longmemeval-data
 curl -fsSL -o /tmp/longmemeval-data/longmemeval_s_cleaned.json \

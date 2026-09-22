@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "mempalace": {
-      "command": "mempalace-mcp"
+    "trimemo": {
+      "command": "trimemo-mcp"
     }
   }
 }

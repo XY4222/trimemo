@@ -8,7 +8,7 @@ import { projectWing, yamlWing } from '../lib/palace.js'
 
 let root
 beforeEach(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'mempalace-dsh-'))
+  root = await mkdtemp(path.join(tmpdir(), 'trimemo-dsh-'))
 })
 afterEach(async () => {
   await rm(root, { recursive: true, force: true })

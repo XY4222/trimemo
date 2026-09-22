@@ -1,6 +1,6 @@
 """Tests for end-of-mine FTS5 validation (#1537).
 
-mempalace mine must not print "Done." and exit 0 on a palace whose
+trimemo mine must not print "Done." and exit 0 on a palace whose
 chroma.sqlite3 left FTS5 in a malformed state. The validation hook in
 ``palace._validate_palace_fts5_after_mine`` runs PRAGMA quick_check at
 the end of every non-dry-run mine and raises ``MineValidationError`` so
@@ -14,8 +14,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from mempalace import cli, convo_miner, miner
-from mempalace.palace import (
+from trimemo import cli, convo_miner, miner
+from trimemo.palace import (
     MineValidationError,
     _validate_palace_fts5_after_mine,
 )
@@ -27,7 +27,7 @@ from mempalace.palace import (
 def _build_palace_with_drawer(palace_path: Path) -> None:
     """Create a real chromadb palace with one drawer so chroma.sqlite3 exists."""
     palace_path.mkdir(parents=True, exist_ok=True)
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     backend = ChromaBackend()
     try:
@@ -111,7 +111,7 @@ def _mine_args(
         dir=src,
         mode=mode,
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=dry_run,
         no_gitignore=False,
@@ -196,7 +196,7 @@ def test_cmd_mine_project_mode_exits_nonzero_with_banner(tmp_path, monkeypatch, 
     assert "SQLite-layer corruption detected" in combined
     assert "PRAGMA quick_check" in combined
     assert "malformed inverted index" in combined
-    assert "mempalace repair --yes" in combined
+    assert "trimemo repair --yes" in combined
 
 
 def test_cmd_mine_convos_mode_exits_nonzero_with_banner(tmp_path, monkeypatch, capsys):
@@ -216,7 +216,7 @@ def test_cmd_mine_convos_mode_exits_nonzero_with_banner(tmp_path, monkeypatch, c
     captured = capsys.readouterr()
     combined = captured.out + captured.err
     assert "SQLite-layer corruption detected" in combined
-    assert "mempalace repair --yes" in combined
+    assert "trimemo repair --yes" in combined
 
 
 # ── 4. Dry-run skips validation ─────────────────────────────────────
@@ -242,7 +242,7 @@ def test_validate_skipped_on_dry_run(tmp_path, monkeypatch):
         project_dir=str(src),
         palace_path=str(palace),
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=True,
     )
@@ -274,8 +274,8 @@ def test_full_chain_raises_through_mine_impl(tmp_path, monkeypatch):
     by test_full_chain_auto_heals_isolated_fts5_corruption below, and would
     never reach this raise path at all now that it's auto-healed.
     """
-    from mempalace import miner as miner_mod
-    from mempalace import palace as palace_mod
+    from trimemo import miner as miner_mod
+    from trimemo import palace as palace_mod
 
     palace = tmp_path / "palace"
     src = tmp_path / "src"
@@ -286,7 +286,7 @@ def test_full_chain_raises_through_mine_impl(tmp_path, monkeypatch):
         project_dir=str(src),
         palace_path=str(palace),
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )
@@ -312,7 +312,7 @@ def test_full_chain_raises_through_mine_impl(tmp_path, monkeypatch):
             project_dir=str(src),
             palace_path=str(palace),
             wing_override=None,
-            agent="mempalace",
+            agent="trimemo",
             limit=0,
             dry_run=False,
         )
@@ -328,7 +328,7 @@ def test_full_chain_auto_heals_isolated_fts5_corruption(tmp_path):
     -- not raise -- since this is exactly the isolated condition
     maybe_autoheal_fts5_index rebuilds in place (#1926/#1928).
     """
-    from mempalace import miner as miner_mod
+    from trimemo import miner as miner_mod
 
     palace = tmp_path / "palace"
     src = tmp_path / "src"
@@ -339,7 +339,7 @@ def test_full_chain_auto_heals_isolated_fts5_corruption(tmp_path):
         project_dir=str(src),
         palace_path=str(palace),
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )
@@ -356,7 +356,7 @@ def test_full_chain_auto_heals_isolated_fts5_corruption(tmp_path):
         project_dir=str(src),
         palace_path=str(palace),
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )
@@ -372,7 +372,7 @@ def test_validator_suppresses_raise_when_autoheal_clears(tmp_path, monkeypatch):
     corruption) proves the wiring in _validate_palace_fts5_after_mine itself,
     deterministically, on every build.
     """
-    from mempalace import repair as repair_mod
+    from trimemo import repair as repair_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -412,8 +412,8 @@ def test_validator_passes_logger_progress_not_print_to_autoheal(tmp_path, monkey
     level -- it has to be one the default configuration does not discard -- is
     pinned by the test below instead.
     """
-    from mempalace import repair as repair_mod
-    from mempalace.palace import logger as palace_logger
+    from trimemo import repair as repair_mod
+    from trimemo.palace import logger as palace_logger
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -445,7 +445,7 @@ def test_validator_passes_logger_progress_not_print_to_autoheal(tmp_path, monkey
 def test_validator_progress_level_survives_the_default_logging_config(tmp_path, monkeypatch):
     """A message the operator never sees closes nothing (#2240).
 
-    Nothing configures logging on the ``mempalace mine`` path, so
+    Nothing configures logging on the ``trimemo mine`` path, so
     ``mempalace.palace`` inherits the root logger's WARNING and INFO records
     are discarded before any handler runs. Everything this call can report --
     a rebuild attempted against the operator's data, refused, or completed --
@@ -457,8 +457,8 @@ def test_validator_progress_level_survives_the_default_logging_config(tmp_path, 
     """
     import logging
 
-    from mempalace import repair as repair_mod
-    from mempalace.palace import logger as palace_logger
+    from trimemo import repair as repair_mod
+    from trimemo.palace import logger as palace_logger
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -507,7 +507,7 @@ def test_validator_still_raises_when_autoheal_cannot_clear(tmp_path, monkeypatch
     (broader corruption, lock contention, rebuild failure), the validator
     must still raise. Same build-independence rationale as the test above.
     """
-    from mempalace import repair as repair_mod
+    from trimemo import repair as repair_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -536,8 +536,8 @@ def test_mine_impl_does_not_print_partial_summary_on_validation_error(
     (ChromaDB's own Rust bindings panic opening a sufficiently corrupted
     file, before this test's validator would ever run).
     """
-    from mempalace import miner as miner_mod
-    from mempalace import palace as palace_mod
+    from trimemo import miner as miner_mod
+    from trimemo import palace as palace_mod
 
     palace = tmp_path / "palace"
     src = tmp_path / "src"
@@ -548,7 +548,7 @@ def test_mine_impl_does_not_print_partial_summary_on_validation_error(
         project_dir=str(src),
         palace_path=str(palace),
         wing_override=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )
@@ -565,7 +565,7 @@ def test_mine_impl_does_not_print_partial_summary_on_validation_error(
             project_dir=str(src),
             palace_path=str(palace),
             wing_override=None,
-            agent="mempalace",
+            agent="trimemo",
             limit=0,
             dry_run=False,
         )
@@ -615,7 +615,7 @@ def test_convo_miner_dry_run_skips_validator(tmp_path, monkeypatch):
     """`mine_convos(..., dry_run=True)` must not invoke the validator;
     mirrors the project-miner guarantee.
     """
-    from mempalace import convo_miner as convo_mod
+    from trimemo import convo_miner as convo_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -633,7 +633,7 @@ def test_convo_miner_dry_run_skips_validator(tmp_path, monkeypatch):
         convo_dir=str(src),
         palace_path=str(palace),
         wing="testwing",
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=True,
     )
@@ -651,7 +651,7 @@ def test_close_handles_called_before_quick_check(tmp_path, monkeypatch):
 
     order = []
 
-    from mempalace import repair as repair_mod
+    from trimemo import repair as repair_mod
 
     real_close = repair_mod._close_chroma_handles
     real_errors = repair_mod.sqlite_integrity_errors
@@ -684,7 +684,7 @@ def test_cmd_mine_extract_mode_exits_nonzero_with_banner(tmp_path, monkeypatch, 
     after #1548 was written, so without this wire-up the extract path
     would exit 0 on a corrupted FTS5 palace.
     """
-    from mempalace import format_miner as format_mod
+    from trimemo import format_miner as format_mod
 
     palace = str(tmp_path / "palace")
     src = tmp_path / "docs"
@@ -702,14 +702,14 @@ def test_cmd_mine_extract_mode_exits_nonzero_with_banner(tmp_path, monkeypatch, 
     captured = capsys.readouterr()
     combined = captured.out + captured.err
     assert "SQLite-layer corruption detected" in combined
-    assert "mempalace repair --yes" in combined
+    assert "trimemo repair --yes" in combined
 
 
 def test_mine_formats_dry_run_skips_validator(tmp_path, monkeypatch):
     """`mine_formats(..., dry_run=True)` must not invoke the validator;
     mirrors the project-miner and convo-miner guarantees.
     """
-    from mempalace import format_miner as format_mod
+    from trimemo import format_miner as format_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -727,7 +727,7 @@ def test_mine_formats_dry_run_skips_validator(tmp_path, monkeypatch):
         format_dir=str(src),
         palace_path=str(palace),
         wing="testwing",
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=True,
     )
@@ -742,7 +742,7 @@ def test_mine_formats_keyboard_interrupt_skips_validator(tmp_path, monkeypatch):
     The per-file `except Exception` does not catch BaseException, so the
     interrupt propagates up to the outer handler as required.
     """
-    from mempalace import format_miner as format_mod
+    from trimemo import format_miner as format_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -767,7 +767,7 @@ def test_mine_formats_keyboard_interrupt_skips_validator(tmp_path, monkeypatch):
         format_dir=str(src),
         palace_path=str(palace),
         wing="testwing",
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )
@@ -788,7 +788,7 @@ def test_mine_formats_full_chain_raises_when_fts5_corrupt(tmp_path, monkeypatch)
     (ChromaDB's own Rust bindings panic opening a sufficiently corrupted
     file, before this test's validator would ever run).
     """
-    from mempalace import format_miner as format_mod
+    from trimemo import format_miner as format_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -810,7 +810,7 @@ def test_mine_formats_full_chain_raises_when_fts5_corrupt(tmp_path, monkeypatch)
             format_dir=str(src),
             palace_path=str(palace),
             wing="testwing",
-            agent="mempalace",
+            agent="trimemo",
             limit=0,
             dry_run=False,
         )
@@ -826,7 +826,7 @@ def test_mine_formats_full_chain_auto_heals_isolated_fts5_corruption(tmp_path):
     Mirrors `test_full_chain_auto_heals_isolated_fts5_corruption` for the
     project-miner path (#1926/#1928).
     """
-    from mempalace import format_miner as format_mod
+    from trimemo import format_miner as format_mod
 
     palace = tmp_path / "palace"
     _build_palace_with_drawer(palace)
@@ -840,7 +840,7 @@ def test_mine_formats_full_chain_auto_heals_isolated_fts5_corruption(tmp_path):
         format_dir=str(src),
         palace_path=str(palace),
         wing="testwing",
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
     )

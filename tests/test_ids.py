@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 
-from mempalace import ids
+from trimemo import ids
 
 
 # ── ID_RECIPE constant ─────────────────────────────────────────────────

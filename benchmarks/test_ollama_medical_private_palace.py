@@ -27,12 +27,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 
-from mempalace.config import MempalaceConfig
-from mempalace.knowledge_graph import KnowledgeGraph
-from mempalace.logstream import Logstream
-from mempalace import mcp_server, mcp_light_server
-from mempalace.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec, tool_palace_coordinate
-from mempalace.palace_graph import create_tunnel, invalidate_graph_cache
+from trimemo.config import MempalaceConfig
+from trimemo.knowledge_graph import KnowledgeGraph
+from trimemo.logstream import Logstream
+from trimemo import mcp_server, mcp_light_server
+from trimemo.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec, tool_palace_coordinate
+from trimemo.palace_graph import create_tunnel, invalidate_graph_cache
 
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
 
@@ -239,7 +239,7 @@ class MedicalPalaceEnvironment:
         invalidate_graph_cache()
 
     def _seed_diaries(self):
-        from mempalace.ids import make_drawer_id_from_content
+        from trimemo.ids import make_drawer_id_from_content
         entry = "SESSION:2026-01-15|reviewed Patient 1042 labs (HbA1c 8.2%)|discussed lifestyle modifications + planned Metformin titration|★★★"
         drw_id = make_drawer_id_from_content("wing_antigravity", "diary", entry)
         self.collection.add(
@@ -389,7 +389,7 @@ def run_medical_test(
     ]
 
     system_prompt = (
-        "You are a private clinical AI assistant equipped with MemPalace medical memory tools "
+        "You are a private clinical AI assistant equipped with TriMemo medical memory tools "
         "(palace_query, palace_exec, palace_coordinate). Use palace_query to retrieve patient EHR notes, "
         "lab panels, allergies, and guidelines. Use palace_exec to file new encounter notes, update dosages, "
         "or record clinician diary entries."

@@ -2,12 +2,12 @@ from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from mempalace import mcp_server
-from mempalace.backends.base import (
+from trimemo import mcp_server
+from trimemo.backends.base import (
     initialize_last_modified_metadata,
 )
-from mempalace.backends.chroma import ChromaCollection
-from mempalace.backends.embedding_wrapper import (
+from trimemo.backends.chroma import ChromaCollection
+from trimemo.backends.embedding_wrapper import (
     EmbeddingCollection,
 )
 

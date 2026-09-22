@@ -27,11 +27,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 
-from mempalace.config import MempalaceConfig
-from mempalace.knowledge_graph import KnowledgeGraph
-from mempalace import mcp_server, mcp_light_server
-from mempalace.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec
-from mempalace.palace_graph import create_tunnel, invalidate_graph_cache
+from trimemo.config import MempalaceConfig
+from trimemo.knowledge_graph import KnowledgeGraph
+from trimemo import mcp_server, mcp_light_server
+from trimemo.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec
+from trimemo.palace_graph import create_tunnel, invalidate_graph_cache
 
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
 
@@ -355,7 +355,7 @@ def run_stress_test_case(
     ]
 
     system_prompt = (
-        "You are an expert clinical and private memory AI assistant connected to a MemPalace database. "
+        "You are an expert clinical and private memory AI assistant connected to a TriMemo database. "
         "Always query the palace using palace_query or mutate using palace_exec. Never hallucinate facts. "
         "Always respect temporal validity (ignore obsolete superseded facts), check allergies before medications, "
         "and isolate the exact patient ID. If a question requires cross-referencing patient records and guidelines, "

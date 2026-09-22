@@ -1,5 +1,5 @@
-// Shared plumbing for the MemPalace DeepSeek Harness plugin: row settings, the
-// one path through which the plugin runs the `mempalace` CLI, and the two
+// Shared plumbing for the TriMemo DeepSeek Harness plugin: row settings, the
+// one path through which the plugin runs the `trimemo` CLI, and the two
 // location rules it needs (the project's wing, the harness home).
 //
 // Nothing here imports @deepseek-ai/*. The rows are plain function-form Cordis
@@ -11,19 +11,19 @@ import { homedir } from 'node:os'
 import path from 'node:path'
 
 /** Executable resolved through the harness subprocess provider. */
-export const DEFAULT_COMMAND = 'mempalace'
+export const DEFAULT_COMMAND = 'trimemo'
 
 /** Ceiling on one CLI read; a cold interpreter start alone is 1-2s. */
 export const DEFAULT_TIMEOUT_MS = 30_000
 
 /**
  * How long a session's first model call may wait for its memory. A cold
- * `mempalace wake-up` (ChromaDB import plus the L1 read) measured 7.4s on a
+ * `trimemo wake-up` (ChromaDB import plus the L1 read) measured 7.4s on a
  * Windows development machine; a budget below that ships the first call bare.
  */
 export const DEFAULT_FIRST_ASSEMBLY_BUDGET_MS = 10_000
 
-/** The light server's `palace_query` as `dsh-mcp-client` names it for serverName `mempalace`. */
+/** The light server's `palace_query` as `dsh-mcp-client` names it for serverName `trimemo`. */
 export const DEFAULT_SEARCH_TOOL = 'mcp__mempalace__palace_query'
 
 const STDOUT_MAX_BYTES = 1024 * 1024
@@ -70,7 +70,7 @@ async function executableFor(ctx, settings) {
 }
 
 /**
- * Run `mempalace <args>` through the harness subprocess seam and collect it.
+ * Run `trimemo <args>` through the harness subprocess seam and collect it.
  *
  * Never throws. A missing executable, a non-zero exit, a timeout and an abort
  * all come back as `{ ok: false, error }`, so a broken palace degrades this
@@ -137,7 +137,7 @@ export function describeFailure(result) {
 }
 
 /**
- * The wing `mempalace mine <cwd>` files this project's drawers under, so recall
+ * The wing `trimemo mine <cwd>` files this project's drawers under, so recall
  * reads the wing the project actually lives in. Mirrors `miner.load_config`:
  * `wing:` from mempalace.yaml (or the legacy mempal.yaml), else the directory
  * name through `config.normalize_wing_name`.

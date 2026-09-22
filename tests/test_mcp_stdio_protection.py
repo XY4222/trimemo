@@ -22,7 +22,7 @@ def test_module_import_redirects_stdout_to_stderr():
         """
         import sys
         original_stdout = sys.stdout
-        from mempalace import mcp_server
+        from trimemo import mcp_server
         assert sys.stdout is sys.stderr, (
             f"Expected sys.stdout to be redirected to sys.stderr, "
             f"got: {sys.stdout!r}"
@@ -48,7 +48,7 @@ def test_restore_stdout_returns_real_stdout():
         """
         import sys
         original_stdout = sys.stdout
-        from mempalace import mcp_server
+        from trimemo import mcp_server
         assert sys.stdout is sys.stderr
         mcp_server._restore_stdout()
         assert sys.stdout is original_stdout, (
@@ -73,7 +73,7 @@ def test_mcp_server_no_stdout_noise_on_clean_exit():
     breaks out cleanly. Any stdout content here would corrupt the
     JSON-RPC stream in real use."""
     proc = subprocess.run(
-        [sys.executable, "-m", "mempalace.mcp_server"],
+        [sys.executable, "-m", "trimemo.mcp_server"],
         input=b"",
         capture_output=True,
         timeout=60,

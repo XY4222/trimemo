@@ -13,8 +13,8 @@ import pytest
 
 from _chroma_palace_helper import make_minimal_chroma_sqlite
 
-from mempalace.backends import BackendMismatchError
-from mempalace.searcher import (
+from trimemo.backends import BackendMismatchError
+from trimemo.searcher import (
     SearchError,
     _result_drawer_id,
     build_where_filter,
@@ -118,7 +118,7 @@ class TestSearchMemories:
         assert hit["source_path"] == "auth.py"
 
     def test_source_file_filter_matches_full_path_not_basename(self, palace_path):
-        from mempalace.palace import get_collection
+        from trimemo.palace import get_collection
 
         col = get_collection(palace_path, create=True)
         col.upsert(
@@ -185,7 +185,7 @@ class TestSearchMemories:
             "distances": [[0.1]],
         }
 
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             result = search_memories("test", "/fake/path")
         hit = result["results"][0]
         assert hit["created_at"] == "unknown"
@@ -195,7 +195,7 @@ class TestSearchMemories:
         mock_col = MagicMock()
         mock_col.query.side_effect = RuntimeError("query failed")
 
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             result = search_memories("test", "/fake/path")
         assert "error" in result
         assert "query failed" in result["error"]
@@ -212,7 +212,7 @@ class TestSearchMemories:
             "ids": [[]],
         }
 
-        with patch("mempalace.searcher.get_collection", return_value=mock_col) as get_collection:
+        with patch("trimemo.searcher.get_collection", return_value=mock_col) as get_collection:
             search_memories("test", "/fake/path", collection_name="custom_drawers")
 
         get_collection.assert_called_once_with(
@@ -248,7 +248,7 @@ class TestSearchMemories:
                 return mock_col
             raise RuntimeError("no closets")
 
-        with patch("mempalace.searcher.get_collection", side_effect=mock_get_collection):
+        with patch("trimemo.searcher.get_collection", side_effect=mock_get_collection):
             result = search_memories("anything", "/fake/path")
         assert "results" in result
         assert len(result["results"]) == 2
@@ -294,8 +294,8 @@ class TestSearchMemories:
         }
 
         with (
-            patch("mempalace.searcher.get_collection", return_value=drawers_col),
-            patch("mempalace.searcher.get_closets_collection", return_value=closets_col),
+            patch("trimemo.searcher.get_collection", return_value=drawers_col),
+            patch("trimemo.searcher.get_closets_collection", return_value=closets_col),
         ):
             result = search_memories("query", "/fake/path", n_results=5)
 
@@ -383,8 +383,8 @@ class TestSearchMemories:
         }
 
         with (
-            patch("mempalace.searcher.get_collection", return_value=drawers_col),
-            patch("mempalace.searcher.get_closets_collection", return_value=closets_col),
+            patch("trimemo.searcher.get_collection", return_value=drawers_col),
+            patch("trimemo.searcher.get_closets_collection", return_value=closets_col),
         ):
             result = search_memories("query term", "/fake/path", n_results=3)
 
@@ -405,27 +405,27 @@ class TestBM25NoneSafety:
     Chroma returned ``None`` documents inside a hybrid-rerank pass.
 
     Trace from the daemon log (2026-04-24 21:07:05):
-        File "mempalace/searcher.py", line 81, in _bm25_scores
+        File "trimemo/searcher.py", line 81, in _bm25_scores
             tokenized = [_tokenize(d) for d in documents]
-        File "mempalace/searcher.py", line 52, in _tokenize
+        File "trimemo/searcher.py", line 52, in _tokenize
             return _TOKEN_RE.findall(text.lower())
         AttributeError: 'NoneType' object has no attribute 'lower'
     """
 
     def test_tokenize_handles_none(self):
-        from mempalace.searcher import _tokenize
+        from trimemo.searcher import _tokenize
 
         assert _tokenize(None) == []
 
     def test_tokenize_handles_empty_string(self):
-        from mempalace.searcher import _tokenize
+        from trimemo.searcher import _tokenize
 
         assert _tokenize("") == []
 
     def test_bm25_scores_does_not_crash_on_none_documents(self):
         """A ``None`` mixed into the corpus must yield score 0.0 for that doc
         and finite scores for the rest, not raise AttributeError."""
-        from mempalace.searcher import _bm25_scores
+        from trimemo.searcher import _bm25_scores
 
         scores = _bm25_scores(
             "postgres migration", ["postgres migration done", None, "kafka rebalance"]
@@ -488,7 +488,7 @@ class TestSearchCLI:
         mock_col = MagicMock()
         mock_col.query.side_effect = RuntimeError("boom")
 
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             with pytest.raises(SearchError, match="Search error"):
                 search("test", fake_palace_path)
 
@@ -532,7 +532,7 @@ class TestSearchCLI:
             ],
             "distances": [[1.5, 1.5, 1.5]],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search("foo bar baz", fake_palace_path)
         captured = capsys.readouterr()
         first_block, _, _ = captured.out.partition("[2]")
@@ -551,7 +551,7 @@ class TestSearchCLI:
     def test_search_warns_when_palace_uses_wrong_distance_metric(self, fake_palace_path, capsys):
         """Legacy palaces created without `hnsw:space=cosine` silently
         use L2, which breaks similarity interpretation. CLI must warn
-        the user and point them at `mempalace repair` rather than
+        the user and point them at `trimemo repair` rather than
         pretending the `Match` scores are meaningful."""
         mock_col = MagicMock()
         mock_col.metadata = {}  # legacy: no hnsw:space set
@@ -560,10 +560,10 @@ class TestSearchCLI:
             "metadatas": [[{"source_file": "a.md", "wing": "w", "room": "r"}]],
             "distances": [[1.2]],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
-        assert "mempalace repair" in captured.err
+        assert "trimemo repair" in captured.err
         assert "cosine" in captured.err.lower()
 
     def test_search_does_not_warn_when_palace_is_correctly_configured(
@@ -576,10 +576,10 @@ class TestSearchCLI:
             "metadatas": [[{"source_file": "a.md", "wing": "w", "room": "r"}]],
             "distances": [[0.3]],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
-        assert "mempalace repair" not in captured.err
+        assert "trimemo repair" not in captured.err
 
     def test_search_handles_none_metadata_without_crash(self, fake_palace_path, capsys):
         """ChromaDB can return `None` entries in the metadatas list when a
@@ -592,7 +592,7 @@ class TestSearchCLI:
             "metadatas": [[{"source_file": "a.md", "wing": "w", "room": "r"}, None]],
             "distances": [[0.1, 0.2]],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
         assert "[1]" in captured.out
@@ -608,14 +608,14 @@ class TestSearchCLI:
             "metadatas": [[{"source_file": "a.md", "wing": "w", "room": "r"}, None]],
             "distances": [[0.1, 0.2]],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
         assert "[1]" in captured.out
         assert "[2]" in captured.out
 
     def test_search_routes_to_bm25_when_hnsw_diverged(self, fake_palace_path, capsys):
-        """Regression: `mempalace search` on a diverged HNSW segment must not
+        """Regression: `trimemo search` on a diverged HNSW segment must not
         segfault ChromaDB's Rust bindings.
 
         The MCP path gates this via ``_vector_disabled`` (#1222); the CLI
@@ -644,13 +644,13 @@ class TestSearchCLI:
             "fallback_reason": "vector_search_disabled",
         }
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="chroma"),
+            patch("trimemo.searcher.resolve_backend_name", return_value="chroma"),
             patch(
-                "mempalace.backends.chroma.hnsw_capacity_status",
+                "trimemo.backends.chroma.hnsw_capacity_status",
                 return_value={"diverged": True, "message": "test divergence"},
             ),
-            patch("mempalace.searcher._bm25_only_via_sqlite", return_value=bm25_result),
-            patch("mempalace.searcher.get_collection") as mock_get_collection,
+            patch("trimemo.searcher._bm25_only_via_sqlite", return_value=bm25_result),
+            patch("trimemo.searcher.get_collection") as mock_get_collection,
         ):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
@@ -659,7 +659,7 @@ class TestSearchCLI:
         # query-only guard is insufficient.
         mock_get_collection.assert_not_called()
         # User got actionable output, not a silent crash.
-        assert "mempalace repair" in captured.out
+        assert "trimemo repair" in captured.out
         assert "diary entry that matches" in captured.out
 
     def test_search_proceeds_to_vector_when_hnsw_healthy(self, fake_palace_path, capsys):
@@ -676,13 +676,13 @@ class TestSearchCLI:
             "distances": [[0.1]],
         }
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="chroma"),
+            patch("trimemo.searcher.resolve_backend_name", return_value="chroma"),
             patch(
-                "mempalace.backends.chroma.hnsw_capacity_status",
+                "trimemo.backends.chroma.hnsw_capacity_status",
                 return_value={"diverged": False, "status": "ok"},
             ),
-            patch("mempalace.searcher._bm25_only_via_sqlite") as mock_bm25,
-            patch("mempalace.searcher.get_collection", return_value=mock_col),
+            patch("trimemo.searcher._bm25_only_via_sqlite") as mock_bm25,
+            patch("trimemo.searcher.get_collection", return_value=mock_col),
         ):
             search("anything", fake_palace_path)
         captured = capsys.readouterr()
@@ -708,13 +708,13 @@ class TestSearchCLI:
             return {"query": "the cat", "filters": {}, "total_before_filter": 0, "results": []}
 
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="chroma"),
+            patch("trimemo.searcher.resolve_backend_name", return_value="chroma"),
             patch(
-                "mempalace.backends.chroma.hnsw_capacity_status",
+                "trimemo.backends.chroma.hnsw_capacity_status",
                 return_value={"diverged": True, "message": "test divergence"},
             ),
-            patch("mempalace.searcher._resolve_stop_words", return_value=frozenset({"the"})),
-            patch("mempalace.searcher._bm25_only_via_sqlite", side_effect=_spy_bm25),
+            patch("trimemo.searcher._resolve_stop_words", return_value=frozenset({"the"})),
+            patch("trimemo.searcher._bm25_only_via_sqlite", side_effect=_spy_bm25),
         ):
             search("the cat", fake_palace_path)
 
@@ -739,12 +739,12 @@ class TestSearchCLI:
             return {"query": "anything", "filters": {}, "total_before_filter": 0, "results": []}
 
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="chroma"),
+            patch("trimemo.searcher.resolve_backend_name", return_value="chroma"),
             patch(
-                "mempalace.backends.chroma.hnsw_capacity_status",
+                "trimemo.backends.chroma.hnsw_capacity_status",
                 return_value={"diverged": True, "message": "test divergence"},
             ),
-            patch("mempalace.searcher._bm25_only_via_sqlite", side_effect=_spy_bm25),
+            patch("trimemo.searcher._bm25_only_via_sqlite", side_effect=_spy_bm25),
         ):
             search("anything", fake_palace_path, since="2026-01-01", before="2026-02-01")
 
@@ -756,12 +756,12 @@ class TestSearchCLI:
         whether the index is healthy or diverged. If the fence ran first it
         would swallow the mistake and answer with unfiltered BM25 results."""
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="chroma"),
+            patch("trimemo.searcher.resolve_backend_name", return_value="chroma"),
             patch(
-                "mempalace.backends.chroma.hnsw_capacity_status",
+                "trimemo.backends.chroma.hnsw_capacity_status",
                 return_value={"diverged": True, "message": "test divergence"},
             ),
-            patch("mempalace.searcher._bm25_only_via_sqlite") as mock_bm25,
+            patch("trimemo.searcher._bm25_only_via_sqlite") as mock_bm25,
         ):
             with pytest.raises(SearchError, match="must be earlier than"):
                 search("anything", fake_palace_path, since="2026-02-01", before="2026-01-01")
@@ -776,9 +776,9 @@ class TestSearchCLI:
             "distances": [[0.1]],
         }
         with (
-            patch("mempalace.searcher.resolve_backend_name", return_value="sqlite_exact"),
-            patch("mempalace.backends.chroma.hnsw_capacity_status") as mock_probe,
-            patch("mempalace.searcher.get_collection", return_value=mock_col),
+            patch("trimemo.searcher.resolve_backend_name", return_value="sqlite_exact"),
+            patch("trimemo.backends.chroma.hnsw_capacity_status") as mock_probe,
+            patch("trimemo.searcher.get_collection", return_value=mock_col),
         ):
             search("anything", fake_palace_path)
 
@@ -795,9 +795,9 @@ class TestSearchCLI:
     ):
         """The early HNSW fence must not replace normal CLI diagnostics."""
         with (
-            patch("mempalace.searcher.resolve_backend_name", side_effect=resolution_error),
-            patch("mempalace.searcher._hnsw_capacity_diverged") as mock_probe,
-            patch("mempalace.searcher._open_collection_or_explain", return_value=None) as mock_open,
+            patch("trimemo.searcher.resolve_backend_name", side_effect=resolution_error),
+            patch("trimemo.searcher._hnsw_capacity_diverged") as mock_probe,
+            patch("trimemo.searcher._open_collection_or_explain", return_value=None) as mock_open,
         ):
             with pytest.raises(SearchError):
                 search("anything", fake_palace_path)
@@ -811,14 +811,14 @@ class TestSearchCLI:
 
 def test_tokenize_default_keeps_all_tokens():
     """Without stop_words, behaviour matches the pre-i18n tokenizer."""
-    from mempalace.searcher import _tokenize
+    from trimemo.searcher import _tokenize
 
     assert _tokenize("The cat sat on the mat") == ["the", "cat", "sat", "on", "the", "mat"]
 
 
 def test_tokenize_filters_stop_words():
     """When stop_words is given, matching tokens are dropped."""
-    from mempalace.searcher import _tokenize
+    from trimemo.searcher import _tokenize
 
     tokens = _tokenize("The cat sat on the mat", stop_words=frozenset({"the", "on"}))
     assert "the" not in tokens
@@ -828,14 +828,14 @@ def test_tokenize_filters_stop_words():
 
 def test_tokenize_stop_words_empty_is_no_op():
     """Empty frozenset is the same as default — full backwards compat."""
-    from mempalace.searcher import _tokenize
+    from trimemo.searcher import _tokenize
 
     assert _tokenize("hello world", stop_words=frozenset()) == _tokenize("hello world")
 
 
 def test_bm25_scores_filters_stop_words_from_query_and_docs():
     """BM25 with a stop-words set uses the filtered vocabulary on both sides."""
-    from mempalace.searcher import _bm25_scores
+    from trimemo.searcher import _bm25_scores
 
     query = "the quick fox"
     docs = ["the quick fox", "the lazy dog"]
@@ -853,7 +853,7 @@ def test_bm25_scores_filters_stop_words_from_query_and_docs():
 
 def test_bm25_scores_all_stopwords_query_returns_zeros():
     """If every query term is a stop word, BM25 short-circuits to all-zero."""
-    from mempalace.searcher import _bm25_scores
+    from trimemo.searcher import _bm25_scores
 
     scores = _bm25_scores(
         "the and of", ["a doc", "another"], stop_words=frozenset({"the", "and", "of"})
@@ -863,7 +863,7 @@ def test_bm25_scores_all_stopwords_query_returns_zeros():
 
 def test_bm25_scores_all_stopword_docs_returns_zero_vector():
     """Every doc emptied by stop-word filter yields zero scores without divide errors."""
-    from mempalace.searcher import _bm25_scores
+    from trimemo.searcher import _bm25_scores
 
     scores = _bm25_scores("fox", ["the the the", "the the"], stop_words=frozenset({"the", "fox"}))
     assert scores == [0.0, 0.0]
@@ -884,7 +884,7 @@ def _isolate_stopword_cache_and_env(monkeypatch):
       would silently bypass the ``MempalaceConfig`` mocks below and see
       different results than CI. Strip them here.
     """
-    from mempalace import searcher
+    from trimemo import searcher
 
     searcher._stopwords_for_canonical.cache_clear()
     monkeypatch.delenv("MEMPALACE_LANG", raising=False)
@@ -894,7 +894,7 @@ def _isolate_stopword_cache_and_env(monkeypatch):
 
 def test_resolve_stop_words_falls_back_silently_when_config_raises(monkeypatch):
     """If MempalaceConfig() blows up, return an empty set so search keeps working."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     def boom(*args, **kwargs):
         raise OSError("config.json unreadable")
@@ -905,7 +905,7 @@ def test_resolve_stop_words_falls_back_silently_when_config_raises(monkeypatch):
 
 def test_resolve_stop_words_none_with_no_explicit_lang_returns_empty(monkeypatch):
     """Unconfigured palaces must not suddenly filter stop words."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     class FakeCfg:
         lang_explicit = None
@@ -916,7 +916,7 @@ def test_resolve_stop_words_none_with_no_explicit_lang_returns_empty(monkeypatch
 
 def test_resolve_stop_words_none_with_explicit_lang_applies_filter(monkeypatch):
     """When the user opts in via lang_explicit, the locale's stop words load."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     class FakeCfg:
         lang_explicit = "ja"
@@ -929,7 +929,7 @@ def test_resolve_stop_words_none_with_explicit_lang_applies_filter(monkeypatch):
 def test_resolve_stop_words_uses_env_var_before_config(monkeypatch):
     """The env-var fast path must avoid constructing MempalaceConfig at all
     on the hot search path when the user has set MEMPALACE_LANG."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     monkeypatch.setenv("MEMPALACE_LANG", "ja")
 
@@ -954,7 +954,7 @@ def test_resolve_stop_words_canonicalizes_cache_key():
     cache entry pointing at the same set; ``maxsize=16`` could be exhausted
     by a tenant rotating through capitalizations.
     """
-    from mempalace import searcher
+    from trimemo import searcher
 
     a = searcher._resolve_stop_words("en")
     b = searcher._resolve_stop_words("EN")
@@ -964,7 +964,7 @@ def test_resolve_stop_words_canonicalizes_cache_key():
 
 def test_resolve_stop_words_caches_per_lang():
     """Repeat lookups for the same lang hit the lru_cache and return the same object."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     a = searcher._resolve_stop_words("ja")
     b = searcher._resolve_stop_words("ja")
@@ -974,7 +974,7 @@ def test_resolve_stop_words_caches_per_lang():
 def test_resolve_stop_words_none_reflects_config_change_between_calls(monkeypatch):
     """The None-arg path must re-read config on every call; a stale cache key
     would pin the first result for the lifetime of the process (igorls, #977)."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     class FakeCfgUnset:
         lang_explicit = None
@@ -1008,7 +1008,7 @@ def test_bm25_only_via_sqlite_forwards_stop_words_to_bm25_scores(monkeypatch, tm
     Without this, vector-disabled (#1222) palaces silently lose stop-word
     filtering on the BM25 fallback path.
     """
-    from mempalace import searcher
+    from trimemo import searcher
 
     captured = {}
     real_bm25 = searcher._bm25_scores
@@ -1063,8 +1063,8 @@ def test_finalize_candidate_hits_forwards_stop_words_to_hybrid_rank(monkeypatch)
     """`_finalize_candidate_hits` must forward `stop_words` into the final
     `_hybrid_rank` re-rank — the BM25 site on the vector/union path. (The
     union candidate gather runs through the backend's own ``lexical_search``,
-    which does its own tokenization and takes no mempalace stop words.)"""
-    from mempalace import searcher
+    which does its own tokenization and takes no trimemo stop words.)"""
+    from trimemo import searcher
 
     captured = {}
 
@@ -1092,7 +1092,7 @@ def test_finalize_candidate_hits_forwards_stop_words_to_hybrid_rank(monkeypatch)
 def test_search_memories_vector_disabled_uses_resolved_stop_words(monkeypatch, tmp_path):
     """`vector_disabled=True` must route `_resolve_stop_words(lang)` into the
     BM25 fallback, not skip stop-word resolution as it did pre-fix."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     captured = {}
 
@@ -1113,10 +1113,10 @@ def test_search_memories_vector_disabled_uses_resolved_stop_words(monkeypatch, t
 
 
 def test_search_cli_threads_resolved_stop_words_to_hybrid_rank(monkeypatch, tmp_path):
-    """The `mempalace search ...` CLI handler must resolve stop_words and
+    """The `trimemo search ...` CLI handler must resolve stop_words and
     pass them to `_hybrid_rank`, matching the MCP `search_memories` path so
     `MEMPALACE_LANG` filtering works for CLI users too."""
-    from mempalace import searcher
+    from trimemo import searcher
 
     # Satisfy the State-A/B filesystem-first checks added in #1498 so
     # `search()` reaches the `_hybrid_rank` call this test exercises.
@@ -1284,7 +1284,7 @@ class TestSearchMemoriesDateFilter:
         # in-window drawer is textually farther, so the historical 3x pool
         # (n_results=2 -> 6) would never contain it. The widened window
         # pool must recover it: recall is the design requirement.
-        from mempalace.palace import get_collection
+        from trimemo.palace import get_collection
 
         col = get_collection(palace_path, create=True)
         ids, docs, metas = [], [], []
@@ -1401,7 +1401,7 @@ class TestSearchMemoriesDateFilter:
     def test_pool_truncated_flag_set_when_widened_pool_full(self, palace_path):
         # n_results=1 -> widened pool = 15; seed 16 in-window drawers so the
         # backend returns a full pool and the honesty flag must fire.
-        from mempalace.palace import get_collection
+        from trimemo.palace import get_collection
 
         col = get_collection(palace_path, create=True)
         ids, docs, metas = [], [], []
@@ -1452,7 +1452,7 @@ class TestSearchMemoriesDateFilter:
         # vector path; without a window the key stays absent.
         from datetime import datetime
 
-        from mempalace.searcher import _bm25_only_via_sqlite
+        from trimemo.searcher import _bm25_only_via_sqlite
 
         truncated = _bm25_only_via_sqlite(
             "authentication database frontend sprint",
@@ -1589,7 +1589,7 @@ class TestCliSearchDateFilter:
             "metadatas": [metas],
             "distances": [dists],
         }
-        with patch("mempalace.searcher.get_collection", return_value=mock_col):
+        with patch("trimemo.searcher.get_collection", return_value=mock_col):
             search(
                 "quixotic zephyr baseline",
                 fake_palace_path,

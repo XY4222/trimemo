@@ -1,4 +1,4 @@
-# MemPalace — Antigravity hook scripts
+# TriMemo — Antigravity hook scripts
 
 Lifecycle hooks for the [Antigravity IDE](https://antigravity.google/).
 
@@ -17,7 +17,7 @@ From the repo root:
 bash hooks/antigravity/install.sh
 ```
 
-This installs the plugin to `~/.gemini/config/plugins/mempalace/`.
+This installs the plugin to `~/.gemini/config/plugins/trimemo/`.
 Restart Antigravity and the MCP server, skill, and hooks all register
 automatically.
 
@@ -36,13 +36,13 @@ bash hooks/antigravity/install.sh --uninstall
 ## What gets installed
 
 ```
-~/.gemini/config/plugins/mempalace/
+~/.gemini/config/plugins/trimemo/
 ├── plugin.json                              # marker manifest
-├── mcp_config.json                          # registers mempalace-mcp
+├── mcp_config.json                          # registers trimemo-mcp
 ├── hooks.json                               # rendered from hooks.json.tmpl
 ├── README.md
 ├── skills/
-│   └── mempalace/
+│   └── trimemo/
 │       └── SKILL.md
 └── hooks/
     ├── lib/
@@ -60,7 +60,7 @@ from `__PLUGIN_DIR__` at install time).
 
 Fires every time the agent's execution loop terminates. Increments a
 per-conversation counter; every `MEMPAL_SAVE_INTERVAL` fires (default
-15), spawns `mempalace mine <transcript-dir> --mode convos --wing
+15), spawns `trimemo mine <transcript-dir> --mode convos --wing
 <inferred>` in the background. The hook itself returns `{}` to stdout
 in under a few milliseconds — the actual mining runs detached and
 does not block the user.
@@ -76,7 +76,7 @@ Defers when:
 
 Fires before every model invocation. Gated to `invocationNum == 1`
 (first invocation of the conversation only) — beyond that we'd be
-re-injecting on every turn. Calls `mempalace wake-up --wing <inferred>`
+re-injecting on every turn. Calls `trimemo wake-up --wing <inferred>`
 with a 500ms hard timeout and emits the verbatim output as an
 `ephemeralMessage` so the agent sees relevant memory on its first
 response without polluting the persistent transcript.
@@ -85,7 +85,7 @@ Skips when:
 
 - `invocationNum != 1`
 - Already woke this conversation (atomic `mkdir` loop guard)
-- `mempalace wake-up` exits non-zero, times out, or produces empty output
+- `trimemo wake-up` exits non-zero, times out, or produces empty output
 - Any kill switch is set
 
 ## Kill switches
@@ -101,17 +101,17 @@ Any one of these disables both hooks (silent passthrough, exit 0):
 
 ## Workspace-scoped install (advanced)
 
-If you want MemPalace to load only inside a specific workspace,
+If you want TriMemo to load only inside a specific workspace,
 manually copy the rendered plugin into your workspace's `.agents/plugins/`:
 
 ```bash
 bash hooks/antigravity/install.sh --install-dir /tmp/render-stage
 mkdir -p <workspace>/.agents/plugins/
-cp -r /tmp/render-stage <workspace>/.agents/plugins/mempalace
+cp -r /tmp/render-stage <workspace>/.agents/plugins/trimemo
 rm -rf /tmp/render-stage
 ```
 
-The global install at `~/.gemini/config/plugins/mempalace/` is the
+The global install at `~/.gemini/config/plugins/trimemo/` is the
 canonical UX and what we recommend.
 
 ## Troubleshooting
@@ -119,33 +119,33 @@ canonical UX and what we recommend.
 ### Hooks aren't firing
 
 1. Confirm Antigravity sees the plugin: open the IDE, navigate to the
-   Customizations page; `mempalace` should appear in the global plugins
+   Customizations page; `trimemo` should appear in the global plugins
    list.
 2. Check `~/.mempalace/hook_state/antigravity_hook.log` — every fire
    logs a line. No log lines = the hook is not being invoked.
-3. Verify `mempalace-mcp` is on `$PATH`: `mempalace-mcp --version`.
+3. Verify `trimemo-mcp` is on `$PATH`: `trimemo-mcp --version`.
 4. Inspect the rendered `hooks.json` paths point at executable files:
-   `bash -n ~/.gemini/config/plugins/mempalace/hooks/*.sh`.
+   `bash -n ~/.gemini/config/plugins/trimemo/hooks/*.sh`.
 
 ### Save fires but no mining happens
 
 1. Look for the most recent `[event=stop]` lines in
    `antigravity_hook.log` — `count` and `interval` should both be
    visible. Mining only triggers when `count % interval == 0`.
-2. Ensure a Python that can import `mempalace` is reachable. The hook
-   runs `"$MEMPAL_PYTHON_BIN" -m mempalace`, where `MEMPAL_PYTHON_BIN`
+2. Ensure a Python that can import `trimemo` is reachable. The hook
+   runs `"$MEMPAL_PYTHON_BIN" -m trimemo`, where `MEMPAL_PYTHON_BIN`
    is resolved (in order) from `$MEMPAL_PYTHON`, the
-   `mempalace-mcp` / `mempalace` console-script shebang on `$PATH`,
+   `trimemo-mcp` / `trimemo` console-script shebang on `$PATH`,
    then `python3`. A failed probe logs:
 
    ```
-   ERROR: mempalace is not runnable via <python> -m mempalace; install mempalace or set MEMPAL_PYTHON
+   ERROR: trimemo is not runnable via <python> -m trimemo; install trimemo or set MEMPAL_PYTHON
    ```
 
    On a GUI-launched Antigravity the harness `PATH` may differ from
    your shell `PATH`; if the shebang heuristic can't find the right
    interpreter, export `MEMPAL_PYTHON=/abs/path/python` (e.g.
-   `"$(uv tool dir)/mempalace/bin/python"`) and restart.
+   `"$(uv tool dir)/trimemo/bin/python"`) and restart.
 
 ### Wake injection isn't appearing
 
@@ -154,8 +154,8 @@ canonical UX and what we recommend.
 2. The atomic `mkdir` marker
    `~/.mempalace/hook_state/antigravity_woke_<conversationId>` exists
    after a successful injection. Remove it to re-inject (rare).
-3. `mempalace wake-up --wing <inferred>` may be returning empty output
-   if the wing doesn't exist yet. Run `mempalace status` to verify
+3. `trimemo wake-up --wing <inferred>` may be returning empty output
+   if the wing doesn't exist yet. Run `trimemo status` to verify
    wing presence.
 
 ## See also

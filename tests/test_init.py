@@ -29,7 +29,7 @@ def test_init_filters_sys_path_from_leaked_pythonpath(pythonpath):
     """Package init must remove sentinel-prefixed entries from sys.path
     so transitive imports do not pull compiled extensions from the
     leaked PYTHONPATH. os.environ['PYTHONPATH'] is left intact so host
-    applications embedding mempalace as a library keep their env for
+    applications embedding trimemo as a library keep their env for
     their own subprocesses; the env strip lives in the CLI/MCP entry
     points (see test_cli.py / test_mcp_server.py).
 
@@ -40,8 +40,8 @@ def test_init_filters_sys_path_from_leaked_pythonpath(pythonpath):
 
     The subprocess runs from a neutral directory (the temp dir) rather
     than inheriting pytest's CWD. When the CWD is the repo checkout,
-    the local ``mempalace/`` source directory shadows the installed
-    package, so ``mempalace.__file__`` resolves to the checkout and its
+    the local ``trimemo/`` source directory shadows the installed
+    package, so ``trimemo.__file__`` resolves to the checkout and its
     parent directory is only reachable through the empty-string CWD
     marker on sys.path -- which the ``if p`` filter excludes. Running
     from the temp dir makes the parent resolve to the installed
@@ -55,9 +55,9 @@ def test_init_filters_sys_path_from_leaked_pythonpath(pythonpath):
     else:
         env["PYTHONPATH"] = pythonpath
     code = (
-        "import mempalace, os, sys; "
+        "import trimemo, os, sys; "
         f"prefix = {_LEAK_PREFIX!r}; "
-        "mempalace_parent = os.path.dirname(os.path.dirname(mempalace.__file__)); "
+        "mempalace_parent = os.path.dirname(os.path.dirname(trimemo.__file__)); "
         "print('ENV:', repr(os.environ.get('PYTHONPATH'))); "
         "print('SENTINEL_IN_PATH:', any(prefix in (p or '') for p in sys.path)); "
         "print('MEMPALACE_PARENT_PRESENT:', any("
@@ -84,10 +84,10 @@ def test_init_filters_sys_path_from_leaked_pythonpath(pythonpath):
         f"PYTHONPATH should be preserved by package import: {diag}"
     )
     assert "SENTINEL_IN_PATH: False" in out, f"sentinel-prefix leak: {diag}"
-    # Filter must not over-strip: the mempalace package itself must remain
+    # Filter must not over-strip: the trimemo package itself must remain
     # importable, so its parent directory must survive on sys.path.
     assert "MEMPALACE_PARENT_PRESENT: True" in out, (
-        f"filter over-stripped sys.path (mempalace parent gone): {diag}"
+        f"filter over-stripped sys.path (trimemo parent gone): {diag}"
     )
 
 
@@ -98,7 +98,7 @@ def test_init_preserves_cwd_marker_when_pythonpath_collides():
     env = os.environ.copy()
     env["PYTHONPATH"] = "."
     code = (
-        "import mempalace, sys; "
+        "import trimemo, sys; "
         "print('CWD_IN_PATH:', '' in sys.path); "
         "print('DOT_IN_PATH:', '.' in sys.path)"
     )
@@ -123,9 +123,9 @@ def test_init_keeps_the_running_environments_own_site_packages(path_name):
 
     Embedding hosts routinely launch a venv with PYTHONPATH pointing at that
     same venv's site-packages -- Electron backends, IDE language servers,
-    ``python -m`` wrappers. Stripping it leaves ``import mempalace`` working
+    ``python -m`` wrappers. Stripping it leaves ``import trimemo`` working
     (it resolved before the guard ran) and every dependency import after it
-    failing with a ModuleNotFoundError raised from inside mempalace while the
+    failing with a ModuleNotFoundError raised from inside trimemo while the
     same import from the same interpreter succeeds (#2484).
 
     The foreign sentinel in the same PYTHONPATH is the control: the wrong-ABI
@@ -135,7 +135,7 @@ def test_init_keeps_the_running_environments_own_site_packages(path_name):
     env = os.environ.copy()
     env["PYTHONPATH"] = own_site + os.pathsep + f"{_LEAK_PREFIX}/foreign"
     code = (
-        "import mempalace, os, sys; "
+        "import trimemo, os, sys; "
         f"own = {own_site!r}; prefix = {_LEAK_PREFIX!r}; "
         "norm = lambda p: os.path.normcase(os.path.normpath(os.path.realpath(p))); "
         "print('OWN_PRESENT:', any(norm(p) == norm(own) for p in sys.path if p)); "
@@ -167,7 +167,7 @@ def test_init_strips_foreign_paths_beneath_the_running_prefix(location):
     env = os.environ.copy()
     env["PYTHONPATH"] = foreign_site + os.pathsep + own_site
     code = (
-        "import mempalace, os, sys; "
+        "import trimemo, os, sys; "
         f"own = {own_site!r}; foreign = {foreign_site!r}; "
         "norm = lambda p: os.path.normcase(os.path.normpath(os.path.realpath(p))); "
         "print('OWN_PRESENT:', any(norm(p) == norm(own) for p in sys.path if p)); "

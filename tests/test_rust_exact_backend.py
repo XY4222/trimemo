@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-from mempalace.backends import available_backends, get_backend
-from mempalace.backends.base import PalaceRef
-from mempalace.backends.rust_exact import RustExactBackend, RustExactCollection
+from trimemo.backends import available_backends, get_backend
+from trimemo.backends.base import PalaceRef
+from trimemo.backends.rust_exact import RustExactBackend, RustExactCollection
 
 
 def test_registry_exposes_rust_exact():
@@ -85,7 +85,7 @@ def test_rust_exact_complex_filter_fallback(tmp_path):
 
 @pytest.fixture
 def native_backend(tmp_path):
-    from mempalace.backends.rust_exact import _NativeVectorIndex
+    from trimemo.backends.rust_exact import _NativeVectorIndex
 
     if _NativeVectorIndex is None:
         if os.environ.get("MEMPALACE_REQUIRE_NATIVE") == "1":
@@ -123,7 +123,7 @@ def test_native_external_commit_refresh(native_backend):
     col = backend.get_collection(palace=palace, collection_name="test", create=True)
     col.add(ids=["a"], documents=["alpha"], embeddings=[[1.0, 0.0]])
     col.query(query_embeddings=[[1.0, 0.0]])
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     other = SQLiteExactBackend()
     try:
@@ -147,11 +147,11 @@ def test_empty_collection_survives_close(tmp_path):
 
 
 def test_native_format_detection_is_sqlite_only(tmp_path, monkeypatch):
-    from mempalace.backends import detect_backends_for_path
-    from mempalace.palace import resolve_backend_name
+    from trimemo.backends import detect_backends_for_path
+    from trimemo.palace import resolve_backend_name
 
     monkeypatch.delenv("MEMPALACE_BACKEND", raising=False)
-    monkeypatch.setattr("mempalace.palace._config_backend_value", lambda _: None)
+    monkeypatch.setattr("trimemo.palace._config_backend_value", lambda _: None)
     backend = RustExactBackend()
     try:
         backend.get_collection(str(tmp_path), "test", create=True)
@@ -166,7 +166,7 @@ def test_native_format_detection_is_sqlite_only(tmp_path, monkeypatch):
 @pytest.mark.parametrize("count", [31, 10001])
 def test_native_matches_python_ranking_and_filters(native_backend, count):
     import numpy as np
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     col = backend.get_collection(palace=palace, collection_name="test", create=True)
@@ -210,7 +210,7 @@ def test_migrated_null_dimension_uses_native_index(native_backend):
 def test_native_retries_when_writer_commits_during_query(
     native_backend, monkeypatch, operation, boundary
 ):
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     col = backend.get_collection(palace=palace, collection_name="test", create=True)
@@ -261,8 +261,8 @@ def test_native_retries_when_writer_commits_during_query(
 
 
 def test_native_continuous_writes_fail_explicitly(native_backend, monkeypatch):
-    from mempalace.backends.base import BackendError
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.base import BackendError
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     col = backend.get_collection(palace=palace, collection_name="test", create=True)
@@ -287,7 +287,7 @@ def test_native_continuous_writes_fail_explicitly(native_backend, monkeypatch):
 
 
 def test_native_immutable_snapshot_reopens_after_mid_query_commit(native_backend, monkeypatch):
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     writer = backend.get_collection(palace=palace, collection_name="test", create=True)
@@ -318,7 +318,7 @@ def test_native_immutable_snapshot_reopens_after_mid_query_commit(native_backend
 
 @pytest.mark.parametrize("read_only", [False, True])
 def test_native_index_is_shared_across_fresh_wrappers(native_backend, monkeypatch, read_only):
-    import mempalace.backends.rust_exact as rust_module
+    import trimemo.backends.rust_exact as rust_module
 
     backend, palace = native_backend
     writer = backend.get_collection(palace=palace, collection_name="test", create=True)
@@ -356,7 +356,7 @@ def test_native_index_is_shared_across_fresh_wrappers(native_backend, monkeypatc
 @pytest.mark.parametrize("magnitude", [1e20, 1e-30, 2**-149])
 @pytest.mark.parametrize("count", [4, 10004])
 def test_native_finite_extremes_match_python_cosine(native_backend, magnitude, count):
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     col = backend.get_collection(palace=palace, collection_name="extremes", create=True)
@@ -386,8 +386,8 @@ def test_native_finite_extremes_match_python_cosine(native_backend, magnitude, c
 
 
 def test_native_load_failure_after_commit_falls_back_after_cursor_exit(native_backend, monkeypatch):
-    import mempalace.backends.rust_exact as rust_module
-    from mempalace.backends.sqlite_exact import SQLiteExactBackend
+    import trimemo.backends.rust_exact as rust_module
+    from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
     backend, palace = native_backend
     writer = backend.get_collection(palace=palace, collection_name="test", create=True)

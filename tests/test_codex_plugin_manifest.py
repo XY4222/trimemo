@@ -20,7 +20,7 @@ def test_marketplace_entry_uses_supported_codex_schema():
     marketplace = _read_json(MARKETPLACE_PATH)
     plugin = marketplace["plugins"][0]
 
-    assert plugin["name"] == "mempalace"
+    assert plugin["name"] == "trimemo"
     assert plugin["source"] == {"source": "local", "path": "./"}
     assert plugin["policy"] == {
         "installation": "AVAILABLE",
@@ -40,8 +40,8 @@ def test_mcp_config_registers_mempalace_server():
 
     assert config == {
         "mcpServers": {
-            "mempalace": {
-                "command": "mempalace-mcp",
+            "trimemo": {
+                "command": "trimemo-mcp",
             }
         }
     }

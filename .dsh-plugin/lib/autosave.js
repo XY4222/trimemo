@@ -1,13 +1,13 @@
-// mempalace-autosave: file each conversation into the palace through
-// MemPalace's own hook runner.
+// trimemo-autosave: file each conversation into the palace through
+// TriMemo's own hook runner.
 //
 //   session/event         append user-written and assistant text to the transcript
-//   agent/turn-stopping   mempalace hook run --hook stop        --harness dsh
-//   compaction/start      mempalace hook run --hook precompact  --harness dsh
-//   session/disposed      mempalace hook run --hook session-end --harness dsh
+//   agent/turn-stopping   trimemo hook run --hook stop        --harness dsh
+//   compaction/start      trimemo hook run --hook precompact  --harness dsh
+//   session/disposed      trimemo hook run --hook session-end --harness dsh
 //
 // Save intervals, diary checkpoints, wing derivation, transcript mining and
-// daemon write routing all stay in MemPalace. This row supplies only what DSH
+// daemon write routing all stay in TriMemo. This row supplies only what DSH
 // cannot hand a hook itself, a readable transcript, and the moments to act on
 // it. No listener waits on a save: `agent/turn-stopping` is a serial point the
 // agent loop awaits, so it only schedules.
@@ -17,7 +17,7 @@ import path from 'node:path'
 import { describeFailure, dshHome, isTracked, resolveSettings, runCli } from './palace.js'
 import { TranscriptLog, recordFor, transcriptFileName } from './transcript.js'
 
-export const name = 'mempalace-autosave'
+export const name = 'trimemo-autosave'
 export const inject = ['subprocess']
 
 /** A precompact hook mines synchronously; give it room. */
@@ -29,10 +29,10 @@ const HOOK_EVENT_NAMES = { stop: 'Stop', precompact: 'PreCompact', 'session-end'
 
 export function apply(ctx, config) {
   const settings = resolveSettings(config)
-  const logger = ctx.logger('mempalace-autosave')
+  const logger = ctx.logger('trimemo-autosave')
   // Absolute once: the hook runs with the session's workspace as its cwd, so a
   // relative directory would name a different file there than it does here.
-  const root = path.resolve(settings.transcriptDir ?? path.join(dshHome(), 'mempalace', 'transcripts'))
+  const root = path.resolve(settings.transcriptDir ?? path.join(dshHome(), 'trimemo', 'transcripts'))
 
   /** sessionId -> { id, cwd, log, queue, runner } */
   const sessions = new Map()
@@ -91,14 +91,14 @@ export function apply(ctx, config) {
       timeoutMs: HOOK_TIMEOUT_MS,
     })
     if (!result.ok) {
-      logger.warn(`mempalace hook ${hook} failed for ${state.id}: ${describeFailure(result)}`)
+      logger.warn(`trimemo hook ${hook} failed for ${state.id}: ${describeFailure(result)}`)
       return
     }
     if (hookOutput(result.stdout)?.decision === 'block') {
       logger.warn(
-        `mempalace asked the model to write the ${hook} checkpoint itself (hooks.silent_save is false). ` +
+        `trimemo asked the model to write the ${hook} checkpoint itself (hooks.silent_save is false). ` +
           'The DSH plugin does not relay that request, so this checkpoint was not written; ' +
-          'set hooks.silent_save to true in ~/.mempalace/config.json to have MemPalace write it directly.',
+          'set hooks.silent_save to true in ~/.mempalace/config.json to have TriMemo write it directly.',
       )
     }
   }
@@ -137,7 +137,7 @@ export function apply(ctx, config) {
       await Promise.race([Promise.allSettled([...runners]), deadline])
       clearTimeout(timer)
     },
-    'mempalace-autosave: drain hook runs',
+    'trimemo-autosave: drain hook runs',
   )
 }
 

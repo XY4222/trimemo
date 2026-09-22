@@ -5,8 +5,8 @@ from pathlib import Path
 
 import yaml
 
-from mempalace.miner import mine
-from mempalace.exporter import export_palace
+from trimemo.miner import mine
+from trimemo.exporter import export_palace
 
 
 def write_file(path: Path, content: str):

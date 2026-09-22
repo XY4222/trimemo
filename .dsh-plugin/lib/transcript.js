@@ -1,4 +1,4 @@
-// The session transcript MemPalace's hook runner reads.
+// The session transcript TriMemo's hook runner reads.
 //
 // DSH stores sessions zstd-compressed, and its own hook bridge hands hooks an
 // empty `transcript_path`, so the plugin keeps a transcript of its own: one

@@ -1,6 +1,6 @@
 # Python API
 
-High-level overview of the key Python interfaces you'd use to integrate MemPalace into your application.
+High-level overview of the key Python interfaces you'd use to integrate TriMemo into your application.
 
 ## Search
 

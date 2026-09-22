@@ -19,7 +19,7 @@ embed a real emoji as a single code point.
 
 import hashlib
 
-from mempalace.config import strip_lone_surrogates
+from trimemo.config import strip_lone_surrogates
 
 
 # ── Unit tests ─────────────────────────────────────────────────────────────
@@ -82,17 +82,17 @@ class TestSanitizersStripSurrogates:
     architectural fix so all MCP tools route through and inherit it for free."""
 
     def test_sanitize_content_strips_surrogates(self):
-        from mempalace.config import sanitize_content
+        from trimemo.config import sanitize_content
 
         assert sanitize_content("hello\udc95world") == "hello�world"
 
     def test_sanitize_kg_value_strips_surrogates(self):
-        from mempalace.config import sanitize_kg_value
+        from trimemo.config import sanitize_kg_value
 
         assert sanitize_kg_value("Alice\udc95") == "Alice�"
 
     def test_sanitize_query_strips_surrogates(self):
-        from mempalace.query_sanitizer import sanitize_query
+        from trimemo.query_sanitizer import sanitize_query
 
         result = sanitize_query("search\udc95term")
         assert "\udc95" not in result["clean_query"]
@@ -103,7 +103,7 @@ class TestSanitizersStripSurrogates:
 
 
 def _patch_mcp_server(monkeypatch, config, kg):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_config", config)
     monkeypatch.setattr(mcp_server, "_get_kg", lambda: kg)
@@ -115,7 +115,7 @@ class TestToolsAcceptSurrogates:
 
     def test_add_drawer_content(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         result = tool_add_drawer(
             wing="test",
@@ -127,7 +127,7 @@ class TestToolsAcceptSurrogates:
 
     def test_add_drawer_metadata(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_add_drawer
+        from trimemo.mcp_server import tool_add_drawer
 
         result = tool_add_drawer(
             wing="test",
@@ -140,7 +140,7 @@ class TestToolsAcceptSurrogates:
 
     def test_check_duplicate(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_check_duplicate
+        from trimemo.mcp_server import tool_check_duplicate
 
         result = tool_check_duplicate(content="exact\udc95match")
         assert isinstance(result, dict)
@@ -148,7 +148,7 @@ class TestToolsAcceptSurrogates:
 
     def test_search_query(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_search
+        from trimemo.mcp_server import tool_search
 
         result = tool_search(query="search\udc95term")
         assert isinstance(result, dict)
@@ -156,7 +156,7 @@ class TestToolsAcceptSurrogates:
 
     def test_update_drawer(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_add_drawer, tool_update_drawer
+        from trimemo.mcp_server import tool_add_drawer, tool_update_drawer
 
         add_result = tool_add_drawer(wing="test", room="update", content="original content")
         assert add_result["success"] is True
@@ -169,7 +169,7 @@ class TestToolsAcceptSurrogates:
 
     def test_diary_write(self, monkeypatch, collection, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_diary_write
+        from trimemo.mcp_server import tool_diary_write
 
         result = tool_diary_write(
             agent_name="数数",
@@ -209,7 +209,7 @@ class TestBackendChokepointStripsDocuments:
 
     @staticmethod
     def _collection():
-        from mempalace.backends.chroma import ChromaCollection
+        from trimemo.backends.chroma import ChromaCollection
 
         fake = _CapturingCollection()
         return fake, ChromaCollection(fake)

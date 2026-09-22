@@ -1,29 +1,29 @@
-# MemPalace remote MCP server — systemd unit template.
+# TriMemo remote MCP server — systemd unit template.
 #
 # Install:
-#   sudo useradd --system --home /var/lib/mempalace --shell /usr/sbin/nologin mempalace
-#   sudo install -d -o mempalace -g mempalace -m 750 /var/lib/mempalace /etc/mempalace
-#   sudo cp deploy/server.env.example /etc/mempalace/server.env   # then edit + chmod 600
-#   sudo install -m 600 -o mempalace -g mempalace /etc/mempalace/server.env /etc/mempalace/server.env
-#   # install mempalace into a venv on PATH, or adjust ExecStart to its absolute path
-#   sudo cp deploy/mempalace-server.service /etc/systemd/system/
-#   sudo systemctl daemon-reload && sudo systemctl enable --now mempalace-server
+#   sudo useradd --system --home /var/lib/trimemo --shell /usr/sbin/nologin trimemo
+#   sudo install -d -o trimemo -g trimemo -m 750 /var/lib/trimemo /etc/trimemo
+#   sudo cp deploy/server.env.example /etc/trimemo/server.env   # then edit + chmod 600
+#   sudo install -m 600 -o trimemo -g trimemo /etc/trimemo/server.env /etc/trimemo/server.env
+#   # install trimemo into a venv on PATH, or adjust ExecStart to its absolute path
+#   sudo cp deploy/trimemo-server.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now trimemo-server
 #
 # This binds 0.0.0.0:8765 and requires MEMPALACE_MCP_HTTP_TOKEN (set in the
 # EnvironmentFile). Front it with a TLS-terminating reverse proxy, or set
 # MEMPALACE_MCP_TLS_CERT / _KEY in the EnvironmentFile for native TLS.
 
 [Unit]
-Description=MemPalace remote MCP server
+Description=TriMemo remote MCP server
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=exec
-User=mempalace
-Group=mempalace
-EnvironmentFile=/etc/mempalace/server.env
-ExecStart=mempalace serve --host 0.0.0.0 --port 8765
+User=trimemo
+Group=trimemo
+EnvironmentFile=/etc/trimemo/server.env
+ExecStart=trimemo serve --host 0.0.0.0 --port 8765
 # The idle watchdog exits with status 0, which on-failure reads as an
 # intentional stop, so the server would stay down. server.env disables the
 # watchdog; Restart=always covers a deployment that has not set it.
@@ -57,8 +57,8 @@ RestrictNamespaces=true
 LockPersonality=true
 MemoryDenyWriteExecute=false
 # The palace and any local state live here; everything else is read-only.
-ReadWritePaths=/var/lib/mempalace
-StateDirectory=mempalace
+ReadWritePaths=/var/lib/trimemo
+StateDirectory=trimemo
 
 [Install]
 WantedBy=multi-user.target

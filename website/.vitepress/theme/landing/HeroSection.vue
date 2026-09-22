@@ -10,7 +10,7 @@
         </h1>
         <p class="lede">
           Every conversation, every idea, every small decision&hellip; held somewhere safe.
-          <br><br>Welcome to the future of memory: <span class="mp-blue">MemPalace</span>
+          <br><br>Welcome to the future of memory: <span class="mp-blue">TriMemo</span>
         </p>
         <form class="waitlist waitlist-hero" data-source="hero" novalidate>
           <div class="waitlist-head">
@@ -44,7 +44,7 @@
         <div class="hero-secondary">
           <a href="/guide/getting-started">Read the docs</a>
           <span class="sep" aria-hidden="true">·</span>
-          <a href="https://github.com/MemPalace/mempalace">GitHub ↗</a>
+          <a href="https://github.com/MemPalace/trimemo">GitHub ↗</a>
         </div>
       </div>
 

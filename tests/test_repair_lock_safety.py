@@ -1,6 +1,6 @@
 """Tests for the repair-vs-mine-lock stranding fix.
 
-``mempalace repair --mode from-sqlite --archive-existing`` used to rename
+``trimemo repair --mode from-sqlite --archive-existing`` used to rename
 the existing palace aside (``palace.pre-rebuild-…``) and only *then* hit the
 single-writer ``mine_palace_lock`` when the first chromadb upsert ran — so a
 palace held by a live MCP server / daemon was stranded: archived, with no
@@ -22,7 +22,7 @@ import time
 
 import pytest
 
-from mempalace.palace import MineAlreadyRunning, mine_palace_lock
+from trimemo.palace import MineAlreadyRunning, mine_palace_lock
 
 pytestmark = pytest.mark.skipif(
     sys.platform == "win32",
@@ -66,7 +66,7 @@ def test_rebuild_refuses_when_lock_held_leaves_palace_untouched(tmp_path, monkey
     original palace dir is left exactly as it was (its marker file intact).
     """
     monkeypatch.setenv("HOME", str(tmp_path))
-    from mempalace.repair import rebuild_from_sqlite
+    from trimemo.repair import rebuild_from_sqlite
 
     palace = tmp_path / "palace"
     palace.mkdir()

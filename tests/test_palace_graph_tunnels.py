@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 with patch.dict("sys.modules", {"chromadb": MagicMock()}):
-    import mempalace.palace_graph as palace_graph
+    import trimemo.palace_graph as palace_graph
 
 
 def _use_tmp_tunnel_file(monkeypatch, tmp_path):
@@ -202,7 +202,7 @@ class TestTopicTunnels:
     """
 
     def test_explicit_config_scopes_persistence_to_selected_palace(self, tmp_path):
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         default_cfg = MempalaceConfig(palace_path=tmp_path / "default" / "palace")
         selected_cfg = MempalaceConfig(palace_path=tmp_path / "selected" / "palace")
@@ -405,9 +405,9 @@ class TestTopicTunnels:
 class TestHyphenatedWingNormalization:
     """Wing names may reach ``tunnels.json`` in either form:
 
-    * ``mempalace mine`` without ``--wing`` derives the slug from the dir
+    * ``trimemo mine`` without ``--wing`` derives the slug from the dir
       name through ``normalize_wing_name`` → stored as ``mempalace_public``.
-    * ``mempalace mine --wing my-wing`` (or any explicit slug) is stored
+    * ``trimemo mine --wing my-wing`` (or any explicit slug) is stored
       verbatim by ``create_tunnel`` (regression #1504) → ``my-wing``.
 
     Read-path helpers (``list_tunnels`` / ``follow_tunnels``) must accept
@@ -419,24 +419,24 @@ class TestHyphenatedWingNormalization:
     def test_list_tunnels_filters_hyphenated_wing(self, tmp_path, monkeypatch):
         _use_tmp_tunnel_file(monkeypatch, tmp_path)
 
-        palace_graph.create_tunnel("mempalace_public", "auth", "wing_people", "users")
+        palace_graph.create_tunnel("trimemo_public", "auth", "wing_people", "users")
 
-        assert len(palace_graph.list_tunnels("mempalace-public")) == 1
-        assert len(palace_graph.list_tunnels("mempalace_public")) == 1
+        assert len(palace_graph.list_tunnels("trimemo-public")) == 1
+        assert len(palace_graph.list_tunnels("trimemo_public")) == 1
 
     def test_follow_tunnels_matches_hyphenated_wing(self, tmp_path, monkeypatch):
         _use_tmp_tunnel_file(monkeypatch, tmp_path)
 
-        palace_graph.create_tunnel("mempalace_public", "auth", "wing_people", "users")
+        palace_graph.create_tunnel("trimemo_public", "auth", "wing_people", "users")
 
-        by_hyphen = palace_graph.follow_tunnels("mempalace-public", "auth")
-        by_under = palace_graph.follow_tunnels("mempalace_public", "auth")
+        by_hyphen = palace_graph.follow_tunnels("trimemo-public", "auth")
+        by_under = palace_graph.follow_tunnels("trimemo_public", "auth")
         assert len(by_hyphen) == 1
         assert len(by_under) == 1
         assert by_hyphen[0]["connected_wing"] == "wing_people"
 
     def test_create_tunnel_preserves_hyphenated_wing_names(self, tmp_path, monkeypatch):
-        """Regression for #1504: wings created via ``mempalace mine --wing my-wing``
+        """Regression for #1504: wings created via ``trimemo mine --wing my-wing``
         keep the hyphen in metadata, so ``create_tunnel`` must store the slug
         verbatim. Read-path normalization in ``list_tunnels``/``follow_tunnels``
         keeps both query forms working."""
@@ -529,9 +529,9 @@ class TestTunnelFileFollowsConfig:
     def test_default_tunnel_file_is_sibling_of_palace_path(self):
         """Regression: tunnel_file is the sibling of palace_path (single
         source of truth), regardless of whether the default resolves to the
-        legacy ``~/.mempalace/`` or the XDG ``~/.config/mempalace/`` layout.
+        legacy ``~/.mempalace/`` or the XDG ``~/.config/trimemo/`` layout.
         """
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         cfg = MempalaceConfig()
         expected = os.path.join(os.path.dirname(cfg.palace_path), "tunnels.json")
@@ -541,7 +541,7 @@ class TestTunnelFileFollowsConfig:
     def test_tunnel_file_follows_palace_path(self, tmp_path):
         """Custom palace_path → tunnel sits beside the palace, not at the
         hardcoded legacy location."""
-        from mempalace.config import MempalaceConfig
+        from trimemo.config import MempalaceConfig
 
         custom_dir = tmp_path / "custom-palace"
         cfg = MempalaceConfig(config_dir=tmp_path)
@@ -872,7 +872,7 @@ class TestTunnelDynamicsIntegration:
     resets the connection weights."""
 
     def test_new_tunnel_carries_all_dynamics_fields(self, tmp_path, monkeypatch):
-        from mempalace.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
+        from trimemo.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
 
         _use_tmp_tunnel_file(monkeypatch, tmp_path)
         t = palace_graph.create_tunnel(
@@ -922,7 +922,7 @@ class TestTunnelDynamicsIntegration:
         """If an existing tunnel record was created before L7 (no dynamics
         fields), a recreate event should backfill the defaults rather than
         leave the fields missing."""
-        from mempalace.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
+        from trimemo.dynamics import DEFAULT_STABILITY, DEFAULT_STRENGTH
 
         _use_tmp_tunnel_file(monkeypatch, tmp_path)
         legacy_tunnel = {

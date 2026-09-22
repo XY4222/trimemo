@@ -1,42 +1,42 @@
 # Antigravity Plugin
 
-MemPalace ships first-class support for Google's
+TriMemo ships first-class support for Google's
 [Antigravity IDE](https://antigravity.google/) as an installable
-plugin. The plugin registers MemPalace's MCP server, ships the
-`mempalace` skill, and wires two lifecycle hooks (Stop and
+plugin. The plugin registers TriMemo's MCP server, ships the
+`trimemo` skill, and wires two lifecycle hooks (Stop and
 PreInvocation) for background mining and startup memory injection.
 
 ## What gets registered
 
 | Surface         | Antigravity component                                      |
 |-----------------|------------------------------------------------------------|
-| MCP server      | `mempalace` (stdio, runs `mempalace-mcp`)                  |
-| Skill           | `mempalace` (in-plugin `skills/mempalace/SKILL.md`)        |
-| Stop hook       | `mempalace-save` — background-mines the conversation        |
-| PreInvocation   | `mempalace-wake` — injects memory on the first model call   |
+| MCP server      | `trimemo` (stdio, runs `trimemo-mcp`)                  |
+| Skill           | `trimemo` (in-plugin `skills/trimemo/SKILL.md`)        |
+| Stop hook       | `trimemo-save` — background-mines the conversation        |
+| PreInvocation   | `trimemo-wake` — injects memory on the first model call   |
 
 The full audit of which Antigravity surfaces we use, why, and what we
-deliberately do not ship is in [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/mempalace/blob/main/hooks/antigravity/INVESTIGATION.md).
+deliberately do not ship is in [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md).
 
 ## Prerequisites
 
 - Python 3.9+
-- [`mempalace`](https://github.com/MemPalace/mempalace) installed and
-  on `$PATH` (`mempalace --version` to verify)
+- [`trimemo`](https://github.com/MemPalace/trimemo) installed and
+  on `$PATH` (`trimemo --version` to verify)
 - [Antigravity IDE](https://antigravity.google/) installed (`~/.gemini/`
   exists)
 
 ## Install
 
-From the cloned `mempalace` repo:
+From the cloned `trimemo` repo:
 
 ```bash
 bash hooks/antigravity/install.sh
 ```
 
-This installs to `~/.gemini/config/plugins/mempalace/`. Restart
+This installs to `~/.gemini/config/plugins/trimemo/`. Restart
 Antigravity and the plugin loads automatically — you'll see
-`mempalace` in the MCP store and the skill list.
+`trimemo` in the MCP store and the skill list.
 
 ### Dry run first
 
@@ -48,7 +48,7 @@ bash hooks/antigravity/install.sh --dry-run
 
 ```bash
 bash hooks/antigravity/install.sh \
-  --install-dir <workspace>/.agents/plugins/mempalace
+  --install-dir <workspace>/.agents/plugins/trimemo
 ```
 
 The installer absolutizes any relative path before baking it into the
@@ -69,21 +69,21 @@ bash hooks/antigravity/install.sh --uninstall
 
 The uninstaller has two safety guards:
 
-1. The basename of `--install-dir` must be exactly `mempalace`.
+1. The basename of `--install-dir` must be exactly `trimemo`.
 2. The directory must contain a `plugin.json` whose `name` is
-   `"mempalace"`.
+   `"trimemo"`.
 
 This prevents an accidental wipe of an unrelated directory if the
 install dir is ever misconfigured.
 
 ## How the hooks behave
 
-### Stop hook (`mempalace-save`)
+### Stop hook (`trimemo-save`)
 
 Fires every time the agent's execution loop terminates. Counts each
 fire per-conversation; on every Nth fire (default 15, configurable
 via `MEMPAL_SAVE_INTERVAL`), it spawns
-`mempalace mine <transcript-dir> --mode convos` in the background.
+`trimemo mine <transcript-dir> --mode convos` in the background.
 
 Defers when:
 
@@ -97,13 +97,13 @@ The hook **always** returns `{}` to stdout — never
 `{"decision": "continue"}`, which would force the agent into an
 infinite re-execution loop.
 
-### PreInvocation hook (`mempalace-wake`)
+### PreInvocation hook (`trimemo-wake`)
 
 Fires before every model call, but is gated to `invocationNum == 1`
 so memory only gets injected once per conversation (mimicking
 Cursor's `sessionStart` semantics).
 
-When the gate passes, runs `mempalace wake-up --wing <inferred>` with
+When the gate passes, runs `trimemo wake-up --wing <inferred>` with
 a 500ms hard timeout and emits the verbatim output as an
 `ephemeralMessage`. The injection lives for one turn only and never
 persists into the transcript.
@@ -134,21 +134,21 @@ becomes a no-op without removing the plugin.
   (`nohup ... &`) so the hook itself returns immediately while the
   mining proceeds.
 - The PreInvocation hook enforces a 500ms hard cap on
-  `mempalace wake-up`. If the call doesn't return in time, the hook
+  `trimemo wake-up`. If the call doesn't return in time, the hook
   emits `{}` and the conversation starts without injection rather
   than blocking the user.
 
-## How the hooks find your `mempalace` install
+## How the hooks find your `trimemo` install
 
-The hooks run `mempalace` as `python -m mempalace`, so they need a
+The hooks run `trimemo` as `python -m trimemo`, so they need a
 Python interpreter that can actually import the package. In almost
 every case this is resolved **automatically** — you should not need to
 configure anything. The resolution order is:
 
 1. **`MEMPAL_PYTHON`** — an explicit interpreter path you export
    (escape hatch; see below).
-2. **The `mempalace-mcp` / `mempalace` console-script shebang.** When
-   you install via `uv tool install mempalace` or `pipx install`, the
+2. **The `trimemo-mcp` / `trimemo` console-script shebang.** When
+   you install via `uv tool install trimemo` or `pipx install`, the
    package lives in an *isolated* environment whose interpreter is
    **not** your system `python3`. The hooks read the shebang line of
    the console script already on your `PATH` (the same one the MCP
@@ -161,13 +161,13 @@ configure anything. The resolution order is:
 ### When you might need `MEMPAL_PYTHON`
 
 You only need to set it if the hooks can't otherwise reach a Python
-with `mempalace` importable — for example, an unusual install layout,
+with `trimemo` importable — for example, an unusual install layout,
 or a wrapper interpreter the shebang heuristic can't follow. Point it
 at the interpreter that owns the package:
 
 ```bash
 # uv tool install: the interpreter lives under `uv tool dir`
-export MEMPAL_PYTHON="$(uv tool dir)/mempalace/bin/python"
+export MEMPAL_PYTHON="$(uv tool dir)/trimemo/bin/python"
 
 # or a project virtualenv
 export MEMPAL_PYTHON=/path/to/.venv/bin/python
@@ -178,28 +178,28 @@ Antigravity (which may not inherit your interactive shell `PATH`)
 picks it up. Verify with:
 
 ```bash
-"$MEMPAL_PYTHON" -m mempalace --version
+"$MEMPAL_PYTHON" -m trimemo --version
 ```
 
 ## Verifying installation
 
 ```bash
-ls ~/.gemini/config/plugins/mempalace/
+ls ~/.gemini/config/plugins/trimemo/
 # expect: README.md hooks/ hooks.json mcp_config.json plugin.json skills/
 
-cat ~/.gemini/config/plugins/mempalace/hooks.json
+cat ~/.gemini/config/plugins/trimemo/hooks.json
 # absolute paths to the two hook scripts
 
-mempalace-mcp --version
+trimemo-mcp --version
 # binary on PATH
 
-bash -n ~/.gemini/config/plugins/mempalace/hooks/*.sh
+bash -n ~/.gemini/config/plugins/trimemo/hooks/*.sh
 # no syntax errors
 ```
 
 After restarting Antigravity:
 
-1. The MCP store should list `mempalace` as a registered server.
+1. The MCP store should list `trimemo` as a registered server.
 2. Starting a fresh conversation should fire the wake hook — check
    `~/.mempalace/hook_state/antigravity_hook.log` for an
    `[event=preInvocation]` line.
@@ -207,21 +207,21 @@ After restarting Antigravity:
 
 ## Troubleshooting
 
-### "MCP server `mempalace` not found"
+### "MCP server `trimemo` not found"
 
 The plugin file is in place but the binary isn't on `$PATH`:
 
 ```bash
-mempalace-mcp --version
+trimemo-mcp --version
 # command not found?
 ```
 
 Install via uv (recommended) or pip:
 
 ```bash
-uv tool install mempalace
+uv tool install trimemo
 # or
-pip install mempalace
+pip install trimemo
 ```
 
 ### Hooks aren't firing
@@ -233,7 +233,7 @@ tail -50 ~/.mempalace/hook_state/antigravity_hook.log
 ```
 
 Each fire writes a line. No lines = the hook is not being invoked.
-Verify `~/.gemini/config/plugins/mempalace/hooks.json` exists and the
+Verify `~/.gemini/config/plugins/trimemo/hooks.json` exists and the
 `command` paths point to executable files.
 
 ### Save fires but no mining happens
@@ -244,15 +244,15 @@ Two common causes:
    `count % MEMPAL_SAVE_INTERVAL == 0`. The log shows the running
    counter and interval per fire — wait for the next save tick or set
    `MEMPAL_SAVE_INTERVAL=1` for testing.
-2. **The resolved Python can't import `mempalace`.** Look for this
+2. **The resolved Python can't import `trimemo`.** Look for this
    line in `~/.mempalace/hook_state/antigravity_hook.log`:
 
    ```
-   ERROR: mempalace is not runnable via <python> -m mempalace; install mempalace or set MEMPAL_PYTHON
+   ERROR: trimemo is not runnable via <python> -m trimemo; install trimemo or set MEMPAL_PYTHON
    ```
 
    If you see it, the interpreter resolution (see *How the hooks find
-   your `mempalace` install* above) landed on a Python without the
+   your `trimemo` install* above) landed on a Python without the
    package. Set `MEMPAL_PYTHON` to the correct interpreter and restart
    Antigravity.
 
@@ -282,7 +282,7 @@ applies them to every workspace. Render the canonical shared-brain rules
 block with a stable identity for this agent and drop it there:
 
 ```bash
-mempalace rules --host mac --harness antigravity --project myapp > ~/.gemini/config/GEMINI.md
+trimemo rules --host mac --harness antigravity --project myapp > ~/.gemini/config/GEMINI.md
 ```
 
 If the file already has other content, paste the rendered block into it
@@ -304,24 +304,24 @@ Antigravity gates terminal commands and MCP writes behind approval prompts
 by default. An unnoticed prompt silently stalls an ack, reply, or patch
 submission — to the requesting agent this looks like "claimed but gone
 quiet", indistinguishable from a crash. For unattended coordination,
-allowlist the mempalace MCP tools and the `mempalace logstream watch`
+allowlist the trimemo MCP tools and the `trimemo logstream watch`
 command in Antigravity's permission settings.
 
 With both pieces in place the agent stays declared-idle until it is in a
 coordination loop (the user asked it to listen, it claimed a task, or it
-delegated), then arms `mempalace logstream watch`, wakes on inbox events,
+delegated), then arms `trimemo logstream watch`, wakes on inbox events,
 acks with `mempalace_event_ack`, and re-arms on its own. Measured on an
 otherwise idle machine, the round trip from event append to ack is about
 five seconds.
 
 ## See also
 
-- [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/mempalace/blob/main/hooks/antigravity/INVESTIGATION.md)
+- [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md)
   — every Antigravity surface investigated, with verbatim quotes from
   the official docs.
-- [`hooks/antigravity/STDIN_SHAPE.md`](https://github.com/MemPalace/mempalace/blob/main/hooks/antigravity/STDIN_SHAPE.md)
+- [`hooks/antigravity/STDIN_SHAPE.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/STDIN_SHAPE.md)
   — exact wire format for both events.
-- [`examples/antigravity/`](https://github.com/MemPalace/mempalace/tree/main/examples/antigravity)
+- [`examples/antigravity/`](https://github.com/MemPalace/trimemo/tree/main/examples/antigravity)
   — standalone `hooks.json` + `mcp_config.json` for users who don't
   want the full plugin install.
 - [Auto-Save Hooks](./hooks.md) — Claude Code equivalent.

@@ -413,10 +413,10 @@ def test_common_sh_parser_omits_sentinel_on_malformed_json(tmp_path: Path) -> No
 
 
 def test_save_hook_missing_mempalace_python_module_does_not_crash(tmp_path: Path) -> None:
-    """When the resolved Python interpreter cannot run `-m mempalace`, fail open.
+    """When the resolved Python interpreter cannot run `-m trimemo`, fail open.
 
-    The save hook now invokes mempalace via ``"$MEMPAL_PYTHON_BIN"
-    -m mempalace mine ...`` rather than the bare ``mempalace`` console
+    The save hook now invokes trimemo via ``"$MEMPAL_PYTHON_BIN"
+    -m trimemo mine ...`` rather than the bare ``trimemo`` console
     script. If MEMPAL_PYTHON points at an interpreter that doesn't
     have the package installed, the hook must log the failure and
     still emit ``{}`` — never crash, never block the user.
@@ -426,15 +426,15 @@ def test_save_hook_missing_mempalace_python_module_does_not_crash(tmp_path: Path
     _ensure_palace(home)
     transcript = tmp_path / "transcript.jsonl"
     transcript.write_text("{}\n", encoding="utf-8")
-    # Point MEMPAL_PYTHON at a stub interpreter that has no mempalace
-    # package installed — `python -m mempalace --version` will fail.
+    # Point MEMPAL_PYTHON at a stub interpreter that has no trimemo
+    # package installed — `python -m trimemo --version` will fail.
     stub = tmp_path / "stub_python"
     stub.write_text(
         "#!/bin/sh\n"
         "# Minimal python stub: rejects every -m invocation so the\n"
         '# hook hits the "module unrunnable" branch.\n'
         'case "$*" in\n'
-        '    *"-m mempalace"*) exit 1 ;;\n'
+        '    *"-m trimemo"*) exit 1 ;;\n'
         '    *) exec /usr/bin/env python3 "$@" ;;\n'
         "esac\n",
         encoding="utf-8",
@@ -456,37 +456,37 @@ def test_save_hook_missing_mempalace_python_module_does_not_crash(tmp_path: Path
     # subshell now (the probe moved off the foreground), so poll for it.
     log = state / "antigravity_hook.log"
     assert _poll_log_contains(log, "is not runnable via"), (
-        f"expected the 'mempalace not runnable via $MEMPAL_PYTHON_BIN' log line; "
+        f"expected the 'trimemo not runnable via $MEMPAL_PYTHON_BIN' log line; "
         f"got:\n{log.read_text(errors='replace') if log.is_file() else '<no log>'}"
     )
 
 
 def test_save_hook_uses_python_module_invocation(tmp_path: Path) -> None:
-    """The save hook source MUST invoke mempalace via `-m mempalace`.
+    """The save hook source MUST invoke trimemo via `-m trimemo`.
 
     Locks in the gemini-code-assist fix so a future edit doesn't
-    silently regress to the bare ``mempalace`` console-script call,
+    silently regress to the bare ``trimemo`` console-script call,
     which fails when the user's PATH doesn't expose the venv bin.
     """
     body = SAVE_HOOK.read_text(encoding="utf-8")
-    assert '"$MEMPAL_PYTHON_BIN" -m mempalace' in body, (
-        "save hook should invoke mempalace via $MEMPAL_PYTHON_BIN -m mempalace, "
-        "not the bare `mempalace` console script. The bare invocation breaks "
+    assert '"$MEMPAL_PYTHON_BIN" -m trimemo' in body, (
+        "save hook should invoke trimemo via $MEMPAL_PYTHON_BIN -m trimemo, "
+        "not the bare `trimemo` console script. The bare invocation breaks "
         "when the venv's bin/ isn't on the hook's PATH."
     )
     # Also verify the bare invocation is gone (defense-in-depth).
-    # Allow `mempalace` to appear in comments / strings, but not as
-    # the start of a `nohup ... mempalace mine` command.
-    assert "nohup mempalace " not in body, (
-        "bare `nohup mempalace ...` invocation found; should be "
-        '`nohup "$MEMPAL_PYTHON_BIN" -m mempalace ...`'
+    # Allow `trimemo` to appear in comments / strings, but not as
+    # the start of a `nohup ... trimemo mine` command.
+    assert "nohup trimemo " not in body, (
+        "bare `nohup trimemo ...` invocation found; should be "
+        '`nohup "$MEMPAL_PYTHON_BIN" -m trimemo ...`'
     )
 
 
 def test_save_hook_backgrounds_probe_mine_and_cleanup_in_one_subshell(tmp_path: Path) -> None:
     """Probe + mine + marker cleanup must live in ONE detached subshell.
 
-    igorls' PR #1633 review: the foreground `mempalace --version`
+    igorls' PR #1633 review: the foreground `trimemo --version`
     probe pays the full chromadb/onnx cold-start import (the `mine`
     subparser imports `mempalace.miner` before argparse handles
     `--version`), which blows the save budget. Moving the probe into
@@ -510,8 +510,8 @@ def test_save_hook_backgrounds_probe_mine_and_cleanup_in_one_subshell(tmp_path: 
         "were folded into a single background subshell."
     )
     # Probe still happens (just inside the subshell now) and uses -m.
-    assert '"$MEMPAL_PYTHON_BIN" -m mempalace --version' in body, (
-        "the runnability probe must still run via $MEMPAL_PYTHON_BIN -m mempalace"
+    assert '"$MEMPAL_PYTHON_BIN" -m trimemo --version' in body, (
+        "the runnability probe must still run via $MEMPAL_PYTHON_BIN -m trimemo"
     )
     # The whole block is backgrounded: a subshell close followed by the
     # detach redirection + `&`.
@@ -528,7 +528,7 @@ def test_save_hook_returns_before_slow_version_probe(tmp_path: Path) -> None:
     """The hook must return immediately even if `--version` is slow.
 
     Proves the probe was moved off the foreground. We point
-    MEMPAL_PYTHON at a stub that sleeps for 3s on any `-m mempalace`
+    MEMPAL_PYTHON at a stub that sleeps for 3s on any `-m trimemo`
     invocation. If the probe still ran in the foreground the hook
     would block ~3s; with the probe backgrounded it returns in well
     under a second.
@@ -543,10 +543,10 @@ def test_save_hook_returns_before_slow_version_probe(tmp_path: Path) -> None:
     stub = tmp_path / "slow_python"
     stub.write_text(
         "#!/bin/sh\n"
-        "# Stub python: any -m mempalace call sleeps 3s, simulating a\n"
+        "# Stub python: any -m trimemo call sleeps 3s, simulating a\n"
         "# heavy cold-start import. Everything else proxies to python3.\n"
         'case "$*" in\n'
-        '    *"-m mempalace"*) sleep 3; exit 0 ;;\n'
+        '    *"-m trimemo"*) sleep 3; exit 0 ;;\n'
         '    *) exec /usr/bin/env python3 "$@" ;;\n'
         "esac\n",
         encoding="utf-8",
@@ -620,21 +620,21 @@ def test_save_hook_helper_uses_temp_and_mv(tmp_path: Path) -> None:
 
 
 def test_wake_hook_uses_sys_executable_module_invocation(tmp_path: Path) -> None:
-    """The wake hook's inner Python must invoke mempalace via sys.executable -m.
+    """The wake hook's inner Python must invoke trimemo via sys.executable -m.
 
-    Same rationale as the save hook fix: the bare ``mempalace``
+    Same rationale as the save hook fix: the bare ``trimemo``
     console script fails when the venv's bin/ isn't on the hook's
-    PATH. Using ``[sys.executable, '-m', 'mempalace', ...]`` binds
+    PATH. Using ``[sys.executable, '-m', 'trimemo', ...]`` binds
     the call to the same interpreter that resolved MEMPAL_PYTHON.
     """
     body = WAKE_HOOK.read_text(encoding="utf-8")
-    assert "sys.executable, '-m', 'mempalace'" in body, (
-        "wake hook should invoke mempalace via [sys.executable, '-m', 'mempalace', ...], "
-        "not ['mempalace', ...]. The bare invocation breaks when the venv's bin/ "
+    assert "sys.executable, '-m', 'trimemo'" in body, (
+        "wake hook should invoke trimemo via [sys.executable, '-m', 'trimemo', ...], "
+        "not ['trimemo', ...]. The bare invocation breaks when the venv's bin/ "
         "isn't on the hook's PATH."
     )
-    assert "['mempalace', 'wake-up'" not in body, (
-        "bare ['mempalace', 'wake-up', ...] invocation found in wake hook"
+    assert "['trimemo', 'wake-up'" not in body, (
+        "bare ['trimemo', 'wake-up', ...] invocation found in wake hook"
     )
 
 
@@ -797,18 +797,18 @@ def test_wake_hook_never_emits_decision_field(tmp_path: Path) -> None:
 
 
 def test_wake_hook_emits_empty_when_mempalace_missing(tmp_path: Path) -> None:
-    """When mempalace can't be run, the wake hook degrades to `{}`.
+    """When trimemo can't be run, the wake hook degrades to `{}`.
 
     Antigravity's hook framework should never see a stack trace from
     a missing CLI — emit `{}` and let the conversation start without
     injection.
 
     Note: the wake hook binds the wake-up call to
-    ``[sys.executable, '-m', 'mempalace', ...]`` (the interpreter that
-    resolved MEMPAL_PYTHON), NOT a bare ``mempalace`` on PATH. So we
+    ``[sys.executable, '-m', 'trimemo', ...]`` (the interpreter that
+    resolved MEMPAL_PYTHON), NOT a bare ``trimemo`` on PATH. So we
     force MEMPAL_PYTHON="" (resolution falls back to ``python3`` on the
     minimal PATH below) and strip PATH to a system python3 that has no
-    mempalace package installed. The inner ``python3 -m mempalace``
+    trimemo package installed. The inner ``python3 -m trimemo``
     then fails and the hook must emit `{}`. We also override
     MEMPAL_PYTHON explicitly so a value exported in the developer's
     shell can't leak in and point at an interpreter that *does* have
@@ -818,7 +818,7 @@ def test_wake_hook_emits_empty_when_mempalace_missing(tmp_path: Path) -> None:
     home = tmp_path / "home"
     _ensure_palace(home)
     # Strip PATH down to just the bash + python essentials, dropping
-    # any directory that might have a `mempalace` binary, and clear
+    # any directory that might have a `trimemo` binary, and clear
     # MEMPAL_PYTHON so resolution falls back to this minimal PATH.
     minimal_path = "/usr/bin:/bin"
     result = _run_hook(
@@ -829,7 +829,7 @@ def test_wake_hook_emits_empty_when_mempalace_missing(tmp_path: Path) -> None:
         extra_env={"PATH": minimal_path, "MEMPAL_PYTHON": ""},
     )
     assert result.returncode == 0, (
-        f"wake hook crashed when mempalace is missing:\n"
+        f"wake hook crashed when trimemo is missing:\n"
         f"stdout={result.stdout!r}\nstderr={result.stderr!r}"
     )
     assert result.stdout.strip() == "{}"
@@ -911,7 +911,7 @@ def test_save_hook_returns_quickly_under_kill_switch(tmp_path: Path) -> None:
     The integration brief budgets hooks at <500ms. We allow a generous
     1500ms here because CI machines can be slow on cold-cache subprocess
     spawn. The point of the test is to fail loudly if a future edit
-    introduces a synchronous mempalace import or DB connection.
+    introduces a synchronous trimemo import or DB connection.
     """
     import time
 
@@ -1125,9 +1125,9 @@ def test_gc_does_not_run_under_kill_switch(tmp_path: Path) -> None:
 
 # ── Python interpreter resolution (mempal_resolve_python) ─────────────
 #
-# The hooks run `"$MEMPAL_PYTHON_BIN" -m mempalace`, so MEMPAL_PYTHON_BIN
-# must resolve to an interpreter that owns the mempalace package. The
-# common install path — `uv tool install mempalace` / `pipx install` —
+# The hooks run `"$MEMPAL_PYTHON_BIN" -m trimemo`, so MEMPAL_PYTHON_BIN
+# must resolve to an interpreter that owns the trimemo package. The
+# common install path — `uv tool install trimemo` / `pipx install` —
 # puts the console scripts on PATH inside an ISOLATED env whose
 # interpreter is NOT system python3. The resolver derives that
 # interpreter from the console-script shebang so mining works without
@@ -1157,7 +1157,7 @@ def _make_fake_python(path: Path) -> Path:
 
 
 def _make_console_script(path: Path, shebang_interp: str) -> Path:
-    """Create a fake mempalace console script with the given shebang interpreter."""
+    """Create a fake trimemo console script with the given shebang interpreter."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(f"#!{shebang_interp}\nprint('hi')\n", encoding="utf-8")
     path.chmod(0o755)
@@ -1167,7 +1167,7 @@ def _make_console_script(path: Path, shebang_interp: str) -> Path:
 def test_resolve_python_derives_interpreter_from_console_script_shebang(
     tmp_path: Path,
 ) -> None:
-    """With MEMPAL_PYTHON unset, the resolver reads the mempalace-mcp shebang.
+    """With MEMPAL_PYTHON unset, the resolver reads the trimemo-mcp shebang.
 
     Simulates a `uv tool install` layout: the console script is on PATH
     but its interpreter is an isolated Python, NOT the system python3
@@ -1177,13 +1177,13 @@ def test_resolve_python_derives_interpreter_from_console_script_shebang(
     _ensure_palace(home)
     interp = _make_fake_python(tmp_path / "pyhome" / "python3.12")
     bindir = tmp_path / "bin"
-    _make_console_script(bindir / "mempalace-mcp", str(interp))
+    _make_console_script(bindir / "trimemo-mcp", str(interp))
 
     env = {**os.environ, "HOME": str(home), "PATH": f"{bindir}:/usr/bin:/bin"}
     env.pop("MEMPAL_PYTHON", None)
 
     assert _resolve_python(env) == str(interp), (
-        "resolver should derive the interpreter from the mempalace-mcp "
+        "resolver should derive the interpreter from the trimemo-mcp "
         "console-script shebang when MEMPAL_PYTHON is unset"
     )
 
@@ -1199,7 +1199,7 @@ def test_resolve_python_prefers_mcp_script_over_path_python3(tmp_path: Path) -> 
     _ensure_palace(home)
     interp = _make_fake_python(tmp_path / "pyhome" / "python3.12")
     bindir = tmp_path / "bin"
-    _make_console_script(bindir / "mempalace-mcp", str(interp))
+    _make_console_script(bindir / "trimemo-mcp", str(interp))
     # A decoy python3 earlier on PATH must be ignored in favour of the shebang.
     _make_fake_python(bindir / "python3")
 
@@ -1218,7 +1218,7 @@ def test_resolve_python_override_beats_shebang(tmp_path: Path) -> None:
     override = _make_fake_python(tmp_path / "override" / "python3")
     interp = _make_fake_python(tmp_path / "pyhome" / "python3.12")
     bindir = tmp_path / "bin"
-    _make_console_script(bindir / "mempalace-mcp", str(interp))
+    _make_console_script(bindir / "trimemo-mcp", str(interp))
 
     env = {
         **os.environ,
@@ -1237,12 +1237,12 @@ def test_resolve_python_rejects_env_style_shebang(tmp_path: Path) -> None:
     The first shebang token would be `/usr/bin/env`, which is not a
     Python interpreter. The resolver must reject it (basename guard) and
     fall through to python3 on PATH rather than trying to run
-    `/usr/bin/env -m mempalace`.
+    `/usr/bin/env -m trimemo`.
     """
     home = tmp_path / "home"
     _ensure_palace(home)
     bindir = tmp_path / "bin"
-    _make_console_script(bindir / "mempalace-mcp", "/usr/bin/env python3")
+    _make_console_script(bindir / "trimemo-mcp", "/usr/bin/env python3")
 
     env = {**os.environ, "HOME": str(home), "PATH": f"{bindir}:/usr/bin:/bin"}
     env.pop("MEMPAL_PYTHON", None)
@@ -1267,7 +1267,7 @@ def test_resolve_python_skips_shebang_interp_that_is_not_executable(
     _ensure_palace(home)
     bindir = tmp_path / "bin"
     missing = tmp_path / "pyhome" / "python3.12"  # never created -> not -x
-    _make_console_script(bindir / "mempalace-mcp", str(missing))
+    _make_console_script(bindir / "trimemo-mcp", str(missing))
 
     env = {**os.environ, "HOME": str(home), "PATH": f"{bindir}:/usr/bin:/bin"}
     env.pop("MEMPAL_PYTHON", None)
@@ -1282,7 +1282,7 @@ def test_resolve_python_skips_shebang_interp_that_is_not_executable(
 def test_resolve_python_falls_back_to_path_python3_without_console_scripts(
     tmp_path: Path,
 ) -> None:
-    """With no mempalace console scripts on PATH, resolve to python3 (prior behaviour)."""
+    """With no trimemo console scripts on PATH, resolve to python3 (prior behaviour)."""
     home = tmp_path / "home"
     _ensure_palace(home)
 
@@ -1341,16 +1341,16 @@ def test_kill_switch_trips_when_no_palace_dir_exists(tmp_path: Path) -> None:
 
 
 def test_kill_switch_proceeds_for_fresh_xdg_install(tmp_path: Path) -> None:
-    """A fresh install since #148 has ~/.config/mempalace and no ~/.mempalace."""
+    """A fresh install since #148 has ~/.config/trimemo and no ~/.mempalace."""
     home = tmp_path / "home"
-    (home / ".config" / "mempalace").mkdir(parents=True)
+    (home / ".config" / "trimemo").mkdir(parents=True)
     assert _kill_switch_tripped(home) is False
 
 
 def test_kill_switch_proceeds_for_xdg_config_home(tmp_path: Path) -> None:
     home = tmp_path / "home"
     xdg = tmp_path / "xdg"
-    (xdg / "mempalace").mkdir(parents=True)
+    (xdg / "trimemo").mkdir(parents=True)
     assert _kill_switch_tripped(home, {"XDG_CONFIG_HOME": xdg.as_posix()}) is False
 
 
@@ -1371,7 +1371,7 @@ def test_kill_switch_expands_tilde_in_explicit_config_dir(tmp_path: Path) -> Non
 def test_kill_switch_expands_tilde_in_xdg_config_home(tmp_path: Path) -> None:
     """``XDG_CONFIG_HOME=~/xdg`` is absolute after expansion, as in Python."""
     home = tmp_path / "home"
-    (home / "xdg" / "mempalace").mkdir(parents=True)
+    (home / "xdg" / "trimemo").mkdir(parents=True)
     assert _kill_switch_tripped(home, {"XDG_CONFIG_HOME": "~/xdg"}) is False
 
 
@@ -1384,7 +1384,7 @@ def test_kill_switch_legacy_dir_still_proceeds(tmp_path: Path) -> None:
 def test_kill_switch_reads_auto_save_from_xdg_config(tmp_path: Path) -> None:
     """``hooks.auto_save: false`` is read from the resolved config dir."""
     home = tmp_path / "home"
-    config_dir = home / ".config" / "mempalace"
+    config_dir = home / ".config" / "trimemo"
     config_dir.mkdir(parents=True)
     (config_dir / "config.json").write_text(
         json.dumps({"hooks": {"auto_save": False}}), encoding="utf-8"

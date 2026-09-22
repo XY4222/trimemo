@@ -1,7 +1,7 @@
-"""Tests for the MemPalace ↔ Hermes integration provider.
+"""Tests for the TriMemo ↔ Hermes integration provider.
 
-The provider ships inside the ``mempalace`` package (at
-``mempalace/integrations/hermes/``) but at runtime Hermes loads it from a
+The provider ships inside the ``trimemo`` package (at
+``trimemo/integrations/hermes/``) but at runtime Hermes loads it from a
 copy in ``~/.hermes/plugins/`` via ``spec_from_file_location`` — not as a
 package import. These tests load it the same way: by file path.
 
@@ -48,7 +48,7 @@ def integration_module():
     _install_stub_memory_provider()
     path = (
         Path(__file__).resolve().parent.parent
-        / "mempalace"
+        / "trimemo"
         / "integrations"
         / "hermes"
         / "__init__.py"
@@ -90,7 +90,7 @@ def _isolate_palace_env(integration_module):
 
 
 def test_name_matches_plugin_yaml(provider):
-    assert provider.name == "mempalace"
+    assert provider.name == "trimemo"
 
 
 def test_is_available_imports_mempalace(provider):
@@ -132,8 +132,8 @@ def test_config_schema_has_documented_keys(provider):
 
 def test_tool_schemas_module_constant_matches_expected_surface(integration_module):
     # 27 tools — openclaw's reference skill set (19 tools at
-    # MemPalace/mempalace#491, April 2026) plus the 8 agent-facing tools
-    # mempalace has added since that openclaw hasn't caught up to.
+    # TriMemo/trimemo#491, April 2026) plus the 8 agent-facing tools
+    # trimemo has added since that openclaw hasn't caught up to.
     # Admin/internal tools (sync, hook_settings, reconnect) intentionally
     # omitted.
     schemas = integration_module.TOOL_SCHEMAS
@@ -354,7 +354,7 @@ def test_shutdown_drains_running_worker(provider):
 
 
 # ---------------------------------------------------------------------------
-# End-to-end integration: real palace via mempalace's own fixtures.
+# End-to-end integration: real palace via trimemo's own fixtures.
 #
 # These exercise the ChromaBackend code path that fixes the dim-mismatch bug
 # from prior in-tree Hermes PRs, and run the tool handlers against the
@@ -365,7 +365,7 @@ def test_shutdown_drains_running_worker(provider):
 @pytest.fixture
 def initialized_provider(provider, palace_path, tmp_dir):
     """Provider initialized against a fresh temp palace."""
-    config_path = Path(tmp_dir) / "mempalace.json"
+    config_path = Path(tmp_dir) / "trimemo.json"
     config_path.write_text(json.dumps({"palace_path": palace_path}))
     provider.initialize("test-session-1", hermes_home=str(tmp_dir), platform="cli")
     # Wait for the optional wake-up warm-up thread so later collection reads
@@ -387,7 +387,7 @@ def _collection_snapshot(provider):
 
 def test_initialize_opens_chroma_via_backend(initialized_provider):
     """The dim-mismatch fix: collection access goes through ChromaBackend."""
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     assert initialized_provider._initialized is True
     assert initialized_provider._collection is not None
@@ -469,7 +469,7 @@ def provider_on_seeded_palace(seeded_collection, provider, palace_path, tmp_dir)
     we then have the provider open the same path via ``ChromaBackend`` — the
     fact that this round-trips at all is the dim-mismatch regression check.
     """
-    (Path(tmp_dir) / "mempalace.json").write_text(json.dumps({"palace_path": palace_path}))
+    (Path(tmp_dir) / "trimemo.json").write_text(json.dumps({"palace_path": palace_path}))
     provider.initialize("s1", hermes_home=str(tmp_dir))
     yield provider
     provider.shutdown()
@@ -562,7 +562,7 @@ def test_list_rooms_tool_marks_truncated_without_wing_total(provider_on_seeded_p
 
 def test_kg_add_persists_to_palace_sibling_sqlite(initialized_provider, palace_path):
     """The provider writes to ``<palace_path>/../knowledge_graph.sqlite3``."""
-    from mempalace.knowledge_graph import KnowledgeGraph
+    from trimemo.knowledge_graph import KnowledgeGraph
 
     result = json.loads(
         initialized_provider.handle_tool_call(
@@ -624,7 +624,7 @@ def test_diary_read_empty_when_no_writes(initialized_provider):
 
 
 def test_initialize_reads_mempalace_json(provider, tmp_dir, palace_path):
-    (Path(tmp_dir) / "mempalace.json").write_text(
+    (Path(tmp_dir) / "trimemo.json").write_text(
         json.dumps(
             {
                 "palace_path": palace_path,
@@ -644,9 +644,9 @@ def test_initialize_reads_mempalace_json(provider, tmp_dir, palace_path):
 def test_collection_name_is_not_hermes_configurable(provider, tmp_dir, palace_path):
     # A hermes-side ``collection_name`` would be a second way to set the
     # name — the write and read sides could silently diverge, making the
-    # provider look mute. The key is ignored; with no mempalace-side
+    # provider look mute. The key is ignored; with no trimemo-side
     # override (conftest redirects HOME to a temp dir), the default applies.
-    (Path(tmp_dir) / "mempalace.json").write_text(
+    (Path(tmp_dir) / "trimemo.json").write_text(
         json.dumps({"palace_path": palace_path, "collection_name": "custom_drawers"})
     )
     provider.initialize("s1", hermes_home=str(tmp_dir))
@@ -661,14 +661,14 @@ def test_collection_name_follows_mempalace_config(
 ):
     # One source of truth: the provider writes to the collection that
     # ``search_memories`` and the mcp_server passthrough actually read —
-    # mempalace's own config — so a customized ``collection_name`` in
+    # trimemo's own config — so a customized ``collection_name`` in
     # ``~/.mempalace/config.json`` cannot make live turns invisible to
     # recall.
     mp_config_dir = tmp_path / "mp_home"
     mp_config_dir.mkdir()
     (mp_config_dir / "config.json").write_text(json.dumps({"collection_name": "family_drawers"}))
 
-    from mempalace.config import MempalaceConfig as real_config
+    from trimemo.config import MempalaceConfig as real_config
 
     def _patched_config(config_dir=None):
         return real_config(config_dir=str(mp_config_dir))
@@ -676,7 +676,7 @@ def test_collection_name_follows_mempalace_config(
     # Patch the provider module's own reference — it imported the name at
     # module load, so patching mempalace.config wouldn't reach it.
     monkeypatch.setattr(integration_module, "MempalaceConfig", _patched_config)
-    (Path(tmp_dir) / "mempalace.json").write_text(json.dumps({"palace_path": palace_path}))
+    (Path(tmp_dir) / "trimemo.json").write_text(json.dumps({"palace_path": palace_path}))
     provider.initialize("s1", hermes_home=str(tmp_dir))
     try:
         assert provider._collection_name == "family_drawers"
@@ -774,9 +774,9 @@ def test_match_wing_by_keywords_ignores_non_string_keywords(integration_module):
 
 
 def test_initialize_bridges_palace_env_for_passthrough(provider, tmp_dir, palace_path):
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
-    (Path(tmp_dir) / "mempalace.json").write_text(json.dumps({"palace_path": palace_path}))
+    (Path(tmp_dir) / "trimemo.json").write_text(json.dumps({"palace_path": palace_path}))
     provider.initialize("s1", hermes_home=str(tmp_dir))
     try:
         expected = os.path.abspath(os.path.expanduser(palace_path))
@@ -792,7 +792,7 @@ def test_reinitialize_follows_updated_hermes_config(provider, tmp_dir, palace_pa
     # The bridge write from session 1 must not masquerade as a user env
     # override in session 2 — a stale bridge would pin the palace to the
     # old hermes-side value forever.
-    config_path = Path(tmp_dir) / "mempalace.json"
+    config_path = Path(tmp_dir) / "trimemo.json"
     config_path.write_text(json.dumps({"palace_path": palace_path}))
     provider.initialize("s1", hermes_home=str(tmp_dir))
     provider.shutdown()
@@ -814,7 +814,7 @@ def test_user_set_palace_env_wins_and_is_never_cleared(
     # precedence) and the bridge must not claim ownership of it — a later
     # re-initialize must leave the user's value in place.
     monkeypatch.setenv("MEMPALACE_PALACE_PATH", palace_path)
-    (Path(tmp_dir) / "mempalace.json").write_text(
+    (Path(tmp_dir) / "trimemo.json").write_text(
         json.dumps({"palace_path": str(tmp_path / "other_palace")})
     )
     provider.initialize("s1", hermes_home=str(tmp_dir))
@@ -835,14 +835,14 @@ def test_user_set_palace_env_wins_and_is_never_cleared(
 def test_hermes_config_defers_to_mempalace_config_when_unset(
     integration_module, provider, tmp_dir, tmp_path, monkeypatch
 ):
-    # No hermes-side palace_path → the provider follows mempalace's own
+    # No hermes-side palace_path → the provider follows trimemo's own
     # config rather than hardcoding the default location.
     mp_config_dir = tmp_path / "mp_home"
     mp_config_dir.mkdir()
     custom_palace = str(tmp_path / "custom_palace")
     (mp_config_dir / "config.json").write_text(json.dumps({"palace_path": custom_palace}))
 
-    from mempalace.config import MempalaceConfig as real_config
+    from trimemo.config import MempalaceConfig as real_config
 
     def _patched_config(config_dir=None):
         return real_config(config_dir=str(mp_config_dir))
@@ -850,7 +850,7 @@ def test_hermes_config_defers_to_mempalace_config_when_unset(
     # Patch the provider module's own reference — it imported the name at
     # module load, so patching mempalace.config wouldn't reach it.
     monkeypatch.setattr(integration_module, "MempalaceConfig", _patched_config)
-    (Path(tmp_dir) / "mempalace.json").write_text(json.dumps({}))
+    (Path(tmp_dir) / "trimemo.json").write_text(json.dumps({}))
     provider.initialize("s1", hermes_home=str(tmp_dir))
     try:
         assert provider._palace_path == custom_palace
@@ -909,7 +909,7 @@ def test_kg_invalidate_rejects_invalid_input(initialized_provider):
 
 
 def test_on_memory_write_mirrors_both_targets(initialized_provider, palace_path):
-    from mempalace.knowledge_graph import KnowledgeGraph
+    from trimemo.knowledge_graph import KnowledgeGraph
 
     initialized_provider.on_memory_write("add", "user", "lives in Boston")
     initialized_provider.on_memory_write("add", "memory", "repo uses uv for deps")

@@ -63,14 +63,14 @@ mempal_log "sessionStart" "$MEMPAL_CONV_ID" \
 # heredoc) so the JSON encoding survives wings whose name contains
 # characters that would otherwise need shell escaping, and so the
 # inferred wing arrives as an argv positional. The MCP tool names
-# referenced here are verified against mempalace/mcp_server.py:
+# referenced here are verified against trimemo/mcp_server.py:
 # mempalace_search and mempalace_diary_read both exist and accept
 # the wing parameter.
 "$MEMPAL_PYTHON_BIN" -c '
 import json, sys
 wing = sys.argv[1] if len(sys.argv) > 1 else "cursor_session"
 ctx = (
-    "MemPalace wake-up. The Cursor workspace maps to wing=" + wing + ". "
+    "TriMemo wake-up. The Cursor workspace maps to wing=" + wing + ". "
     "Before answering anything that touches past work in this "
     "project, call mempalace_search (wing=" + wing + ", "
     "query=<relevant keywords>) and mempalace_diary_read "

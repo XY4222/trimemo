@@ -2,8 +2,8 @@
 
 from argparse import Namespace
 
-import mempalace.hallways as hallways_mod
-from mempalace.cli import cmd_hallways
+import trimemo.hallways as hallways_mod
+from trimemo.cli import cmd_hallways
 
 
 def test_lists_sorted_by_count(monkeypatch, capsys):

@@ -11,9 +11,9 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-import mempalace.hooks_cli as hooks_cli_mod
-from mempalace.config import sanitize_name
-from mempalace.hooks_cli import (
+import trimemo.hooks_cli as hooks_cli_mod
+from trimemo.config import sanitize_name
+from trimemo.hooks_cli import (
     SAVE_INTERVAL,
     _count_human_messages,
     _diary_agent_for_harness,
@@ -96,7 +96,7 @@ def test_mempalace_python_handles_shallow_path_without_crashing(monkeypatch):
 
     The function used to index ``Path(__file__).resolve().parents[3]`` to
     find the venv root for the standard ``<venv>/lib/python3.X/site-packages/
-    mempalace/`` install. In editable installs at a shallow path (Docker
+    trimemo/`` install. In editable installs at a shallow path (Docker
     containers mounting at ``/work``, ``/opt/app``, etc.), ``parents`` has
     fewer than 4 elements and the bare index would raise ``IndexError``.
     Affected sites: Docker-based dev, OrbStack-style cross-platform CI,
@@ -116,7 +116,7 @@ def test_mempalace_python_handles_shallow_path_without_crashing(monkeypatch):
     # defensive against a future regression that drops the length check.
     def get_item(idx):
         if idx == 1:
-            return RealPath("/work/mempalace")
+            return RealPath("/work/trimemo")
         raise IndexError(idx)
 
     fake_parents = MagicMock()
@@ -126,7 +126,7 @@ def test_mempalace_python_handles_shallow_path_without_crashing(monkeypatch):
     fake_path = MagicMock()
     fake_path.resolve.return_value.parents = fake_parents
 
-    with patch("mempalace.hooks_cli.Path", return_value=fake_path):
+    with patch("trimemo.hooks_cli.Path", return_value=fake_path):
         # Must not raise; must return SOME string (either editable-venv
         # fallback path or sys.executable).
         result = _mempalace_python()
@@ -434,17 +434,17 @@ def _capture_hook_output(hook_fn, data, harness="claude-code", state_dir=None):
     buf = io.StringIO()
     patches = [
         patch(
-            "mempalace.hooks_cli._output",
+            "trimemo.hooks_cli._output",
             side_effect=lambda d: buf.write(json.dumps(d)),
         )
     ]
     if state_dir:
-        patches.append(patch("mempalace.hooks_cli.STATE_DIR", state_dir))
+        patches.append(patch("trimemo.hooks_cli.STATE_DIR", state_dir))
     # Mock MempalaceConfig so tests don't depend on user's ~/.mempalace/config.json
     mock_config = MagicMock()
     type(mock_config).hook_silent_save = PropertyMock(return_value=True)
     type(mock_config).hook_desktop_toast = PropertyMock(return_value=False)
-    patches.append(patch("mempalace.config.MempalaceConfig", return_value=mock_config))
+    patches.append(patch("trimemo.config.MempalaceConfig", return_value=mock_config))
     with contextlib.ExitStack() as stack:
         for p in patches:
             stack.enter_context(p)
@@ -453,7 +453,7 @@ def _capture_hook_output(hook_fn, data, harness="claude-code", state_dir=None):
 
 
 def test_stop_hook_passthrough_when_active(tmp_path):
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
         result = _capture_hook_output(
             hook_stop,
             {"session_id": "test", "stop_hook_active": True, "transcript_path": ""},
@@ -463,7 +463,7 @@ def test_stop_hook_passthrough_when_active(tmp_path):
 
 
 def test_stop_hook_passthrough_when_active_string(tmp_path):
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
         result = _capture_hook_output(
             hook_stop,
             {"session_id": "test", "stop_hook_active": "true", "transcript_path": ""},
@@ -497,7 +497,7 @@ def test_stop_hook_saves_silently_at_interval(tmp_path):
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
     save_result = {"count": 15, "themes": ["hooks", "notifications"]}
-    with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result) as mock_save:
+    with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result) as mock_save:
         result = _capture_hook_output(
             hook_stop,
             {"session_id": "test", "stop_hook_active": False, "transcript_path": str(transcript)},
@@ -522,7 +522,7 @@ def test_stop_hook_derives_wing_from_transcript_path(tmp_path):
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
     save_result = {"count": 15, "themes": []}
-    with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result) as mock_save:
+    with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result) as mock_save:
         _capture_hook_output(
             hook_stop,
             {"session_id": "test", "stop_hook_active": False, "transcript_path": str(transcript)},
@@ -547,12 +547,12 @@ def test_stop_hook_tracks_save_point(tmp_path):
 
     # First call saves silently with systemMessage notification
     save_result = {"count": 15, "themes": ["hooks"]}
-    with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result):
+    with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result):
         result = _capture_hook_output(hook_stop, data, state_dir=tmp_path)
     assert "systemMessage" in result
 
     # Second call with same count passes through (already saved)
-    with patch("mempalace.hooks_cli._save_diary_direct") as mock_save:
+    with patch("trimemo.hooks_cli._save_diary_direct") as mock_save:
         result = _capture_hook_output(hook_stop, data, state_dir=tmp_path)
     assert result == {}
     mock_save.assert_not_called()
@@ -612,7 +612,7 @@ def test_stop_hook_files_checkpoint_under_harness_agent(tmp_path, harness, expec
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
     with patch(
-        "mempalace.hooks_cli._save_diary_direct", return_value={"count": 5, "themes": []}
+        "trimemo.hooks_cli._save_diary_direct", return_value={"count": 5, "themes": []}
     ) as mock_save:
         _capture_hook_output(
             hook_stop,
@@ -629,8 +629,8 @@ def test_stop_hook_checkpoint_visible_to_diary_read(monkeypatch, config, palace_
     and is not siloed under the legacy 'session-hook' identity."""
     import chromadb
 
-    from mempalace import mcp_server
-    from mempalace.mcp_server import tool_diary_read
+    from trimemo import mcp_server
+    from trimemo.mcp_server import tool_diary_read
 
     monkeypatch.setattr(mcp_server, "_config", config)
     monkeypatch.setattr(mcp_server, "_get_kg", lambda *a, **kw: kg)
@@ -669,9 +669,9 @@ def test_save_diary_direct_daemon_opt_in_submits_job(tmp_path):
     job = {"id": "job", "state": "succeeded", "result": {"success": True, "entry_id": "e1"}}
 
     with patch.dict("os.environ", env):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._daemon_available", return_value=True):
-                with patch("mempalace.daemon.submit_job", return_value=job) as mock_submit:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._daemon_available", return_value=True):
+                with patch("trimemo.daemon.submit_job", return_value=job) as mock_submit:
                     result = _save_diary_direct(
                         str(transcript),
                         "sess1",
@@ -711,16 +711,16 @@ def test_save_diary_daemon_lock_deferral_does_not_stall_the_hook(tmp_path):
         "state": "queued",
         "error": {
             "error_class": "LockHeldByOtherProcess",
-            "message": "palace /p is held by PID 999 (mempalace-mcp)",
+            "message": "palace /p is held by PID 999 (trimemo-mcp)",
         },
         "result": None,
     }
 
     with patch.dict("os.environ", env):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._daemon_available", return_value=True):
-                with patch("mempalace.daemon.submit_job", return_value=parked) as mock_submit:
-                    with patch("mempalace.hooks_cli._log") as mock_log:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._daemon_available", return_value=True):
+                with patch("trimemo.daemon.submit_job", return_value=parked) as mock_submit:
+                    with patch("trimemo.hooks_cli._log") as mock_log:
                         result = _save_diary_direct(
                             str(transcript), "sess1", wing="wing_project", agent_name="claude"
                         )
@@ -738,7 +738,7 @@ def test_save_diary_daemon_lock_deferral_does_not_stall_the_hook(tmp_path):
 
 
 def test_hooks_daemon_enabled_requires_explicit_true():
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         assert _hooks_daemon_enabled() is False
         mock_cfg_cls.return_value.hook_use_daemon = True
         assert _hooks_daemon_enabled() is True
@@ -791,14 +791,14 @@ def test_wing_from_transcript_path_lowercases():
 
 
 def test_wing_from_transcript_path_non_projects_layout():
-    # Linux user with code under ~/dev/. The encoded form ``dev-MemPalace-mempalace``
-    # is ambiguous between ``~/dev/MemPalace/mempalace/`` (project = mempalace) and
-    # ``~/dev/MemPalace-mempalace/`` (hyphenated single-name project). With no JSONL
+    # Linux user with code under ~/dev/. The encoded form ``dev-TriMemo-trimemo``
+    # is ambiguous between ``~/dev/TriMemo/trimemo/`` (project = trimemo) and
+    # ``~/dev/MemPalace-trimemo/`` (hyphenated single-name project). With no JSONL
     # cwd to disambiguate, we preserve all post-``dev-`` segments rather than silently
-    # truncating to the last token (which would drop ``MemPalace`` here and collide
-    # with any other ``-mempalace`` leaf elsewhere on the system).
-    path = "/home/igor/.claude/projects/-home-igor-dev-MemPalace-mempalace/session.jsonl"
-    assert _wing_from_transcript_path(path) == "wing_mempalace_mempalace"
+    # truncating to the last token (which would drop ``TriMemo`` here and collide
+    # with any other ``-trimemo`` leaf elsewhere on the system).
+    path = "/home/igor/.claude/projects/-home-igor-dev-TriMemo-trimemo/session.jsonl"
+    assert _wing_from_transcript_path(path) == "wing_trimemo_trimemo"
 
 
 def test_wing_from_transcript_path_macos_users_layout():
@@ -877,17 +877,17 @@ def test_wing_from_transcript_path_uses_cwd_from_jsonl(tmp_path):
     """When the JSONL records ``cwd``, the leaf segment of cwd is the wing —
     even if the encoded folder name would have produced a different (and
     noisier) wing."""
-    # Encoded folder says ``-home-igor-dev-MemPalace-mempalace`` (would yield
-    # ``wing_mempalace_mempalace`` via fallback), but cwd is the truth.
-    project_dir = tmp_path / "-home-igor-dev-MemPalace-mempalace"
+    # Encoded folder says ``-home-igor-dev-TriMemo-trimemo`` (would yield
+    # ``wing_trimemo_trimemo`` via fallback), but cwd is the truth.
+    project_dir = tmp_path / "-home-igor-dev-TriMemo-trimemo"
     project_dir.mkdir()
     transcript = project_dir / "session.jsonl"
     transcript.write_text(
         '{"type":"queue-operation","operation":"enqueue","timestamp":"2026-05-09T00:00:00Z"}\n'
-        '{"type":"user","cwd":"/home/igor/dev/MemPalace/mempalace","content":"hi"}\n',
+        '{"type":"user","cwd":"/home/igor/dev/MemPalace/trimemo","content":"hi"}\n',
         encoding="utf-8",
     )
-    assert _wing_from_transcript_path(str(transcript)) == "wing_mempalace"
+    assert _wing_from_transcript_path(str(transcript)) == "wing_trimemo"
 
 
 def test_wing_from_transcript_path_cwd_with_hyphenated_project(tmp_path):
@@ -1057,13 +1057,13 @@ def test_output_writes_to_real_stdout_fd_when_mcp_server_loaded():
     """_output() must reach fd 1 even when mcp_server has redirected sys.stdout."""
     import types
 
-    fake_module = types.ModuleType("mempalace.mcp_server")
+    fake_module = types.ModuleType("trimemo.mcp_server")
 
     read_fd, write_fd = os.pipe()
     try:
         fake_module._REAL_STDOUT_FD = write_fd
-        with patch.dict("sys.modules", {"mempalace.mcp_server": fake_module}):
-            from mempalace.hooks_cli import _output
+        with patch.dict("sys.modules", {"trimemo.mcp_server": fake_module}):
+            from trimemo.hooks_cli import _output
 
             _output({"systemMessage": "test"})
 
@@ -1093,7 +1093,7 @@ def test_output_falls_back_to_fd1_when_mcp_server_absent():
                 k: v for k, v in __import__("sys").modules.items() if "mcp_server" not in k
             }
             with patch.dict("sys.modules", modules_without_mcp, clear=True):
-                from mempalace.hooks_cli import _output
+                from trimemo.hooks_cli import _output
 
                 _output({"continue": True})
         finally:
@@ -1116,7 +1116,7 @@ def test_output_falls_back_to_fd1_when_mcp_server_absent():
 
 
 def test_log_writes_to_hook_log(tmp_path):
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
         _log("test message")
     log_path = tmp_path / "hook.log"
     assert log_path.is_file()
@@ -1126,7 +1126,7 @@ def test_log_writes_to_hook_log(tmp_path):
 
 def test_log_oserror_is_silenced(tmp_path):
     """_log should not raise if the directory cannot be created."""
-    with patch("mempalace.hooks_cli.STATE_DIR", Path("/nonexistent/deeply/nested/dir")):
+    with patch("trimemo.hooks_cli.STATE_DIR", Path("/nonexistent/deeply/nested/dir")):
         # Should not raise
         _log("this will fail silently")
 
@@ -1137,7 +1137,7 @@ def test_log_oserror_is_silenced(tmp_path):
 def test_maybe_auto_ingest_no_env(tmp_path):
     """Without MEMPAL_DIR or transcript_path, does nothing."""
     with patch.dict("os.environ", {}, clear=True):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
             _maybe_auto_ingest()  # should not raise
 
 
@@ -1146,9 +1146,9 @@ def test_maybe_auto_ingest_with_env(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
-                with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+                with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                     _maybe_auto_ingest()
                     mock_popen.assert_called_once()
                     cmd = mock_popen.call_args[0][0]
@@ -1169,11 +1169,11 @@ def test_maybe_auto_ingest_daemon_opt_in_submits_job(tmp_path):
         "MEMPALACE_PALACE_PATH": str(palace_dir),
     }
     with patch.dict("os.environ", env):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._daemon_available", return_value=True):
-                with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._daemon_available", return_value=True):
+                with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                     with patch(
-                        "mempalace.daemon.submit_job", return_value={"id": "job"}
+                        "trimemo.daemon.submit_job", return_value={"id": "job"}
                     ) as mock_submit:
                         _maybe_auto_ingest()
 
@@ -1190,17 +1190,17 @@ def test_maybe_auto_ingest_uses_mempalace_python(tmp_path):
     Hook subprocesses inherit the harness PATH which on GUI-launched
     Claude Code may resolve to a system Python without chromadb. The
     interpreter used here must be the same one the hook itself runs
-    under (typically the venv that owns mempalace).
+    under (typically the venv that owns trimemo).
     """
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
                 with patch(
-                    "mempalace.hooks_cli._mempalace_python", return_value="/fake/venv/python"
+                    "trimemo.hooks_cli._mempalace_python", return_value="/fake/venv/python"
                 ):
-                    with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+                    with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                         _maybe_auto_ingest()
                         cmd = mock_popen.call_args[0][0]
                         assert cmd[0] == "/fake/venv/python"
@@ -1211,8 +1211,8 @@ def test_mine_sync_with_env_uses_projects_mode(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
                 _mine_sync()
                 mock_run.assert_called_once()
                 cmd = mock_run.call_args[0][0]
@@ -1231,17 +1231,17 @@ def test_mine_sync_daemon_lock_deferral_is_not_reported_as_a_failure(tmp_path):
         "state": "queued",
         "error": {
             "error_class": "LockHeldByOtherProcess",
-            "message": "palace /p is held by PID 999 (mempalace-mcp)",
+            "message": "palace /p is held by PID 999 (trimemo-mcp)",
         },
         "result": None,
     }
     env = {"MEMPAL_DIR": str(mempal_dir), "MEMPALACE_HOOKS_DAEMON": "yes"}
     with patch.dict("os.environ", env):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._daemon_available", return_value=True):
-                with patch("mempalace.daemon.submit_job", return_value=parked) as mock_submit:
-                    with patch("mempalace.hooks_cli._log") as mock_log:
-                        with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._daemon_available", return_value=True):
+                with patch("trimemo.daemon.submit_job", return_value=parked) as mock_submit:
+                    with patch("trimemo.hooks_cli._log") as mock_log:
+                        with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
                             _mine_sync()
 
     assert mock_submit.call_args.kwargs["stop_on_lock_deferral"] is True
@@ -1258,9 +1258,9 @@ def test_mine_sync_uses_mempalace_python(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._mempalace_python", return_value="/fake/venv/python"):
-                with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._mempalace_python", return_value="/fake/venv/python"):
+                with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
                     _mine_sync()
                     cmd = mock_run.call_args[0][0]
                     assert cmd[0] == "/fake/venv/python"
@@ -1268,10 +1268,10 @@ def test_mine_sync_uses_mempalace_python(tmp_path):
 
 def test_claim_mine_slot_writes_live_placeholder_pid(tmp_path):
     """Regression #1443: claimed slots must not be empty during spawn startup."""
-    cmd = ["mempalace", "mine", "/tmp/proj", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/proj", "--mode", "projects"]
     pid_dir = tmp_path / "mine_pids"
 
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         pid_file = _claim_mine_slot(cmd)
 
         assert pid_file == _pid_file_for_cmd(cmd)
@@ -1284,12 +1284,12 @@ def test_claim_mine_slot_writes_live_placeholder_pid(tmp_path):
 
 def test_claim_mine_slot_reclaimed_slot_writes_live_placeholder_pid(tmp_path):
     """Regression #1443: stale-slot reclaim must also write a live placeholder."""
-    cmd = ["mempalace", "mine", "/tmp/proj", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/proj", "--mode", "projects"]
     pid_dir = tmp_path / "mine_pids"
 
     with (
-        patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir),
-        patch("mempalace.hooks_cli._pid_alive", return_value=False),
+        patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir),
+        patch("trimemo.hooks_cli._pid_alive", return_value=False),
     ):
         pid_file = _pid_file_for_cmd(cmd)
         pid_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1315,9 +1315,9 @@ def test_maybe_auto_ingest_ignores_transcript_arg_path(tmp_path):
     transcript = convo_dir / "session.jsonl"
     transcript.write_text("")
     with patch.dict("os.environ", {}, clear=True):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
-                with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+                with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                     _maybe_auto_ingest()
                     mock_popen.assert_not_called()
 
@@ -1334,8 +1334,8 @@ def test_mine_sync_ignores_transcript(tmp_path):
     transcript = convo_dir / "session.jsonl"
     transcript.write_text("")
     with patch.dict("os.environ", {}, clear=True):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
                 _mine_sync()
                 mock_run.assert_not_called()
 
@@ -1345,9 +1345,9 @@ def test_maybe_auto_ingest_oserror(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
-                with patch("mempalace.hooks_cli.subprocess.Popen", side_effect=OSError("fail")):
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+                with patch("trimemo.hooks_cli.subprocess.Popen", side_effect=OSError("fail")):
                     _maybe_auto_ingest()  # should not raise
 
 
@@ -1357,15 +1357,15 @@ def test_maybe_auto_ingest_skips_when_mine_running(tmp_path):
     mempal_dir.mkdir()
     pid_dir = tmp_path / "mine_pids"
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
                 # Pre-populate the per-target slot with a live PID (our own).
-                from mempalace.hooks_cli import _pid_file_for_cmd
+                from trimemo.hooks_cli import _pid_file_for_cmd
 
                 cmd = [
                     sys.executable,
                     "-m",
-                    "mempalace",
+                    "trimemo",
                     "mine",
                     str(mempal_dir.resolve()),
                     "--mode",
@@ -1376,8 +1376,8 @@ def test_maybe_auto_ingest_skips_when_mine_running(tmp_path):
                 import time as _time
 
                 pid_file.write_text(f"{os.getpid()} {int(_time.time())}")
-                with patch("mempalace.hooks_cli._mempalace_python", return_value=sys.executable):
-                    with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+                with patch("trimemo.hooks_cli._mempalace_python", return_value=sys.executable):
+                    with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                         _maybe_auto_ingest()
                         mock_popen.assert_not_called()
 
@@ -1387,9 +1387,9 @@ def test_maybe_auto_ingest_skips_when_mine_running(tmp_path):
 
 def test_detached_popen_kwargs_posix(monkeypatch):
     """On POSIX, kwargs include start_new_session so the child detaches."""
-    from mempalace.hooks_cli import _detached_popen_kwargs
+    from trimemo.hooks_cli import _detached_popen_kwargs
 
-    monkeypatch.setattr("mempalace.hooks_cli.os.name", "posix")
+    monkeypatch.setattr("trimemo.hooks_cli.os.name", "posix")
     kwargs = _detached_popen_kwargs()
     assert kwargs.get("start_new_session") is True
     assert kwargs.get("stdin") is subprocess.DEVNULL
@@ -1410,19 +1410,19 @@ def test_detached_popen_kwargs_windows(monkeypatch):
     Per the Win32 CreateProcess docs CREATE_NO_WINDOW is ignored when OR'd
     with DETACHED_PROCESS, so the two must be mutually exclusive.
     """
-    from mempalace.hooks_cli import _detached_popen_kwargs
+    from trimemo.hooks_cli import _detached_popen_kwargs
 
-    monkeypatch.setattr("mempalace.hooks_cli.os.name", "nt")
+    monkeypatch.setattr("trimemo.hooks_cli.os.name", "nt")
     # Simulate Windows-only Popen flag constants on the imported subprocess
     # module so getattr() picks them up cross-platform.
     monkeypatch.setattr(
-        "mempalace.hooks_cli.subprocess.CREATE_NO_WINDOW", 0x08000000, raising=False
+        "trimemo.hooks_cli.subprocess.CREATE_NO_WINDOW", 0x08000000, raising=False
     )
     monkeypatch.setattr(
-        "mempalace.hooks_cli.subprocess.DETACHED_PROCESS", 0x00000008, raising=False
+        "trimemo.hooks_cli.subprocess.DETACHED_PROCESS", 0x00000008, raising=False
     )
     monkeypatch.setattr(
-        "mempalace.hooks_cli.subprocess.CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
+        "trimemo.hooks_cli.subprocess.CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
     )
     kwargs = _detached_popen_kwargs()
     assert kwargs.get("stdin") is subprocess.DEVNULL
@@ -1437,13 +1437,13 @@ def test_detached_popen_kwargs_windows(monkeypatch):
 
 def test_spawn_mine_uses_detached_kwargs(tmp_path):
     """_spawn_mine forwards detached kwargs so the hook can exit cleanly."""
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                 mock_popen.return_value.pid = 9999
-                from mempalace.hooks_cli import _spawn_mine
+                from trimemo.hooks_cli import _spawn_mine
 
-                _spawn_mine(["mempalace", "mine", "/tmp/x"])
+                _spawn_mine(["trimemo", "mine", "/tmp/x"])
                 kwargs = mock_popen.call_args.kwargs
                 # The exact key set varies by platform; assert on the
                 # shared invariants that protect against the Windows hang.
@@ -1456,16 +1456,16 @@ def test_spawn_mine_skips_when_target_running(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            from mempalace.hooks_cli import _pid_file_for_cmd, _spawn_mine
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            from trimemo.hooks_cli import _pid_file_for_cmd, _spawn_mine
 
-            cmd = ["mempalace", "mine", "/tmp/proj", "--mode", "projects"]
+            cmd = ["trimemo", "mine", "/tmp/proj", "--mode", "projects"]
             pid_file = _pid_file_for_cmd(cmd)
             pid_file.parent.mkdir(parents=True, exist_ok=True)
             pid_file.write_text(f"{os.getpid()} {int(_time.time())}")  # live PID, fresh
 
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                 _spawn_mine(cmd)
                 mock_popen.assert_not_called()
 
@@ -1473,31 +1473,31 @@ def test_spawn_mine_skips_when_target_running(tmp_path):
 def test_spawn_mine_distinct_targets_dont_block_each_other(tmp_path):
     """Two spawn calls for *different* targets both proceed."""
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
-                from mempalace.hooks_cli import _spawn_mine
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
+                from trimemo.hooks_cli import _spawn_mine
 
                 mock_popen.return_value.pid = 1111
-                _spawn_mine(["mempalace", "mine", "/tmp/a", "--mode", "projects"])
+                _spawn_mine(["trimemo", "mine", "/tmp/a", "--mode", "projects"])
                 mock_popen.return_value.pid = 2222
-                _spawn_mine(["mempalace", "mine", "/tmp/b", "--mode", "projects"])
+                _spawn_mine(["trimemo", "mine", "/tmp/b", "--mode", "projects"])
                 assert mock_popen.call_count == 2
 
 
 def test_spawn_mine_reclaims_stale_slot(tmp_path):
     """A slot pointing at a dead PID is reclaimed silently."""
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            from mempalace.hooks_cli import _pid_file_for_cmd, _spawn_mine
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            from trimemo.hooks_cli import _pid_file_for_cmd, _spawn_mine
 
-            cmd = ["mempalace", "mine", "/tmp/proj", "--mode", "projects"]
+            cmd = ["trimemo", "mine", "/tmp/proj", "--mode", "projects"]
             pid_file = _pid_file_for_cmd(cmd)
             pid_file.parent.mkdir(parents=True, exist_ok=True)
             pid_file.write_text("999999999")  # dead PID
 
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                 mock_popen.return_value.pid = 4242
                 _spawn_mine(cmd)
                 mock_popen.assert_called_once()
@@ -1509,14 +1509,14 @@ def test_spawn_mine_reclaims_stale_slot(tmp_path):
 def test_spawn_mine_releases_slot_on_oserror(tmp_path):
     """If Popen raises OSError, the claimed slot must be released."""
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            from mempalace.hooks_cli import _pid_file_for_cmd, _spawn_mine
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            from trimemo.hooks_cli import _pid_file_for_cmd, _spawn_mine
 
-            cmd = ["mempalace", "mine", "/tmp/proj", "--mode", "projects"]
+            cmd = ["trimemo", "mine", "/tmp/proj", "--mode", "projects"]
             pid_file = _pid_file_for_cmd(cmd)
 
-            with patch("mempalace.hooks_cli.subprocess.Popen", side_effect=OSError("spawn fail")):
+            with patch("trimemo.hooks_cli.subprocess.Popen", side_effect=OSError("spawn fail")):
                 with pytest.raises(OSError):
                     _spawn_mine(cmd)
                 assert not pid_file.exists(), (
@@ -1527,13 +1527,13 @@ def test_spawn_mine_releases_slot_on_oserror(tmp_path):
 def test_spawn_mine_passes_pid_file_env_var(tmp_path):
     """The child inherits MEMPALACE_MINE_PID_FILE so its cleanup hook can find the slot."""
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                 mock_popen.return_value.pid = 5555
-                from mempalace.hooks_cli import _pid_file_for_cmd, _spawn_mine
+                from trimemo.hooks_cli import _pid_file_for_cmd, _spawn_mine
 
-                cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+                cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
                 _spawn_mine(cmd)
                 child_env = mock_popen.call_args.kwargs.get("env", {})
                 expected = str(_pid_file_for_cmd(cmd))
@@ -1544,10 +1544,10 @@ def test_ingest_transcript_uses_detached_kwargs(tmp_path):
     """_ingest_transcript spawns the convos mine with detach kwargs."""
     transcript = tmp_path / "session.jsonl"
     transcript.write_text("x" * 200)  # > 100 byte gate
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
-            with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
-                from mempalace.hooks_cli import _ingest_transcript
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+            with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
+                from trimemo.hooks_cli import _ingest_transcript
 
                 _ingest_transcript(str(transcript))
                 assert mock_popen.called
@@ -1563,13 +1563,13 @@ def test_ingest_transcript_daemon_opt_in_submits_job(tmp_path):
     transcript.write_text("x" * 200)
     env = {"MEMPALACE_HOOKS_DAEMON": "yes", "MEMPALACE_PALACE_PATH": str(palace_dir)}
     with patch.dict("os.environ", env):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._daemon_available", return_value=True):
-                with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._daemon_available", return_value=True):
+                with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                     with patch(
-                        "mempalace.daemon.submit_job", return_value={"id": "job"}
+                        "trimemo.daemon.submit_job", return_value={"id": "job"}
                     ) as mock_submit:
-                        from mempalace.hooks_cli import _ingest_transcript
+                        from trimemo.hooks_cli import _ingest_transcript
 
                         _ingest_transcript(str(transcript))
 
@@ -1586,15 +1586,15 @@ def test_ingest_transcript_skips_when_target_running(tmp_path):
     transcript = tmp_path / "session.jsonl"
     transcript.write_text("x" * 200)
     pid_dir = tmp_path / "mine_pids"
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
-            with patch("mempalace.hooks_cli._mempalace_python", return_value=sys.executable):
-                from mempalace.hooks_cli import _ingest_transcript, _pid_file_for_cmd
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
+            with patch("trimemo.hooks_cli._mempalace_python", return_value=sys.executable):
+                from trimemo.hooks_cli import _ingest_transcript, _pid_file_for_cmd
 
                 expected_cmd = [
                     sys.executable,
                     "-m",
-                    "mempalace",
+                    "trimemo",
                     "mine",
                     str(transcript.resolve()),
                     "--mode",
@@ -1608,7 +1608,7 @@ def test_ingest_transcript_skips_when_target_running(tmp_path):
 
                 pid_file.write_text(f"{os.getpid()} {int(_time.time())}")  # live target, fresh
 
-                with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
+                with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
                     _ingest_transcript(str(transcript))
                     mock_popen.assert_not_called()
 
@@ -1618,9 +1618,9 @@ def test_ingest_transcript_skips_when_target_running(tmp_path):
 
 def _seed_slot(pid_dir, cmd, body: str):
     """Write ``body`` into the per-target slot for ``cmd`` under ``pid_dir``."""
-    from mempalace.hooks_cli import _pid_file_for_cmd
+    from trimemo.hooks_cli import _pid_file_for_cmd
 
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         slot = _pid_file_for_cmd(cmd)
     slot.parent.mkdir(parents=True, exist_ok=True)
     slot.write_text(body)
@@ -1629,17 +1629,17 @@ def _seed_slot(pid_dir, cmd, body: str):
 
 def test_mine_already_running_no_file(tmp_path):
     """Returns False when no per-target slot exists."""
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", tmp_path / "mine_pids"):
         assert _mine_already_running(cmd) is False
 
 
 def test_mine_already_running_dead_pid(tmp_path):
     """Returns False when the slot's recorded PID is no longer alive."""
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     _seed_slot(pid_dir, cmd, "999999999")  # almost certainly not a real PID
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd) is False
 
 
@@ -1648,19 +1648,19 @@ def test_mine_already_running_live_pid(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     # Use a recent timestamp so the default 2 h timeout does not trigger.
     _seed_slot(pid_dir, cmd, f"{os.getpid()} {int(_time.time())}")
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd) is True
 
 
 def test_mine_already_running_live_pid_bare_format(tmp_path):
     """Old bare-PID format uses file mtime for the stale-by-age check."""
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     _seed_slot(pid_dir, cmd, str(os.getpid()))  # old format: bare PID
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd) is True
 
 
@@ -1669,12 +1669,12 @@ def test_mine_already_running_bare_pid_old_mtime_is_stale(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     slot = _seed_slot(pid_dir, cmd, str(os.getpid()))
     old_mtime = _time.time() - 3601
     os.utime(slot, (old_mtime, old_mtime))
     with (
-        patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir),
+        patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir),
         patch.dict("os.environ", {"MEMPALACE_MINE_TIMEOUT_HOURS": "1"}),
     ):
         assert _mine_already_running(cmd) is False
@@ -1683,15 +1683,15 @@ def test_mine_already_running_bare_pid_old_mtime_is_stale(tmp_path):
 def test_mine_already_running_malformed_timestamp_is_stale(tmp_path):
     """Malformed timestamps fail soft instead of crashing hook execution."""
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     _seed_slot(pid_dir, cmd, f"{os.getpid()} not-a-timestamp")
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd) is False
 
 
 def test_mine_slot_timeout_invalid_env_disables_timeout():
     """Invalid MEMPALACE_MINE_TIMEOUT_HOURS disables stale-by-age checks."""
-    from mempalace.hooks_cli import _mine_slot_timeout_secs
+    from trimemo.hooks_cli import _mine_slot_timeout_secs
 
     with patch.dict("os.environ", {"MEMPALACE_MINE_TIMEOUT_HOURS": "nope"}):
         assert _mine_slot_timeout_secs() == 0.0
@@ -1702,12 +1702,12 @@ def test_mine_already_running_live_pid_exceeds_timeout(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     # Timestamp far in the past so any positive timeout fires immediately.
     old_ts = int(_time.time()) - 3601  # 1 second past 1-hour mark
     _seed_slot(pid_dir, cmd, f"{os.getpid()} {old_ts}")
     with (
-        patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir),
+        patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir),
         patch.dict("os.environ", {"MEMPALACE_MINE_TIMEOUT_HOURS": "1"}),
     ):
         assert _mine_already_running(cmd) is False
@@ -1718,11 +1718,11 @@ def test_mine_already_running_live_pid_within_timeout(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     recent_ts = int(_time.time()) - 60  # only 1 minute old
     _seed_slot(pid_dir, cmd, f"{os.getpid()} {recent_ts}")
     with (
-        patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir),
+        patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir),
         patch.dict("os.environ", {"MEMPALACE_MINE_TIMEOUT_HOURS": "2"}),
     ):
         assert _mine_already_running(cmd) is True
@@ -1733,11 +1733,11 @@ def test_mine_already_running_timeout_zero_disables_check(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     old_ts = int(_time.time()) - 86400  # 24 hours ago — stale under any non-zero timeout
     _seed_slot(pid_dir, cmd, f"{os.getpid()} {old_ts}")
     with (
-        patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir),
+        patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir),
         patch.dict("os.environ", {"MEMPALACE_MINE_TIMEOUT_HOURS": "0"}),
     ):
         # Timeout disabled — alive PID is always considered running.
@@ -1747,9 +1747,9 @@ def test_mine_already_running_timeout_zero_disables_check(tmp_path):
 def test_mine_already_running_corrupt_file(tmp_path):
     """Returns False when the slot contains non-integer content."""
     pid_dir = tmp_path / "mine_pids"
-    cmd = ["mempalace", "mine", "/tmp/x", "--mode", "projects"]
+    cmd = ["trimemo", "mine", "/tmp/x", "--mode", "projects"]
     _seed_slot(pid_dir, cmd, "not-a-pid")
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd) is False
 
 
@@ -1758,11 +1758,11 @@ def test_mine_already_running_distinct_cmds_independent(tmp_path):
     import time as _time
 
     pid_dir = tmp_path / "mine_pids"
-    cmd_a = ["mempalace", "mine", "/tmp/a", "--mode", "projects"]
-    cmd_b = ["mempalace", "mine", "/tmp/b", "--mode", "projects"]
+    cmd_a = ["trimemo", "mine", "/tmp/a", "--mode", "projects"]
+    cmd_b = ["trimemo", "mine", "/tmp/b", "--mode", "projects"]
     recent_ts = int(_time.time())
     _seed_slot(pid_dir, cmd_a, f"{os.getpid()} {recent_ts}")
-    with patch("mempalace.hooks_cli._MINE_PID_DIR", pid_dir):
+    with patch("trimemo.hooks_cli._MINE_PID_DIR", pid_dir):
         assert _mine_already_running(cmd_a) is True
         assert _mine_already_running(cmd_b) is False
 
@@ -1877,7 +1877,7 @@ def test_stop_hook_oserror_on_last_save_read(tmp_path):
     # Write invalid content to last save file
     (tmp_path / "test_last_save").write_text("not_a_number")
     save_result = {"count": 15, "themes": ["testing"]}
-    with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result):
+    with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result):
         result = _capture_hook_output(
             hook_stop,
             {"session_id": "test", "stop_hook_active": False, "transcript_path": str(transcript)},
@@ -1899,8 +1899,8 @@ def test_stop_hook_oserror_on_write(tmp_path):
         raise OSError("disk full")
 
     save_result = {"count": 15, "themes": []}
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result):
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result):
             with patch.object(Path, "write_text", bad_write_text):
                 result = _capture_hook_output(
                     hook_stop,
@@ -1922,7 +1922,7 @@ def test_precompact_with_mempal_dir(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+        with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
             result = _capture_hook_output(
                 hook_precompact,
                 {"session_id": "test"},
@@ -1937,7 +1937,7 @@ def test_precompact_with_mempal_dir_oserror(tmp_path):
     mempal_dir = tmp_path / "project"
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
-        with patch("mempalace.hooks_cli.subprocess.run", side_effect=OSError("fail")):
+        with patch("trimemo.hooks_cli.subprocess.run", side_effect=OSError("fail")):
             result = _capture_hook_output(
                 hook_precompact,
                 {"session_id": "test"},
@@ -1952,7 +1952,7 @@ def test_precompact_with_timeout(tmp_path):
     mempal_dir.mkdir()
     with patch.dict("os.environ", {"MEMPAL_DIR": str(mempal_dir)}):
         with patch(
-            "mempalace.hooks_cli.subprocess.run",
+            "trimemo.hooks_cli.subprocess.run",
             side_effect=subprocess.TimeoutExpired(cmd="mine", timeout=60),
         ):
             result = _capture_hook_output(
@@ -1974,8 +1974,8 @@ def test_precompact_mines_only_active_transcript(tmp_path, monkeypatch):
     # _ingest_transcript skips files smaller than 100 bytes, so pad it.
     transcript.write_text("x" * 200)
     monkeypatch.delenv("MEMPAL_DIR", raising=False)
-    with patch("mempalace.hooks_cli.subprocess.Popen") as mock_popen:
-        with patch("mempalace.hooks_cli.subprocess.run") as mock_run:
+    with patch("trimemo.hooks_cli.subprocess.Popen") as mock_popen:
+        with patch("trimemo.hooks_cli.subprocess.run") as mock_run:
             result = _capture_hook_output(
                 hook_precompact,
                 {"session_id": "test", "transcript_path": str(transcript)},
@@ -1998,8 +1998,8 @@ def test_run_hook_dispatches_session_start(tmp_path):
     """run_hook reads stdin JSON and dispatches to correct handler."""
     stdin_data = json.dumps({"session_id": "run-test"})
     with patch("sys.stdin", io.StringIO(stdin_data)):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._output") as mock_output:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._output") as mock_output:
                 run_hook("session-start", "claude-code")
     mock_output.assert_called_once_with({})
 
@@ -2018,8 +2018,8 @@ def test_run_hook_dispatches_stop(tmp_path):
         }
     )
     with patch("sys.stdin", io.StringIO(stdin_data)):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._output") as mock_output:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._output") as mock_output:
                 run_hook("stop", "claude-code")
     mock_output.assert_called_once_with({})
 
@@ -2027,8 +2027,8 @@ def test_run_hook_dispatches_stop(tmp_path):
 def test_run_hook_dispatches_precompact(tmp_path):
     stdin_data = json.dumps({"session_id": "run-test"})
     with patch("sys.stdin", io.StringIO(stdin_data)):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._output") as mock_output:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._output") as mock_output:
                 run_hook("precompact", "claude-code")
     mock_output.assert_called_once_with({})
 
@@ -2043,7 +2043,7 @@ def test_stop_hook_disabled_by_config(tmp_path):
         transcript,
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = False
         result = _capture_hook_output(
             hook_stop,
@@ -2065,11 +2065,11 @@ def test_stop_hook_enabled_by_default(tmp_path):
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
     save_result = {"count": 3, "themes": ["auto-save"]}
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_silent_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
-        with patch("mempalace.hooks_cli._save_diary_direct", return_value=save_result):
+        with patch("trimemo.hooks_cli._save_diary_direct", return_value=save_result):
             result = _capture_hook_output(
                 hook_stop,
                 {
@@ -2085,7 +2085,7 @@ def test_stop_hook_enabled_by_default(tmp_path):
 
 def test_precompact_hook_disabled_by_config(tmp_path):
     """When hooks.auto_save is false, precompact hook passes through."""
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = False
         result = _capture_hook_output(
             hook_precompact,
@@ -2097,9 +2097,9 @@ def test_precompact_hook_disabled_by_config(tmp_path):
 
 def test_precompact_hook_enabled_by_default(tmp_path):
     """When auto_save is true, precompact mines synchronously then returns {}."""
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
-        with patch("mempalace.hooks_cli._mine_sync") as mock_mine:
+        with patch("trimemo.hooks_cli._mine_sync") as mock_mine:
             result = _capture_hook_output(
                 hook_precompact,
                 {"session_id": "test"},
@@ -2120,8 +2120,8 @@ def test_run_hook_unknown_hook():
 def test_run_hook_invalid_json(tmp_path):
     """Invalid stdin JSON should not crash — falls back to empty dict."""
     with patch("sys.stdin", io.StringIO("not valid json")):
-        with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-            with patch("mempalace.hooks_cli._output") as mock_output:
+        with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+            with patch("trimemo.hooks_cli._output") as mock_output:
                 run_hook("session-start", "claude-code")
     mock_output.assert_called_once_with({})
 
@@ -2169,8 +2169,8 @@ def test_count_rejects_traversal_path():
 
 def test_count_logs_warning_on_rejected_path(tmp_path):
     """_count_human_messages should log a warning when a non-empty path is rejected."""
-    with patch("mempalace.hooks_cli.STATE_DIR", tmp_path):
-        with patch("mempalace.hooks_cli._log") as mock_log:
+    with patch("trimemo.hooks_cli.STATE_DIR", tmp_path):
+        with patch("trimemo.hooks_cli._log") as mock_log:
             _count_human_messages("../../etc/passwd")
     mock_log.assert_called_once()
     assert "rejected" in mock_log.call_args[0][0].lower()
@@ -2201,7 +2201,7 @@ def test_stop_hook_rejects_injected_stop_hook_active(tmp_path):
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(SAVE_INTERVAL)],
     )
     with patch(
-        "mempalace.hooks_cli._save_diary_direct", return_value={"count": 1, "themes": []}
+        "trimemo.hooks_cli._save_diary_direct", return_value={"count": 1, "themes": []}
     ) as mock_save:
         _capture_hook_output(
             hook_stop,
@@ -2227,7 +2227,7 @@ def test_stop_hook_rejects_injected_stop_hook_active(tmp_path):
 
 def _redirect_palace_root(monkeypatch, tmp_path):
     """Point PALACE_ROOT and STATE_DIR at a tmp location that does NOT exist."""
-    fake_root = tmp_path / "absent-mempalace"
+    fake_root = tmp_path / "absent-trimemo"
     monkeypatch.setattr(hooks_cli_mod, "PALACE_ROOT", fake_root)
     monkeypatch.setattr(hooks_cli_mod, "STATE_DIR", fake_root / "hook_state")
     monkeypatch.setattr(hooks_cli_mod, "_state_dir_initialized", False)
@@ -2257,7 +2257,7 @@ def test_hook_stop_does_not_create_palace_dir_when_absent(tmp_path, monkeypatch)
 def test_run_hook_dispatches_session_end():
     stdin_data = json.dumps({"session_id": "run-test"})
     with patch("sys.stdin", io.StringIO(stdin_data)):
-        with patch("mempalace.hooks_cli.hook_session_end") as mock_hook:
+        with patch("trimemo.hooks_cli.hook_session_end") as mock_hook:
             run_hook("session-end", "claude-code")
     mock_hook.assert_called_once_with({"session_id": "run-test"}, "claude-code")
 
@@ -2275,17 +2275,17 @@ def test_session_end_uses_detached_paths_not_sync_mine(tmp_path):
     )
     last_save_file = tmp_path / "sess_last_save"
     last_save_file.write_text("2", encoding="utf-8")
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         with (
             patch(
-                "mempalace.hooks_cli._save_diary_direct",
+                "trimemo.hooks_cli._save_diary_direct",
                 return_value={"count": 3, "themes": ["exit"]},
             ) as mock_save,
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
-            patch("mempalace.hooks_cli._mine_sync") as mock_sync,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._mine_sync") as mock_sync,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2307,12 +2307,12 @@ def test_session_end_uses_detached_paths_not_sync_mine(tmp_path):
 def test_session_end_disabled_by_config_clears_marker(tmp_path):
     last_save_file = tmp_path / "sess_last_save"
     last_save_file.write_text("15", encoding="utf-8")
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = False
         with (
-            patch("mempalace.hooks_cli._save_diary_direct") as mock_save,
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._save_diary_direct") as mock_save,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2331,14 +2331,14 @@ def test_session_end_defaults_to_saving_when_config_unreadable(tmp_path):
     defaults to auto-save on (toasts off) instead of crashing the hook."""
     transcript = tmp_path / "t.jsonl"
     _write_transcript(transcript, [{"message": {"role": "user", "content": "hi"}}])
-    with patch("mempalace.hooks_cli.MempalaceConfig", side_effect=RuntimeError("corrupt config")):
+    with patch("trimemo.hooks_cli.MempalaceConfig", side_effect=RuntimeError("corrupt config")):
         with (
             patch(
-                "mempalace.hooks_cli._save_diary_direct",
+                "trimemo.hooks_cli._save_diary_direct",
                 return_value={"count": 1, "themes": []},
             ) as mock_save,
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2356,16 +2356,16 @@ def test_session_end_clears_marker_even_if_capture_raises(tmp_path):
     and never wedges the per-session marker on."""
     last_save_file = tmp_path / "boom_last_save"
     last_save_file.write_text("5", encoding="utf-8")
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         with (
-            patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
+            patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
             patch(
-                "mempalace.hooks_cli._ingest_transcript",
+                "trimemo.hooks_cli._ingest_transcript",
                 side_effect=RuntimeError("boom"),
             ),
-            patch("mempalace.hooks_cli._output"),
+            patch("trimemo.hooks_cli._output"),
         ):
             with pytest.raises(RuntimeError):
                 hook_session_end(
@@ -2382,8 +2382,8 @@ def test_session_end_clears_marker_on_parse_failure(tmp_path):
     last_save_file = tmp_path / "unknown_last_save"
     last_save_file.write_text("5", encoding="utf-8")
     with (
-        patch("mempalace.hooks_cli.STATE_DIR", tmp_path),
-        patch("mempalace.hooks_cli._output"),
+        patch("trimemo.hooks_cli.STATE_DIR", tmp_path),
+        patch("trimemo.hooks_cli._output"),
     ):
         with pytest.raises(AttributeError):
             hook_session_end(["not", "a", "dict"], "claude-code")
@@ -2405,14 +2405,14 @@ def test_session_end_auto_ingest_only_when_no_transcript(tmp_path):
     ``_maybe_auto_ingest`` inside the ``if transcript_path`` block by mistake."""
     last_save_file = tmp_path / "sess_last_save"
     last_save_file.write_text("3", encoding="utf-8")
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         with (
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
-            patch("mempalace.hooks_cli._save_diary_direct") as mock_save,
-            patch("mempalace.hooks_cli._mine_sync") as mock_sync,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._save_diary_direct") as mock_save,
+            patch("trimemo.hooks_cli._mine_sync") as mock_sync,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2433,13 +2433,13 @@ def test_session_end_rejects_invalid_transcript_path(tmp_path):
     still runs), and the per-session marker is still cleared."""
     last_save_file = tmp_path / "bad_last_save"
     last_save_file.write_text("5", encoding="utf-8")
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         with (
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._save_diary_direct") as mock_save,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._save_diary_direct") as mock_save,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2459,17 +2459,17 @@ def test_session_end_accepts_full_sessionend_payload(tmp_path):
     contract so a future strict-parse or reason-branching regression is caught."""
     transcript = tmp_path / "t.jsonl"
     _write_transcript(transcript, [{"message": {"role": "user", "content": "hi"}}])
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         with (
             patch(
-                "mempalace.hooks_cli._save_diary_direct",
+                "trimemo.hooks_cli._save_diary_direct",
                 return_value={"count": 1, "themes": []},
             ),
-            patch("mempalace.hooks_cli._ingest_transcript") as mock_ingest,
-            patch("mempalace.hooks_cli._maybe_auto_ingest") as mock_auto,
-            patch("mempalace.hooks_cli._mine_sync") as mock_sync,
+            patch("trimemo.hooks_cli._ingest_transcript") as mock_ingest,
+            patch("trimemo.hooks_cli._maybe_auto_ingest") as mock_auto,
+            patch("trimemo.hooks_cli._mine_sync") as mock_sync,
         ):
             result = _capture_hook_output(
                 hook_session_end,
@@ -2496,8 +2496,8 @@ def test_session_end_checkpoint_visible_to_diary_read(
     mirroring test_stop_hook_checkpoint_visible_to_diary_read."""
     import chromadb
 
-    from mempalace import mcp_server
-    from mempalace.mcp_server import tool_diary_read
+    from trimemo import mcp_server
+    from trimemo.mcp_server import tool_diary_read
 
     monkeypatch.setattr(mcp_server, "_config", config)
     monkeypatch.setattr(mcp_server, "_get_kg", lambda *a, **kw: kg)
@@ -2511,13 +2511,13 @@ def test_session_end_checkpoint_visible_to_diary_read(
         [{"message": {"role": "user", "content": f"msg {i}"}} for i in range(5)],
     )
 
-    with patch("mempalace.hooks_cli.MempalaceConfig") as mock_cfg_cls:
+    with patch("trimemo.hooks_cli.MempalaceConfig") as mock_cfg_cls:
         mock_cfg_cls.return_value.hooks_auto_save = True
         mock_cfg_cls.return_value.hook_desktop_toast = False
         # Mock only the detached subprocess mines; run the REAL diary write.
         with (
-            patch("mempalace.hooks_cli._ingest_transcript"),
-            patch("mempalace.hooks_cli._maybe_auto_ingest"),
+            patch("trimemo.hooks_cli._ingest_transcript"),
+            patch("trimemo.hooks_cli._maybe_auto_ingest"),
         ):
             hook_session_end(
                 {"session_id": "sessX", "transcript_path": str(transcript)},
@@ -2560,7 +2560,7 @@ def test_log_does_not_create_palace_dir_when_absent(tmp_path, monkeypatch):
 
 def test_existing_dir_proceeds_normally(tmp_path, monkeypatch):
     """Regression: when PALACE_ROOT exists, hooks must proceed (no short-circuit)."""
-    fake_root = tmp_path / "present-mempalace"
+    fake_root = tmp_path / "present-trimemo"
     fake_root.mkdir()
     monkeypatch.setattr(hooks_cli_mod, "PALACE_ROOT", fake_root)
     monkeypatch.setattr(hooks_cli_mod, "STATE_DIR", fake_root / "hook_state")
@@ -2575,10 +2575,10 @@ def test_config_dir_satisfies_kill_switch_without_legacy_root(tmp_path, monkeypa
     """A fresh install since #148 has its config dir but no ~/.mempalace.
 
     Before the fix every hook short-circuited on such an install, so a fresh
-    ``mempalace init`` followed by a PreCompact hook filed nothing.
+    ``trimemo init`` followed by a PreCompact hook filed nothing.
     """
     fake_root = _redirect_palace_root(monkeypatch, tmp_path)
-    config_root = tmp_path / "xdg" / "mempalace"
+    config_root = tmp_path / "xdg" / "trimemo"
     config_root.mkdir(parents=True)
     monkeypatch.setattr(hooks_cli_mod, "_config_root", lambda: config_root)
 

@@ -6,8 +6,8 @@ from _chroma_palace_helper import make_minimal_chroma_sqlite
 
 import pytest
 
-from mempalace.backends import CollectionNotInitializedError, PalaceNotFoundError
-from mempalace.palace import (
+from trimemo.backends import CollectionNotInitializedError, PalaceNotFoundError
+from trimemo.palace import (
     CLOSETS_COLLECTION_NAME,
     CollectionNameMismatchError,
     _allowed_wrapper_collection_names,
@@ -59,7 +59,7 @@ def test_open_collection_or_explain_state_a_missing_dir(tmp_path):
 
     assert result is None
     assert any("No palace found" in line for line in lines)
-    assert any("mempalace init" in line for line in lines)
+    assert any("trimemo init" in line for line in lines)
     # Helper must not create the directory.
     assert not missing.exists()
 
@@ -135,7 +135,7 @@ def test_open_collection_or_explain_state_c_no_collection(tmp_path):
 
     assert result is None
     assert any("initialized but empty" in line for line in lines)
-    assert any("mempalace mine" in line for line in lines)
+    assert any("trimemo mine" in line for line in lines)
 
 
 def test_open_collection_or_explain_unknown_backend(tmp_path, monkeypatch):
@@ -176,7 +176,7 @@ def test_open_collection_or_explain_state_e_unexpected_error(tmp_path, monkeypat
     def boom(*args, **kwargs):
         raise RuntimeError("disk on fire")
 
-    monkeypatch.setattr("mempalace.palace.get_collection", boom)
+    monkeypatch.setattr("trimemo.palace.get_collection", boom)
 
     result = _open_collection_or_explain(str(palace), out=emit)
 
@@ -207,7 +207,7 @@ def test_open_collection_or_explain_propagates_palace_not_found_from_backend(tmp
     def raise_pnf(*args, **kwargs):
         raise PalaceNotFoundError(str(palace))
 
-    monkeypatch.setattr("mempalace.palace.get_collection", raise_pnf)
+    monkeypatch.setattr("trimemo.palace.get_collection", raise_pnf)
 
     result = _open_collection_or_explain(str(palace), out=emit)
 
@@ -224,7 +224,7 @@ def test_open_collection_or_explain_reraises_backend_closed_error(tmp_path, monk
     every call site as "Error opening palace ... Try: repair-status"
     even when the actual fix is to stop using a closed backend handle.
     """
-    from mempalace.backends import BackendClosedError
+    from trimemo.backends import BackendClosedError
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -233,7 +233,7 @@ def test_open_collection_or_explain_reraises_backend_closed_error(tmp_path, monk
     def raise_closed(*args, **kwargs):
         raise BackendClosedError("ChromaBackend has been closed")
 
-    monkeypatch.setattr("mempalace.palace.get_collection", raise_closed)
+    monkeypatch.setattr("trimemo.palace.get_collection", raise_closed)
 
     import pytest
 
@@ -253,7 +253,7 @@ def test_open_collection_or_explain_distinguishes_collection_subclass(tmp_path, 
     def raise_cnie(*args, **kwargs):
         raise CollectionNotInitializedError(str(palace))
 
-    monkeypatch.setattr("mempalace.palace.get_collection", raise_cnie)
+    monkeypatch.setattr("trimemo.palace.get_collection", raise_cnie)
 
     result = _open_collection_or_explain(str(palace), out=emit)
 
@@ -315,7 +315,7 @@ class TestGetCollectionNameValidation:
     def test_bare_mempalace_rejected(self, tmp_path):
         palace = self._bootstrap(tmp_path)
         with pytest.raises(CollectionNameMismatchError):
-            get_collection(str(palace), collection_name="mempalace", create=True)
+            get_collection(str(palace), collection_name="trimemo", create=True)
 
     def test_adhoc_name_rejected(self, tmp_path):
         palace = self._bootstrap(tmp_path)
@@ -355,7 +355,7 @@ class TestGetCollectionNameValidation:
         """If the user configures a custom drawers name, that name must pass."""
         palace = self._bootstrap(tmp_path)
 
-        import mempalace.config as config_mod
+        import trimemo.config as config_mod
 
         monkeypatch.setattr(config_mod, "get_configured_collection_name", lambda: "custom_drawers")
         col = get_collection(str(palace), collection_name="custom_drawers", create=True)

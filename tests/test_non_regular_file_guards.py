@@ -1,7 +1,7 @@
 """Non-regular files must never wedge an ingest command.
 
 ``os.walk``/``rglob`` list a FIFO, a socket and a device node as ordinary
-filenames, and MemPalace decides what to read by extension. Opening a FIFO
+filenames, and TriMemo decides what to read by extension. Opening a FIFO
 for reading parks in the kernel until a writer appears, so a named pipe
 called ``notes.md`` sitting in a mined directory used to hang ``mine``,
 ``sweep`` and ``init`` forever — no output, no error, no progress.
@@ -37,25 +37,25 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from mempalace.cli import (
+from trimemo.cli import (
     _ensure_mempalace_files_gitignored,
     _gather_origin_samples,
     cmd_compress,
     cmd_init,
 )
-from mempalace.convo_miner import _is_regular_source_file, scan_convos
-from mempalace.entity_detector import detect_entities
-from mempalace.format_miner import ExtractionStatus, extract_text
-from mempalace.hook_shell import count_human_messages
-from mempalace.llm_refine import collect_corpus_text
-from mempalace.miner import _read_text_no_follow, load_config, mine, scan_project
-from mempalace.normalize import _read_transcript_file
-from mempalace.project_scanner import _collect_manifest_names, _parse_gradle
-from mempalace.repair import _copy_file_no_follow, _open_regular_file_no_follow
-from mempalace.room_detector_local import detect_rooms_local
-from mempalace.split_mega_files import main as split_main
-from mempalace.split_mega_files import split_file
-from mempalace.sweeper import parse_claude_jsonl, sweep_directory
+from trimemo.convo_miner import _is_regular_source_file, scan_convos
+from trimemo.entity_detector import detect_entities
+from trimemo.format_miner import ExtractionStatus, extract_text
+from trimemo.hook_shell import count_human_messages
+from trimemo.llm_refine import collect_corpus_text
+from trimemo.miner import _read_text_no_follow, load_config, mine, scan_project
+from trimemo.normalize import _read_transcript_file
+from trimemo.project_scanner import _collect_manifest_names, _parse_gradle
+from trimemo.repair import _copy_file_no_follow, _open_regular_file_no_follow
+from trimemo.room_detector_local import detect_rooms_local
+from trimemo.split_mega_files import main as split_main
+from trimemo.split_mega_files import split_file
+from trimemo.sweeper import parse_claude_jsonl, sweep_directory
 
 # ``os.mkfifo`` and ``SIGALRM`` are both POSIX-only. Windows has no FIFO in
 # the filesystem namespace at all (its named pipes live under \\.\pipe\ and
@@ -191,7 +191,7 @@ _STATUS_IN_A_CHILD = """
 import json, sys
 
 sys.path.insert(0, sys.argv[2])
-import mempalace.repair as repair
+import trimemo.repair as repair
 
 answer = repair.status(palace_path=sys.argv[1])
 sys.stderr.write(sys.argv[3] + json.dumps(answer))
@@ -199,15 +199,15 @@ sys.stderr.write(sys.argv[3] + json.dumps(answer))
 
 
 def _tree_under_test() -> str:
-    """The directory holding the ``mempalace`` package this run imported.
+    """The directory holding the ``trimemo`` package this run imported.
 
     ``-I`` drops ``PYTHONPATH`` and the script directory, so without this the
     child would import whatever is installed rather than the checkout pytest
     is running against, and a broken tree would test green.
     """
-    import mempalace
+    import trimemo
 
-    return os.path.dirname(os.path.dirname(os.path.abspath(mempalace.__file__)))
+    return os.path.dirname(os.path.dirname(os.path.abspath(trimemo.__file__)))
 
 
 def _repair_status_bounded(palace: Path) -> "tuple[dict, str]":
@@ -269,7 +269,7 @@ import io, json, os, stat, sys
 from contextlib import redirect_stdout
 
 sys.path.insert(0, sys.argv[2])
-import mempalace.repair as repair
+import trimemo.repair as repair
 
 palace = sys.argv[1]
 counted = repair.sqlite_drawer_count
@@ -367,7 +367,7 @@ _INTEGRITY_PROBE_IN_A_CHILD = """
 import json, sys
 
 sys.path.insert(0, sys.argv[2])
-import mempalace.repair as repair
+import trimemo.repair as repair
 
 palace = sys.argv[1]
 if sys.argv[4] == "status":
@@ -492,7 +492,7 @@ _INTEGRITY_STATUS_WITH_A_MIDCALL_CHMOD_IN_A_CHILD = """
 import json, os, stat, sys
 
 sys.path.insert(0, sys.argv[2])
-import mempalace.repair as repair
+import trimemo.repair as repair
 
 palace = sys.argv[1]
 probe = repair._quick_check_errors
@@ -597,7 +597,7 @@ _MCP_SESSION_REQUESTS = [
 
 _MCP_SERVER_IN_A_CHILD = (
     "import runpy, sys; sys.path.insert(0, sys.argv.pop(1)); "
-    "runpy.run_module('mempalace.mcp_server', run_name='__main__')"
+    "runpy.run_module('trimemo.mcp_server', run_name='__main__')"
 )
 
 
@@ -849,7 +849,7 @@ def test_split_mega_files_skips_fifo(tmp_path, capsys, monkeypatch):
     # tests/test_split_mega_files.py::test_find_session_boundaries_two_sessions.
     session = "Claude Code v1.0\ncontent\n" + "\n" * 5
     write_regular(tmp_path, "real.txt", session * 2)
-    monkeypatch.setattr("sys.argv", ["mempalace split", "--source", str(tmp_path), "--dry-run"])
+    monkeypatch.setattr("sys.argv", ["trimemo split", "--source", str(tmp_path), "--dry-run"])
     with hard_timeout(TIMEOUT_SECONDS, "split_mega_files.main over a FIFO"):
         split_main()
     out = capsys.readouterr().out
@@ -925,7 +925,7 @@ def test_collect_manifest_names_survives_an_unreadable_directory(tmp_path):
     ``os.walk`` lists the children of a directory with ``r`` but no ``x``,
     and stating one of them raises ``PermissionError``. Each parser already
     swallowed that through its own ``except OSError``, so the gate in front
-    of them has to swallow it too — otherwise ``mempalace init`` gains a
+    of them has to swallow it too — otherwise ``trimemo init`` gains a
     traceback where it used to report no manifest name.
     """
     repo = tmp_path / "repo"
@@ -1036,7 +1036,7 @@ def test_cmd_compress_ignores_a_fifo_entities_json(tmp_path, monkeypatch, capsys
     monkeypatch.chdir(tmp_path)
     make_fifo(tmp_path, "entities.json")
     args = argparse.Namespace(palace=None, wing=None, dry_run=False, config=None)
-    with patch("mempalace.cli.MempalaceConfig") as mock_config_cls:
+    with patch("trimemo.cli.MempalaceConfig") as mock_config_cls:
         mock_config_cls.return_value.palace_path = str(tmp_path / "nonexistent")
         with hard_timeout(TIMEOUT_SECONDS, "cmd_compress with a FIFO entities.json"):
             with pytest.raises(SystemExit):
@@ -1062,7 +1062,7 @@ def test_cmd_compress_fifo_entities_json_does_not_shadow_the_palace_copy(
     palace.mkdir()
     (palace / "entities.json").write_text('{"entities": {"Alice": "ALC"}}', encoding="utf-8")
     args = argparse.Namespace(palace=None, wing=None, dry_run=False, config=None)
-    with patch("mempalace.cli.MempalaceConfig") as mock_config_cls:
+    with patch("trimemo.cli.MempalaceConfig") as mock_config_cls:
         mock_config_cls.return_value.palace_path = str(palace)
         with hard_timeout(TIMEOUT_SECONDS, "cmd_compress candidate loop"):
             with pytest.raises(SystemExit):
@@ -1120,12 +1120,12 @@ def test_cmd_init_refuses_to_write_entities_over_a_fifo(tmp_path, capsys):
     detected = {"people": [{"name": "Alice"}], "projects": [], "topics": [], "uncertain": []}
     confirmed = {"people": ["Alice"], "projects": [], "topics": []}
     with (
-        patch("mempalace.cli.MempalaceConfig"),
-        patch("mempalace.project_scanner.discover_entities", return_value=detected),
-        patch("mempalace.entity_detector.confirm_entities", return_value=confirmed),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
-        patch("mempalace.cli._run_pass_zero", return_value=None),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.cli.MempalaceConfig"),
+        patch("trimemo.project_scanner.discover_entities", return_value=detected),
+        patch("trimemo.entity_detector.confirm_entities", return_value=confirmed),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli._run_pass_zero", return_value=None),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
     ):
         with hard_timeout(TIMEOUT_SECONDS, "cmd_init with a FIFO entities.json"):
             cmd_init(args)
@@ -1193,7 +1193,7 @@ def test_sweep_directory_still_books_a_stat_failure_as_a_failure(tmp_path, capsy
     The type gate has to tell those apart. A dangling symlink, a symlink loop
     and a file unlinked between ``rglob`` and the gate all raise from
     ``stat`` — and every one of them used to reach ``open`` inside ``sweep``
-    and be booked. Swallowing them would flip ``mempalace sweep`` from exit 2
+    and be booked. Swallowing them would flip ``trimemo sweep`` from exit 2
     to exit 0 on a transcript it could not read.
     """
     convos = tmp_path / "convos"
@@ -1249,7 +1249,7 @@ def test_read_text_no_follow_retries_when_a_lease_break_returns_eagain(tmp_path,
         assert not flags & os.O_NONBLOCK, "retry should drop the flag"
         return real_open(path, flags, *args, **kwargs)
 
-    monkeypatch.setattr("mempalace.miner.os.open", _fake_open)
+    monkeypatch.setattr("trimemo.miner.os.open", _fake_open)
     with hard_timeout(TIMEOUT_SECONDS, "_read_text_no_follow under an injected EAGAIN"):
         result = _read_text_no_follow(target, tmp_path)
     assert result is not None
@@ -1276,7 +1276,7 @@ def test_read_text_no_follow_does_not_retry_eagain_on_a_fifo(tmp_path, monkeypat
             raise OSError(errno.EAGAIN, os.strerror(errno.EAGAIN), str(path))
         raise AssertionError("must not retry a blocking open on a FIFO")
 
-    monkeypatch.setattr("mempalace.miner.os.open", _fake_open)
+    monkeypatch.setattr("trimemo.miner.os.open", _fake_open)
     with hard_timeout(TIMEOUT_SECONDS, "_read_text_no_follow EAGAIN on a FIFO"):
         assert _read_text_no_follow(fifo, tmp_path) is None
 
@@ -1312,7 +1312,7 @@ def test_read_transcript_file_size_message_names_the_path_once(tmp_path):
         st_mode = stat_module.S_IFREG | 0o644
         st_size = 600 * 1024 * 1024
 
-    with patch("mempalace.normalize.os.fstat", return_value=_HugeStat()):
+    with patch("trimemo.normalize.os.fstat", return_value=_HugeStat()):
         with pytest.raises(IOError) as excinfo:
             _read_transcript_file(str(big))
     message = str(excinfo.value)
@@ -1327,7 +1327,7 @@ def test_read_transcript_file_size_message_names_the_path_once(tmp_path):
 
 @posix_only
 def test_mine_completes_with_a_fifo_in_the_corpus(tmp_path):
-    """The original report: ``mempalace mine <dir>`` never returned."""
+    """The original report: ``trimemo mine <dir>`` never returned."""
     project_root = tmp_path / "corpus"
     project_root.mkdir()
     (project_root / "mempalace.yaml").write_text(

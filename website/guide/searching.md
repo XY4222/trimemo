@@ -1,24 +1,24 @@
 # Searching Memories
 
-MemPalace uses ChromaDB's semantic vector search to find relevant memories. When you search, you get **verbatim text** — the exact words, never summaries.
+TriMemo uses ChromaDB's semantic vector search to find relevant memories. When you search, you get **verbatim text** — the exact words, never summaries.
 
 ## CLI Search
 
 ```bash
 # Search everything
-mempalace search "why did we switch to GraphQL"
+trimemo search "why did we switch to GraphQL"
 
 # Filter by wing (project)
-mempalace search "database decision" --wing myapp
+trimemo search "database decision" --wing myapp
 
 # Filter by room (topic)
-mempalace search "auth decisions" --room auth-migration
+trimemo search "auth decisions" --room auth-migration
 
 # Filter by both
-mempalace search "pricing" --wing driftwood --room costs
+trimemo search "pricing" --wing driftwood --room costs
 
 # More results
-mempalace search "deploy process" --results 10
+trimemo search "deploy process" --results 10
 ```
 
 ## How Search Works
@@ -89,10 +89,10 @@ Instead of searching, you can load a compact context of your world:
 
 ```bash
 # Load identity + top memories (~600-900 tokens in typical use)
-mempalace wake-up
+trimemo wake-up
 
 # Project-specific context
-mempalace wake-up --wing driftwood
+trimemo wake-up --wing driftwood
 ```
 
 This loads Layer 0 (identity) and Layer 1 (essential story) as bounded startup context before the first retrieval call.

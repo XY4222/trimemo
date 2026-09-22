@@ -12,7 +12,7 @@ import pytest
 
 from _chroma_palace_helper import make_minimal_chroma_sqlite
 
-from mempalace import repair
+from trimemo import repair
 
 # Mirrors the guard test_backups declares; test_non_regular_file_guards carries
 # a root-only variant because every use of it there also carries a marker that
@@ -63,7 +63,7 @@ def _symlink_or_skip(link, target):
 # ── _get_palace_path ──────────────────────────────────────────────────
 
 
-@patch("mempalace.repair.MempalaceConfig", create=True)
+@patch("trimemo.repair.MempalaceConfig", create=True)
 def test_get_palace_path_from_config(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/configured/palace"
     with patch.dict("sys.modules", {}):
@@ -73,17 +73,17 @@ def test_get_palace_path_from_config(mock_config_cls):
 
 
 def test_get_palace_path_fallback():
-    with patch("mempalace.repair._get_palace_path") as mock_get:
+    with patch("trimemo.repair._get_palace_path") as mock_get:
         mock_get.return_value = os.path.join(os.path.expanduser("~"), ".mempalace", "palace")
         result = mock_get()
         assert ".mempalace" in result
 
 
 def test_get_collection_name_from_config():
-    from mempalace.config import get_configured_collection_name
+    from trimemo.config import get_configured_collection_name
 
     get_configured_collection_name.cache_clear()
-    with patch("mempalace.config.MempalaceConfig") as mock_config_cls:
+    with patch("trimemo.config.MempalaceConfig") as mock_config_cls:
         mock_config_cls.return_value.collection_name = "custom_drawers"
         assert repair._drawers_collection_name() == "custom_drawers"
     get_configured_collection_name.cache_clear()
@@ -350,8 +350,8 @@ def _install_mock_backend(mock_backend_cls, collection):
     return mock_backend
 
 
-@patch("mempalace.repair.hnsw_capacity_status")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.hnsw_capacity_status")
+@patch("trimemo.repair.ChromaBackend")
 def test_scan_palace_aborts_on_hnsw_divergence(mock_backend_cls, mock_capacity, tmp_path):
     """count() on a diverged HNSW segment can hard-crash the process
     (#1222) -- a try/except cannot save it. scan_palace must never reach
@@ -364,7 +364,7 @@ def test_scan_palace_aborts_on_hnsw_divergence(mock_backend_cls, mock_capacity, 
     mock_backend_cls.assert_not_called()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_scan_palace_no_ids(mock_backend_cls, tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 0
@@ -376,7 +376,7 @@ def test_scan_palace_no_ids(mock_backend_cls, tmp_path):
     assert bad == set()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_scan_palace_all_good(mock_backend_cls, tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 2
@@ -393,7 +393,7 @@ def test_scan_palace_all_good(mock_backend_cls, tmp_path):
     assert len(bad) == 0
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_scan_palace_with_bad_ids(mock_backend_cls, tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 2
@@ -418,7 +418,7 @@ def test_scan_palace_with_bad_ids(mock_backend_cls, tmp_path):
     assert "bad1" in bad
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_scan_palace_with_wing_filter(mock_backend_cls, tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 1
@@ -437,8 +437,8 @@ def test_scan_palace_with_wing_filter(mock_backend_cls, tmp_path):
 # ── prune_corrupt ─────────────────────────────────────────────────────
 
 
-@patch("mempalace.repair.hnsw_capacity_status")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.hnsw_capacity_status")
+@patch("trimemo.repair.ChromaBackend")
 def test_prune_corrupt_aborts_on_hnsw_divergence(mock_backend_cls, mock_capacity, tmp_path):
     """Same guard as scan_palace: a failed purge attempt against a
     diverged segment must never reach count()/delete() (#91)."""
@@ -449,13 +449,13 @@ def test_prune_corrupt_aborts_on_hnsw_divergence(mock_backend_cls, mock_capacity
     mock_backend_cls.assert_not_called()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_prune_corrupt_no_file(mock_backend_cls, tmp_path):
     # Should print message and return without error
     repair.prune_corrupt(palace_path=str(tmp_path))
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_prune_corrupt_dry_run(mock_backend_cls, tmp_path):
     bad_file = tmp_path / "corrupt_ids.txt"
     bad_file.write_text("bad1\nbad2\n")
@@ -464,7 +464,7 @@ def test_prune_corrupt_dry_run(mock_backend_cls, tmp_path):
     mock_backend_cls.assert_not_called()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_prune_corrupt_confirmed(mock_backend_cls, tmp_path):
     bad_file = tmp_path / "corrupt_ids.txt"
     bad_file.write_text("bad1\nbad2\n")
@@ -477,7 +477,7 @@ def test_prune_corrupt_confirmed(mock_backend_cls, tmp_path):
     mock_col.delete.assert_called_once()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_prune_corrupt_delete_failure_fallback(mock_backend_cls, tmp_path):
     bad_file = tmp_path / "corrupt_ids.txt"
     bad_file.write_text("bad1\nbad2\n")
@@ -495,15 +495,15 @@ def test_prune_corrupt_delete_failure_fallback(mock_backend_cls, tmp_path):
 # ── rebuild_index ─────────────────────────────────────────────────────
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_no_palace(mock_backend_cls, tmp_path):
     nonexistent = str(tmp_path / "nope")
     repair.rebuild_index(palace_path=nonexistent)
     mock_backend_cls.assert_not_called()
 
 
-@patch("mempalace.repair.shutil")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.shutil")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_empty_palace(mock_backend_cls, mock_shutil, tmp_path):
     mock_col = MagicMock()
     mock_col.count.return_value = 0
@@ -513,7 +513,7 @@ def test_rebuild_index_empty_palace(mock_backend_cls, mock_shutil, tmp_path):
     mock_backend.delete_collection.assert_not_called()
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_read_failure_points_to_from_sqlite(mock_backend_cls, tmp_path):
     """A chromadb HNSW compactor failure makes the first ``count()`` read
     raise; rebuild_index cannot recover it, so it must direct the user to
@@ -526,7 +526,7 @@ def test_rebuild_index_read_failure_points_to_from_sqlite(mock_backend_cls, tmp_
     msgs: list[str] = []
     repair.rebuild_index(palace_path=str(tmp_path), progress=msgs.append)
     out = "\n".join(msgs)
-    assert "mempalace repair --mode from-sqlite --archive-existing" in out
+    assert "trimemo repair --mode from-sqlite --archive-existing" in out
     assert "may need to be re-mined" not in out
 
 
@@ -535,12 +535,12 @@ def test_index_read_recovery_guidance_recommends_from_sqlite():
     full and never tells the user the palace ``may need to be re-mined`` —
     the harmful pre-#1843 advice that silently drops MCP-added drawers."""
     msg = repair.index_read_recovery_guidance()
-    assert "mempalace repair --mode from-sqlite --archive-existing" in msg
+    assert "trimemo repair --mode from-sqlite --archive-existing" in msg
     assert "may need to be re-mined" not in msg
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_success(mock_backend_cls, mock_copy, tmp_path):
     # Create a valid sqlite file so the repair preflight can run quick_check.
     sqlite_path = tmp_path / "chroma.sqlite3"
@@ -586,8 +586,8 @@ def test_rebuild_index_success(mock_backend_cls, mock_copy, tmp_path):
     mock_new_col.add.assert_not_called()
 
 
-@patch("mempalace.repair.hnsw_capacity_status")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.hnsw_capacity_status")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_aborts_on_hnsw_divergence_preflight(
     mock_backend_cls, mock_capacity, tmp_path
 ):
@@ -607,9 +607,9 @@ def test_rebuild_index_aborts_on_hnsw_divergence_preflight(
     assert "diverged" in "\n".join(msgs).lower()
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.hnsw_capacity_status")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.hnsw_capacity_status")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_warns_when_closets_still_diverged(
     mock_backend_cls, mock_capacity, mock_copy, tmp_path, capsys
 ):
@@ -651,8 +651,8 @@ def test_rebuild_index_warns_when_closets_still_diverged(
     assert "closets still diverged" in out
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_ignores_missing_temp_collection_at_start(
     mock_backend_cls, mock_copy, tmp_path
 ):
@@ -703,8 +703,8 @@ def test_delete_collection_if_exists_reraises_unexpected_value_error():
         repair._delete_collection_if_exists(mock_backend, "/palace", "bad/name")
 
 
-@patch("mempalace.repair.shutil")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.shutil")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_error_reading(mock_backend_cls, mock_shutil, tmp_path):
     mock_backend = MagicMock()
     mock_backend.get_collection.side_effect = Exception("corrupt")
@@ -719,20 +719,20 @@ def test_rebuild_index_error_reading(mock_backend_cls, mock_shutil, tmp_path):
 
 def test_check_extraction_safety_passes_when_counts_match(tmp_path):
     """SQLite reports same count as extracted → no exception."""
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=500):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=500):
         repair.check_extraction_safety(str(tmp_path), 500)
 
 
 def test_check_extraction_safety_uses_configured_collection(tmp_path):
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=500) as count:
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=500) as count:
         repair.check_extraction_safety(str(tmp_path), 500, collection_name="custom_drawers")
     count.assert_called_once_with(str(tmp_path), "custom_drawers")
 
 
 def test_check_extraction_safety_default_uses_configured_collection(tmp_path):
     with (
-        patch("mempalace.repair._drawers_collection_name", return_value="custom_drawers"),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=500) as count,
+        patch("trimemo.repair._drawers_collection_name", return_value="custom_drawers"),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=500) as count,
     ):
         repair.check_extraction_safety(str(tmp_path), 500)
     count.assert_called_once_with(str(tmp_path), "custom_drawers")
@@ -740,13 +740,13 @@ def test_check_extraction_safety_default_uses_configured_collection(tmp_path):
 
 def test_check_extraction_safety_passes_when_sqlite_unreadable_and_under_cap(tmp_path):
     """SQLite check fails (None) but extraction is well under the cap → safe."""
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=None):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=None):
         repair.check_extraction_safety(str(tmp_path), 5_000)
 
 
 def test_check_extraction_safety_aborts_when_sqlite_higher(tmp_path):
     """SQLite reports more than extracted — the user-reported #1208 case."""
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=67_580):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=67_580):
         try:
             repair.check_extraction_safety(str(tmp_path), 10_000)
         except repair.TruncationDetected as e:
@@ -761,7 +761,7 @@ def test_check_extraction_safety_aborts_when_sqlite_higher(tmp_path):
 
 def test_check_extraction_safety_aborts_when_unreadable_and_at_cap(tmp_path):
     """SQLite unreadable but extraction == default get() cap → suspicious."""
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=None):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=None):
         try:
             repair.check_extraction_safety(str(tmp_path), repair.CHROMADB_DEFAULT_GET_LIMIT)
         except repair.TruncationDetected as e:
@@ -774,7 +774,7 @@ def test_check_extraction_safety_aborts_when_unreadable_and_at_cap(tmp_path):
 
 def test_check_extraction_safety_override_skips_check(tmp_path):
     """``confirm_truncation_ok=True`` short-circuits both signals."""
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=99_999):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=99_999):
         # Would normally abort — override allows through
         repair.check_extraction_safety(str(tmp_path), 10_000, confirm_truncation_ok=True)
 
@@ -792,8 +792,8 @@ def test_sqlite_drawer_count_returns_none_on_unreadable_schema(tmp_path):
     assert repair.sqlite_drawer_count(str(tmp_path)) is None
 
 
-@patch("mempalace.repair.shutil")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.shutil")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_default_uses_configured_collection(mock_backend_cls, mock_shutil, tmp_path):
     sqlite_path = tmp_path / "chroma.sqlite3"
     sqlite3.connect(str(sqlite_path)).close()
@@ -812,8 +812,8 @@ def test_rebuild_index_default_uses_configured_collection(mock_backend_cls, mock
     mock_backend.create_collection.side_effect = [mock_temp_col, mock_new_col]
 
     with (
-        patch("mempalace.repair._drawers_collection_name", return_value="custom_drawers"),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=2) as count,
+        patch("trimemo.repair._drawers_collection_name", return_value="custom_drawers"),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=2) as count,
     ):
         repair.rebuild_index(palace_path=str(tmp_path))
 
@@ -850,7 +850,7 @@ def test_status_returns_empty_when_db_present_no_drawers(tmp_path, capsys):
     return-shape contract; see the real-disk sibling below for the
     no-chromadb-client invariant."""
     make_minimal_chroma_sqlite(tmp_path)
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=0):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=0):
         result = repair.status(palace_path=str(tmp_path))
 
     assert result["status"] == "empty"
@@ -890,8 +890,8 @@ def test_status_falls_through_to_capacity_when_sqlite_count_unreadable(tmp_path)
     short-circuiting on 'empty' (#1498)."""
     make_minimal_chroma_sqlite(tmp_path)
     with (
-        patch("mempalace.repair.sqlite_drawer_count", return_value=None),
-        patch("mempalace.repair.hnsw_capacity_status") as capacity_status,
+        patch("trimemo.repair.sqlite_drawer_count", return_value=None),
+        patch("trimemo.repair.hnsw_capacity_status") as capacity_status,
     ):
         capacity_status.side_effect = [
             {
@@ -926,9 +926,9 @@ def test_status_default_uses_configured_drawer_collection(tmp_path):
     # and sqlite_drawer_count returns a positive number (palace not empty).
     make_minimal_chroma_sqlite(tmp_path)
     with (
-        patch("mempalace.repair._drawers_collection_name", return_value="custom_drawers"),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=1),
-        patch("mempalace.repair.hnsw_capacity_status") as capacity_status,
+        patch("trimemo.repair._drawers_collection_name", return_value="custom_drawers"),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=1),
+        patch("trimemo.repair.hnsw_capacity_status") as capacity_status,
     ):
         capacity_status.side_effect = [
             {
@@ -1109,8 +1109,8 @@ def test_status_reads_a_database_reached_through_a_symlink(tmp_path, capsys):
     assert _reported_drawer_count(capsys.readouterr().out) == "1"
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_aborts_on_truncation_signal(mock_backend_cls, mock_copy, tmp_path):
     """rebuild_index honors the safety guard: SQLite says 67k, get() returns
     10k → no delete_collection, no upsert, no backup."""
@@ -1129,7 +1129,7 @@ def test_rebuild_index_aborts_on_truncation_signal(mock_backend_cls, mock_copy, 
     mock_backend.get_collection.return_value = mock_col
     mock_backend_cls.return_value = mock_backend
 
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=67_580):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=67_580):
         repair.rebuild_index(palace_path=str(tmp_path))
 
     # Guard fired: nothing destructive happened
@@ -1138,8 +1138,8 @@ def test_rebuild_index_aborts_on_truncation_signal(mock_backend_cls, mock_copy, 
     mock_copy.assert_not_called()
 
 
-@patch("mempalace.repair.shutil")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.shutil")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_proceeds_with_override(mock_backend_cls, mock_shutil, tmp_path):
     """Override flag lets repair proceed even when the guard would fire."""
     mock_backend = MagicMock()
@@ -1161,7 +1161,7 @@ def test_rebuild_index_proceeds_with_override(mock_backend_cls, mock_shutil, tmp
     mock_backend.create_collection.side_effect = [mock_temp_col, mock_new_col]
     mock_backend_cls.return_value = mock_backend
 
-    with patch("mempalace.repair.sqlite_drawer_count", return_value=67_580):
+    with patch("trimemo.repair.sqlite_drawer_count", return_value=67_580):
         repair.rebuild_index(palace_path=str(tmp_path), confirm_truncation_ok=True)
 
     assert mock_backend.delete_collection.call_count == 3
@@ -1170,8 +1170,8 @@ def test_rebuild_index_proceeds_with_override(mock_backend_cls, mock_shutil, tmp
     mock_new_col.upsert.assert_called()
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_stage_failure_leaves_live_collection_untouched(
     mock_backend_cls, mock_copy, tmp_path
 ):
@@ -1201,8 +1201,8 @@ def test_rebuild_index_stage_failure_leaves_live_collection_untouched(
     ]
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_live_failure_restores_backup(mock_backend_cls, mock_copy, tmp_path):
     """When the live swap fails after the delete, recovery must PROMOTE
     the verified temp copy (not restore a sqlite-only file backup, whose
@@ -1253,8 +1253,8 @@ def test_rebuild_index_live_failure_restores_backup(mock_backend_cls, mock_copy,
     helper_backend.close_palace.assert_not_called()
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_live_delete_missing_still_restores_backup(
     mock_backend_cls, mock_copy, tmp_path
 ):
@@ -1307,8 +1307,8 @@ def test_rebuild_index_live_delete_missing_still_restores_backup(
     assert mock_promoted_col.upsert.called
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_restore_failure_preserves_original_error(
     mock_backend_cls, mock_copy, tmp_path, capsys
 ):
@@ -1349,7 +1349,7 @@ def test_rebuild_index_restore_failure_preserves_original_error(
     assert "live upsert failed" in str(excinfo.value)
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_collection_via_temp_keeps_original_error_when_cleanup_fails(
     mock_backend_cls,
 ):
@@ -1386,7 +1386,7 @@ def test_rebuild_collection_via_temp_keeps_original_error_when_cleanup_fails(
     ]
 
 
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_collection_via_temp_preserves_temp_when_live_replaced_and_reupload_fails(
     mock_backend_cls,
 ):
@@ -1508,8 +1508,8 @@ def test_promote_temp_collection_survives_when_final_temp_cleanup_fails():
     assert result == 1  # promotion itself succeeded despite the cleanup failure
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_ignores_temp_cleanup_failure_after_success(
     mock_backend_cls, mock_copy, tmp_path
 ):
@@ -2123,7 +2123,7 @@ def test_sqlite_integrity_errors_reports_a_path_python_cannot_encode(tmp_path):
     ``ValueError`` subclass, and the absence gate's docstring promises callers
     never see one; ``palace._validate_palace_fts5_after_mine`` and
     ``cli.cmd_repair`` both call this without a guard, so raising there is a
-    traceback out of ``mempalace mine`` and ``mempalace repair`` on a database
+    traceback out of ``trimemo mine`` and ``trimemo repair`` on a database
     sitting right at the end of that path.
 
     The invariant asserted here is that the call answers. The version-gated
@@ -2249,8 +2249,8 @@ def test_sqlite_integrity_status_reports_an_unreachable_directory_as_an_error(tm
     assert "named pipe" not in status.errors[0]
 
 
-@patch("mempalace.repair._copy_file_no_follow")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair._copy_file_no_follow")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_aborts_on_sqlite_integrity_errors_before_delete_collection(
     mock_backend_cls,
     mock_copy,
@@ -2275,7 +2275,7 @@ def test_rebuild_index_aborts_on_sqlite_integrity_errors_before_delete_collectio
     mock_backend = _install_mock_backend(mock_backend_cls, mock_col)
 
     with patch(
-        "mempalace.repair.sqlite_integrity_errors",
+        "trimemo.repair.sqlite_integrity_errors",
         return_value=[
             "Page 4 of B-tree 12345: database disk image is malformed",
             "Page 8 of B-tree 67890: database disk image is malformed",
@@ -2313,7 +2313,7 @@ def test_rebuild_index_runs_sqlite_preflight_before_chromadb_open(tmp_path, caps
     # at full schema size, then mangle several middle pages so PRAGMA
     # quick_check fails with "disk image is malformed". This matches the
     # production failure mode users hit in #1362 / #1364.
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     backend = ChromaBackend()
     try:
@@ -2416,7 +2416,7 @@ def test_rebuild_index_repairs_poisoned_max_seq_id_before_collection_rebuild(tmp
     palace = str(tmp_path / "palace")
     _seed_poisoned_max_seq_id(palace)
 
-    with patch("mempalace.repair.ChromaBackend") as mock_backend:
+    with patch("trimemo.repair.ChromaBackend") as mock_backend:
         repair.rebuild_index(palace)
 
     out = capsys.readouterr().out
@@ -2448,7 +2448,7 @@ def _seed_palace(palace_path, collection_name, rows):
     """
     import gc
 
-    from mempalace.backends.chroma import ChromaBackend, _clear_chroma_system_cache
+    from trimemo.backends.chroma import ChromaBackend, _clear_chroma_system_cache
 
     backend = ChromaBackend()
     try:
@@ -2645,7 +2645,7 @@ def test_rebuild_from_sqlite_roundtrips_via_real_chromadb(tmp_path):
     other test in this file would catch it because they all stop at the
     extraction layer.
     """
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     source = tmp_path / "source"
     dest = tmp_path / "dest"
@@ -2783,7 +2783,7 @@ def test_rebuild_from_sqlite_in_place_archives_when_opted_in(tmp_path):
     archived_rows = list(repair.extract_via_sqlite(str(archives[0]), "mempalace_drawers"))
     assert len(archived_rows) == 15
 
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     rebuilt = ChromaBackend().get_collection(str(palace), "mempalace_drawers")
     assert rebuilt.count() == 15
@@ -2938,7 +2938,7 @@ def test_cmd_repair_dry_run_leaves_a_real_palace_byte_identical(tmp_path, capsys
     import argparse
     import hashlib
 
-    from mempalace.cli import cmd_repair
+    from trimemo.cli import cmd_repair
 
     palace = tmp_path / "palace"
     _seed_palace(palace, "mempalace_drawers", [(f"d{i}", f"b{i}", {"wing": "w"}) for i in range(4)])
@@ -2953,7 +2953,7 @@ def test_cmd_repair_dry_run_leaves_a_real_palace_byte_identical(tmp_path, capsys
     before = snapshot()
     args = argparse.Namespace(palace=str(palace), yes=True, dry_run=True)
 
-    with patch("mempalace.cli.MempalaceConfig") as mock_config_cls:
+    with patch("trimemo.cli.MempalaceConfig") as mock_config_cls:
         mock_config_cls.return_value.palace_path = str(palace)
         mock_config_cls.return_value.collection_name = "mempalace_drawers"
         cmd_repair(args)
@@ -3165,11 +3165,11 @@ def test_rebuild_from_sqlite_raises_on_upsert_failure(tmp_path, monkeypatch):
 
     # Make the very first upsert raise so we don't depend on batch
     # boundary behavior. Patching ChromaCollection.upsert (the wrapper
-    # mempalace's backend returns) keeps the failure path realistic.
+    # trimemo's backend returns) keeps the failure path realistic.
     # ``monkeypatch`` is pytest's built-in fixture that auto-restores
     # the original attribute when the test exits, so we don't need to
     # undo this manually.
-    from mempalace.backends.chroma import ChromaCollection
+    from trimemo.backends.chroma import ChromaCollection
 
     def boom(self, **kwargs):
         raise RuntimeError("simulated chromadb upsert failure")
@@ -3203,7 +3203,7 @@ def test_rebuild_from_sqlite_honors_configured_drawer_collection_name(tmp_path, 
     Strategy: monkeypatch the lazy resolver so the test is hermetic and
     does not depend on the global config file or env state.
     """
-    from mempalace.backends.chroma import ChromaBackend
+    from trimemo.backends.chroma import ChromaBackend
 
     custom_drawers = "custom_drawers_xyz"
     monkeypatch.setattr(repair, "_drawers_collection_name", lambda: custom_drawers)
@@ -3521,7 +3521,7 @@ def test_maybe_autoheal_fts5_index_leaves_non_fts5_errors_untouched(tmp_path):
     page_errors = ["Page 4 of B-tree 12345: database disk image is malformed"]
 
     # Not isolated FTS5: returned unchanged and the rebuild is never attempted.
-    with patch("mempalace.palace.mine_palace_lock") as lock:
+    with patch("trimemo.palace.mine_palace_lock") as lock:
         remaining = repair.maybe_autoheal_fts5_index(palace, page_errors, progress=lambda *_: None)
     assert remaining == page_errors
     lock.assert_not_called()
@@ -3539,7 +3539,7 @@ def test_maybe_autoheal_fts5_index_declines_checksum_mismatch_without_writing(tm
     palace = _make_fts5_palace(tmp_path, corrupt=True)
     errors = ['fts5: checksum mismatch for table "embedding_fulltext_search"']
 
-    with patch("mempalace.palace.mine_palace_lock") as lock:
+    with patch("trimemo.palace.mine_palace_lock") as lock:
         remaining = repair.maybe_autoheal_fts5_index(palace, errors, progress=lambda *_: None)
 
     assert remaining == errors
@@ -3552,7 +3552,7 @@ def test_maybe_autoheal_fts5_index_reports_why_it_declined(tmp_path):
     page_errors = ["Page 4 of B-tree 12345: database disk image is malformed"]
 
     messages: list[str] = []
-    with patch("mempalace.palace.mine_palace_lock") as lock:
+    with patch("trimemo.palace.mine_palace_lock") as lock:
         remaining = repair.maybe_autoheal_fts5_index(palace, page_errors, progress=messages.append)
 
     assert remaining == page_errors
@@ -3595,7 +3595,7 @@ def test_maybe_autoheal_fts5_index_explains_a_missing_database(tmp_path):
     assert repair._errors_are_isolated_fts5(errors), "must reach the missing-database branch"
 
     messages: list[str] = []
-    with patch("mempalace.palace.mine_palace_lock") as lock:
+    with patch("trimemo.palace.mine_palace_lock") as lock:
         remaining = repair.maybe_autoheal_fts5_index(
             str(tmp_path), errors, progress=messages.append
         )
@@ -3811,7 +3811,7 @@ def test_print_sqlite_integrity_abort_names_the_sqlite_build(tmp_path, capsys):
 
 
 def test_maybe_autoheal_fts5_index_skips_when_palace_is_being_mined(tmp_path):
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     palace = _make_fts5_palace(tmp_path, corrupt=True)
     errors = repair.sqlite_integrity_errors(palace)
@@ -3820,7 +3820,7 @@ def test_maybe_autoheal_fts5_index_skips_when_palace_is_being_mined(tmp_path):
         raise MineAlreadyRunning("held by pid 999")
 
     # A live mine holds the lock: do not race the rebuild — surface and abort.
-    with patch("mempalace.palace.mine_palace_lock", side_effect=_raise):
+    with patch("trimemo.palace.mine_palace_lock", side_effect=_raise):
         remaining = repair.maybe_autoheal_fts5_index(palace, errors, progress=lambda *_: None)
 
     assert remaining == errors
@@ -4150,8 +4150,8 @@ def test_rebuild_index_preflight_autoheals_isolated_fts5_then_proceeds(tmp_path,
     assert repair.sqlite_integrity_errors(palace) == []
 
 
-@patch("mempalace.repair.shutil")
-@patch("mempalace.repair.ChromaBackend")
+@patch("trimemo.repair.shutil")
+@patch("trimemo.repair.ChromaBackend")
 def test_rebuild_index_calls_vacuum(mock_backend_cls, mock_shutil, tmp_path):
     """rebuild_index closes chroma handles then calls _vacuum_and_rebuild_fts5.
 

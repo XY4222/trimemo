@@ -13,7 +13,7 @@ from _mcp_server_helpers import (
 class TestKGTools:
     def test_kg_add(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_kg_add
+        from trimemo.mcp_server import tool_kg_add
 
         result = tool_kg_add(
             subject="Alice",
@@ -25,14 +25,14 @@ class TestKGTools:
 
     def test_kg_query(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_query
+        from trimemo.mcp_server import tool_kg_query
 
         result = tool_kg_query(entity="Max")
         assert result["count"] > 0
 
     def test_kg_invalidate(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_invalidate
+        from trimemo.mcp_server import tool_kg_invalidate
 
         result = tool_kg_invalidate(
             subject="Max",
@@ -47,7 +47,7 @@ class TestKGTools:
 
     def test_kg_supersede(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_kg_supersede
+        from trimemo.mcp_server import tool_kg_supersede
 
         kg.add_triple("Bot", "uses_model", "old", valid_from="2026-05-01")
         result = tool_kg_supersede(
@@ -69,7 +69,7 @@ class TestKGTools:
     def test_kg_add_forwards_valid_to(self, monkeypatch, config, palace_path, kg):
         """Regression #1314 case 1: valid_to must round-trip through kg_add."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_kg_add
+        from trimemo.mcp_server import tool_kg_add
 
         result = tool_kg_add(
             subject="_test_temporal",
@@ -90,7 +90,7 @@ class TestKGTools:
     def test_kg_add_forwards_source_provenance(self, monkeypatch, config, palace_path, kg):
         """Regression #1314 case 3: source_file / source_drawer_id reach storage."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_kg_add
+        from trimemo.mcp_server import tool_kg_add
 
         result = tool_kg_add(
             subject="operating-verb",
@@ -126,7 +126,7 @@ class TestKGTools:
         from datetime import date as _date
 
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_invalidate
+        from trimemo.mcp_server import tool_kg_invalidate
 
         # Caller-supplied date round-trips into the response.
         explicit = tool_kg_invalidate(
@@ -149,7 +149,7 @@ class TestKGTools:
 
     def test_kg_timeline(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_timeline
+        from trimemo.mcp_server import tool_kg_timeline
 
         result = tool_kg_timeline(entity="Alice")
         assert result["count"] > 0
@@ -159,7 +159,7 @@ class TestKGTools:
 
     def test_kg_timeline_paginates(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_timeline
+        from trimemo.mcp_server import tool_kg_timeline
 
         full = tool_kg_timeline()
         total = full["total"]
@@ -176,7 +176,7 @@ class TestKGTools:
 
     def test_kg_timeline_clamps_pagination_args(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_timeline
+        from trimemo.mcp_server import tool_kg_timeline
 
         result = tool_kg_timeline(limit=10_000, offset=-3)
         assert result["limit"] == 100  # clamped to _MAX_RESULTS
@@ -184,7 +184,7 @@ class TestKGTools:
 
     def test_kg_stats(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_stats
+        from trimemo.mcp_server import tool_kg_stats
 
         result = tool_kg_stats()
         assert result["entities"] >= 4
@@ -193,7 +193,7 @@ class TestKGTools:
 
     def test_kg_add_rejects_invalid_valid_from(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_kg_add
+        from trimemo.mcp_server import tool_kg_add
 
         result = tool_kg_add(
             subject="Alice",
@@ -207,7 +207,7 @@ class TestKGTools:
 
     def test_kg_query_rejects_invalid_as_of(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_query
+        from trimemo.mcp_server import tool_kg_query
 
         result = tool_kg_query(entity="Max", as_of="March 2026")
         assert "error" in result
@@ -215,7 +215,7 @@ class TestKGTools:
 
     def test_kg_invalidate_rejects_invalid_ended(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_invalidate
+        from trimemo.mcp_server import tool_kg_invalidate
 
         result = tool_kg_invalidate(
             subject="Max",
@@ -228,7 +228,7 @@ class TestKGTools:
 
     def test_kg_query_rejects_partial_iso_dates(self, monkeypatch, config, palace_path, seeded_kg):
         _patch_mcp_server(monkeypatch, config, seeded_kg)
-        from mempalace.mcp_server import tool_kg_query
+        from trimemo.mcp_server import tool_kg_query
 
         # Partial ISO dates are rejected: KG queries compare TEXT dates
         # lexicographically, so "2026-01-01" <= "2026" is False, which
@@ -245,7 +245,7 @@ class TestKGTools:
     def test_kg_add_accepts_datetime_valid_from(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         result = mcp_server.tool_kg_add(
             "Alice",
@@ -264,7 +264,7 @@ class TestKGTools:
     def test_kg_add_accepts_datetime_valid_to(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         result = mcp_server.tool_kg_add(
             "Alice",
@@ -292,7 +292,7 @@ class TestKGTools:
             valid_from="2026-05-06T14:00:00Z",
         )
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         result = mcp_server.tool_kg_query(
             "Alice",
@@ -309,7 +309,7 @@ class TestKGTools:
         self, monkeypatch, config, palace_path, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         kg.add_triple(
             "Alice",
@@ -327,7 +327,7 @@ class TestKGTools:
         self, monkeypatch, config, palace_path, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         kg.add_triple("Alice", "starts", "school", valid_from="2099-01-01")
         kg.add_triple("Alice", "lives_in", "Town", valid_from="2020-01-01")
@@ -342,7 +342,7 @@ class TestKGTools:
         self, monkeypatch, config, palace_path, kg
     ):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         kg.add_triple(
             "Alice",
@@ -375,7 +375,7 @@ class TestKGTools:
             valid_from="2026-05-06T14:00:00Z",
         )
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         result = mcp_server.tool_kg_invalidate(
             "Alice",
@@ -395,7 +395,7 @@ class TestKGTools:
     def test_kg_add_rejects_non_canonical_datetimes(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         invalid_values = [
             "2026-05-06T14:23:00+02:00",
@@ -422,7 +422,7 @@ class TestKGTools:
     ):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         invalid_values = [
             "2026-05-06T14:23:00+02:00",
@@ -453,7 +453,7 @@ class TestKGTools:
             valid_from="2026-05-06T14:00:00Z",
         )
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         invalid_values = [
             "2026-05-06T14:23:00+02:00",
@@ -478,7 +478,7 @@ class TestKGTools:
     def test_kg_add_rejects_timezone_offset_datetime(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         result = mcp_server.tool_kg_add(
             "Alice",
@@ -511,7 +511,7 @@ class TestKGLazyCache:
         env["HOME"] = str(tmp_path)
         env["USERPROFILE"] = str(tmp_path)
         result = subprocess.run(
-            [sys.executable, "-c", "import mempalace.mcp_server"],
+            [sys.executable, "-c", "import trimemo.mcp_server"],
             env=env,
             capture_output=True,
             text=True,
@@ -522,7 +522,7 @@ class TestKGLazyCache:
 
     def test_get_kg_returns_same_instance(self, tmp_path, monkeypatch):
         """Two calls with the same resolved path return the same KG."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_kg_by_path", {})
         monkeypatch.setattr(mcp_server, "_palace_flag_given", True)
@@ -535,7 +535,7 @@ class TestKGLazyCache:
 
     def test_get_kg_different_paths_different_instances(self, tmp_path, monkeypatch):
         """Different palace paths map to different KG instances."""
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         tmp_a = tmp_path / "a"
         tmp_b = tmp_path / "b"
@@ -559,7 +559,7 @@ class TestKGLazyCache:
         Rotating MEMPALACE_PALACE_PATH between MCP tool calls must route
         each call to the correct tenant's KG sqlite file.
         """
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         tmp_a = tmp_path / "tenant_a"
         tmp_b = tmp_path / "tenant_b"

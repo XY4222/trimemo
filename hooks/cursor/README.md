@@ -1,4 +1,4 @@
-# MemPalace Cursor IDE Hooks
+# TriMemo Cursor IDE Hooks
 
 Auto-save and session-recall hooks for the [Cursor](https://cursor.com) IDE,
 matching the behaviour of the existing Claude Code + Codex hooks at the repo
@@ -15,8 +15,8 @@ the published version at
 | File                                | Role                                                                |
 |-------------------------------------|---------------------------------------------------------------------|
 | `lib/common.sh`                     | Shared bash helpers (parse, log, counter, wing inference, kill switch). Sourced by all three hooks. |
-| `mempal_save_hook_cursor.sh`        | Cursor `stop` hook. Counts stop invocations per conversation, emits a `followup_message` every `SAVE_INTERVAL` (default 15) telling the agent to file the session into MemPalace. |
-| `mempal_precompact_hook_cursor.sh`  | Cursor `preCompact` hook. Runs `mempalace mine` synchronously on the transcript before compaction, then drops a `.pending` marker so the next stop forces a save nudge. |
+| `mempal_save_hook_cursor.sh`        | Cursor `stop` hook. Counts stop invocations per conversation, emits a `followup_message` every `SAVE_INTERVAL` (default 15) telling the agent to file the session into TriMemo. |
+| `mempal_precompact_hook_cursor.sh`  | Cursor `preCompact` hook. Runs `trimemo mine` synchronously on the transcript before compaction, then drops a `.pending` marker so the next stop forces a save nudge. |
 | `mempal_wake_hook_cursor.sh`        | Cursor `sessionStart` hook. Returns `additional_context` telling the agent to recall scoped to the wing inferred from the workspace root. Cursor-only — Claude Code has no equivalent. |
 | `install.sh`                        | Optional installer. Copies the scripts to `~/.mempalace/hooks/cursor/` and merges entries into `~/.cursor/hooks.json` (or `.cursor/hooks.json` for project scope). Supports `--dry-run` and `--uninstall`. |
 | `STDIN_SHAPE.md`                    | Reference. Per-event stdin / stdout schema with citations to the official Cursor docs. |
@@ -37,7 +37,7 @@ hooks/cursor/install.sh --scope user
 
 Pass `--scope project --target <repo>` to write `<repo>/.cursor/hooks.json` instead.
 The installer never auto-runs — it is a documented opt-in step. We do not
-modify your Cursor config on `pip install mempalace` because editor config
+modify your Cursor config on `pip install trimemo` because editor config
 is sacred and should never be touched without explicit consent.
 
 ## Manual install (no installer)
@@ -132,9 +132,9 @@ the full walkthrough with diagrams.
 ## Why the followup is on by default (Cursor-specific)
 
 Unlike the Claude Code hook — which is silent by default because its
-background `mempalace mine --mode convos` captures the verbatim transcript
+background `trimemo mine --mode convos` captures the verbatim transcript
 on its own — Cursor's transcript format is **undocumented** and
-`mempalace/normalize.py` has **no Cursor parser**. The background mine on
+`trimemo/normalize.py` has **no Cursor parser**. The background mine on
 the Cursor `stop`/`preCompact` hooks is therefore **best-effort only**: it
 does not yet yield clean verbatim conversation drawers.
 

@@ -1,19 +1,19 @@
 # Remote / Team Server
 
-Run MemPalace as a **central memory service** that a whole team connects to:
+Run TriMemo as a **central memory service** that a whole team connects to:
 one host stores the palace, does the embedding (optionally on a GPU), and
 serves MCP over HTTP. Every teammate's AI reads and writes the same shared
 memory instead of a palace on each laptop.
 
-This is built from three pieces that already ship in MemPalace:
+This is built from three pieces that already ship in TriMemo:
 
-- the **HTTP transport** for the MCP server (`mempalace-mcp --transport http`),
+- the **HTTP transport** for the MCP server (`trimemo-mcp --transport http`),
 - a **networked storage backend** ([Milvus / Zilliz Cloud](https://milvus.io/),
   [Qdrant](https://qdrant.tech/), or [Postgres + pgvector](/guide/configuration)),
 - optional **GPU embedding** on the server.
 
 ::: warning This is a deliberate step away from single-machine local-first
-By default MemPalace keeps everything on your own machine. A central server is
+By default TriMemo keeps everything on your own machine. A central server is
 still **your** infrastructure — no telemetry, nothing phones home — but your
 verbatim memory now lives on a server you operate and travels over your
 network. If you choose a managed backend such as Zilliz Cloud, that backend
@@ -21,14 +21,14 @@ also receives the vectors and text by design. Run every self-hosted component
 (Milvus, Qdrant, Postgres, the MCP host) on hardware you control, put it on a
 private network or VPN, and treat the bearer token and TLS setup below as
 mandatory, not optional. Embeddings are still produced locally on the server by
-MemPalace.
+TriMemo.
 :::
 
 ## Architecture
 
 ```
   Teammate A ─┐
-  Teammate B ─┤  MCP over HTTP        ┌─ mempalace-mcp --transport http
+  Teammate B ─┤  MCP over HTTP        ┌─ trimemo-mcp --transport http
   Teammate C ─┴──(bearer token, TLS)─▶│   (one host: embedding + GPU)
                                       └─────────────┬───────────────
                                                     │ vectors + verbatim text
@@ -46,10 +46,10 @@ one palace directory, so use a server URI for team mode.
 Install the optional Milvus driver on the server host:
 
 ```bash
-pip install mempalace[milvus]
+pip install trimemo[milvus]
 ```
 
-Point MemPalace at the shared Milvus endpoint:
+Point TriMemo at the shared Milvus endpoint:
 
 ```bash
 export MEMPALACE_BACKEND=milvus
@@ -57,7 +57,7 @@ export MEMPALACE_MILVUS_URI=https://your-cluster.api.region.zillizcloud.com
 export MEMPALACE_MILVUS_TOKEN=your-token
 ```
 
-Prefer Qdrant? It needs no extra Python package — MemPalace talks to its REST
+Prefer Qdrant? It needs no extra Python package — TriMemo talks to its REST
 API directly.
 
 Run Qdrant (Docker shown; use a managed/self-hosted instance you control):
@@ -68,7 +68,7 @@ docker run -d --name qdrant -p 6333:6333 \
   qdrant/qdrant
 ```
 
-Point MemPalace at it on the server host:
+Point TriMemo at it on the server host:
 
 ```bash
 export MEMPALACE_BACKEND=qdrant
@@ -90,10 +90,10 @@ export MEMPALACE_QDRANT_API_KEY=your-qdrant-api-key   # if your Qdrant requires 
 | `MEMPALACE_QDRANT_TIMEOUT` | backend default | REST request timeout (seconds) |
 
 The backend can also be set with `--backend milvus` (or `qdrant` /
-`pgvector`) on any `mempalace` / `mempalace-mcp` command, or with
+`pgvector`) on any `trimemo` / `trimemo-mcp` command, or with
 `"backend": "milvus"` in `config.json`.
 
-Prefer Postgres? Install `pip install mempalace[pgvector]`, point
+Prefer Postgres? Install `pip install trimemo[pgvector]`, point
 `MEMPALACE_BACKEND=pgvector` at a database with the `vector` extension, and
 the rest of this guide applies unchanged. If more than one machine talks to
 that database and they are meant to share one palace, set the same
@@ -108,25 +108,25 @@ Embedding is the heaviest step; running it on the server's GPU keeps recall
 fast for everyone. Install one acceleration extra and select the device:
 
 ```bash
-pip install mempalace[gpu]            # NVIDIA CUDA (onnxruntime-gpu)
+pip install trimemo[gpu]            # NVIDIA CUDA (onnxruntime-gpu)
 export MEMPALACE_EMBEDDING_DEVICE=cuda
 ```
 
-Other targets: `mempalace[dml]` + `MEMPALACE_EMBEDDING_DEVICE=dml` (DirectML,
-Windows AMD/Intel/NVIDIA), `mempalace[coreml]` + `=coreml` (Apple Neural
+Other targets: `trimemo[dml]` + `MEMPALACE_EMBEDDING_DEVICE=dml` (DirectML,
+Windows AMD/Intel/NVIDIA), `trimemo[coreml]` + `=coreml` (Apple Neural
 Engine), or `=auto` to pick the best available provider. CPU is the default
 and needs no extra.
 
 ## 3. Serve MCP over HTTP
 
-One command — `mempalace serve` — runs the server with secure defaults. On a
+One command — `trimemo serve` — runs the server with secure defaults. On a
 network-exposed (`0.0.0.0`) bind it **auto-generates a strong bearer token**
 (stored `0600` under `~/.mempalace/server/`, printed once), prints a
 ready-to-paste client config, and runs in the foreground so Docker/systemd own
 the lifecycle.
 
 ```bash
-mempalace serve --host 0.0.0.0 --port 8765 --backend milvus
+trimemo serve --host 0.0.0.0 --port 8765 --backend milvus
 ```
 
 Output includes the token and the exact client command. Useful flags:
@@ -155,8 +155,8 @@ TLS-terminating reverse proxy (nginx/Caddy/Traefik) — never expose plaintext
 `/mcp` beyond a trusted private network.
 :::
 
-The underlying server is `mempalace-mcp --transport http` (the same flags exist
-there if you'd rather wire the token/TLS yourself); `mempalace serve` is the
+The underlying server is `trimemo-mcp --transport http` (the same flags exist
+there if you'd rather wire the token/TLS yourself); `trimemo serve` is the
 turnkey wrapper over it.
 
 ## 4. Connect a client
@@ -165,7 +165,7 @@ Point each teammate's MCP client at the server's `/mcp` endpoint with the
 shared token. For Claude Code:
 
 ```bash
-claude mcp add --transport http mempalace https://memory.example.com/mcp \
+claude mcp add --transport http trimemo https://memory.example.com/mcp \
   --header "Authorization: Bearer $MEMPALACE_MCP_HTTP_TOKEN"
 ```
 
@@ -178,7 +178,7 @@ curl https://memory.example.com/statusz \
   -H "Authorization: Bearer $MEMPALACE_MCP_HTTP_TOKEN"
 ```
 
-Once connected, all of MemPalace's [MCP tools](/guide/mcp-integration) operate
+Once connected, all of TriMemo's [MCP tools](/guide/mcp-integration) operate
 against the shared palace — searches and saved memories are visible to the
 whole team.
 
@@ -191,7 +191,7 @@ messages between machines.
 
 ## Operating notes
 
-- **Mining** still happens via the CLI (`mempalace mine …`) on the server host
+- **Mining** still happens via the CLI (`trimemo mine …`) on the server host
   against the same backend, so the central palace stays populated. While the
   server is running it owns the palace's writer lease, so the CLI (and the
   save hooks, which spawn it) automatically detect the live server and hand
@@ -199,7 +199,7 @@ messages between machines.
   you — the server records its endpoint under `~/.mempalace/server/` at
   startup. Set `MEMPALACE_HUB_FORWARD=0` to force direct mines (they will be
   refused while the server holds the lease).
-- **One writer-lease per process**: a single `mempalace-mcp --transport http`
+- **One writer-lease per process**: a single `trimemo-mcp --transport http`
   process safely handles concurrent reads and writes. Don't point two server
   processes at the same backend collection.
 - **Health checks**: `GET /healthz` returns `200 ok` without a token, so it
@@ -232,7 +232,7 @@ messages between machines.
   ```bash
   MEMPALACE_MCP_HTTP_TOKEN="$(cat ~/.mempalace/server/<key>/token)" \
   MEMPALACE_MCP_EXTRA_ALLOWED_HOSTS="yourbox.your-tailnet.ts.net" \
-    mempalace serve --host 127.0.0.1 --port 8765
+    trimemo serve --host 127.0.0.1 --port 8765
   tailscale serve --bg --https=443 http://127.0.0.1:8765
   ```
 
@@ -248,7 +248,7 @@ messages between machines.
 ## One-command deployments
 
 The repo ships ready-to-edit deployment files under
-[`deploy/`](https://github.com/MemPalace/mempalace/tree/main/deploy):
+[`deploy/`](https://github.com/MemPalace/trimemo/tree/main/deploy):
 
 **Docker Compose (server + Qdrant):**
 
@@ -257,15 +257,15 @@ cp deploy/server.env.example deploy/.env      # set MEMPALACE_MCP_HTTP_TOKEN
 docker compose -f deploy/docker-compose.server.yml --env-file deploy/.env up -d
 ```
 
-This brings up a Qdrant container and a MemPalace server running
+This brings up a Qdrant container and a TriMemo server running
 `serve --host 0.0.0.0 --backend qdrant`, with a `/healthz` healthcheck and
-persistent volumes. Embeddings stay local to the MemPalace container.
+persistent volumes. Embeddings stay local to the TriMemo container.
 
 **systemd:**
 
-`deploy/mempalace-server.service` is a hardened unit template
+`deploy/trimemo-server.service` is a hardened unit template
 (`NoNewPrivileges`, `ProtectSystem=strict`, dedicated user) that runs
-`mempalace serve` with its config from `/etc/mempalace/server.env`. Install
+`trimemo serve` with its config from `/etc/trimemo/server.env`. Install
 steps are in the file's header comment.
 
 ## See also

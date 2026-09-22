@@ -6,7 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CANONICAL_SKILLS = REPO_ROOT / "skills"
 CLAUDE_SKILLS = REPO_ROOT / ".claude-plugin" / "skills"
-EXPECTED_SKILLS = {"mempalace", "mempalace-recall", "mempalace-task"}
+EXPECTED_SKILLS = {"trimemo", "trimemo-recall", "trimemo-task"}
 
 
 def test_claude_marketplace_bundles_canonical_skills_without_drift():

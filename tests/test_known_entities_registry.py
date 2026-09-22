@@ -14,7 +14,7 @@ import os
 
 import pytest
 
-from mempalace import miner
+from trimemo import miner
 
 
 @pytest.fixture
@@ -194,19 +194,19 @@ def test_populated_registry_improves_miner_recall(temp_registry):
     miner.add_to_known_entities(
         {
             "people": ["Julia Grib", "Kevin Heifner"],
-            "projects": ["hyperion-history", "mempalace"],
+            "projects": ["hyperion-history", "trimemo"],
         }
     )
 
     sample = (
-        "Met with Julia Grib yesterday about the mempalace release. "
+        "Met with Julia Grib yesterday about the trimemo release. "
         "Kevin Heifner pushed the hyperion-history fix."
     )
     result = miner._extract_entities_for_metadata(sample)
     tagged = set(result.split(";")) if result else set()
 
     # All four registered entities should land in the metadata string
-    for expected in ("Julia Grib", "Kevin Heifner", "hyperion-history", "mempalace"):
+    for expected in ("Julia Grib", "Kevin Heifner", "hyperion-history", "trimemo"):
         assert expected in tagged, f"expected '{expected}' in metadata {tagged!r}"
 
 
@@ -317,7 +317,7 @@ def test_non_dict_registry_is_preserved_beside_the_new_one(temp_registry):
 
 def test_registry_with_undecodable_bytes_does_not_raise(temp_registry):
     """A byte that is not valid UTF-8 used to leave ``UnicodeDecodeError``
-    out of this call, and ``mempalace init`` renders it as a traceback."""
+    out of this call, and ``trimemo init`` renders it as a traceback."""
     temp_registry.write_bytes(b'{"people": ["Alic\xffe Kern"]}')
     original = temp_registry.read_bytes()
 

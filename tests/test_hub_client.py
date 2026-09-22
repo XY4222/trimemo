@@ -2,7 +2,7 @@
 
 import json
 
-from mempalace import hub_client, server_registry
+from trimemo import hub_client, server_registry
 
 
 class _Response:

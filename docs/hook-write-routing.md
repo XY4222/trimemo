@@ -2,8 +2,8 @@
 
 > [!IMPORTANT]
 > This page documents unreleased hook write-routing behavior on `develop`.
-> MemPalace v3.6.0 does not consume `write_routing.hooks`; see the
-> [v3.6.0 write-routing policy](https://github.com/MemPalace/mempalace/blob/v3.6.0/docs/write-routing-policy.md#backward-compatibility)
+> TriMemo v3.6.0 does not consume `write_routing.hooks`; see the
+> [v3.6.0 write-routing policy](https://github.com/MemPalace/trimemo/blob/v3.6.0/docs/write-routing-policy.md#backward-compatibility)
 > for behavior available in that release.
 
 Hook-triggered writes use the shared write-routing policy introduced for the
@@ -43,7 +43,7 @@ Hooks use the daemon when it is already healthy.
 If the daemon is unavailable:
 
 - no in-process ChromaDB write runs;
-- no direct `mempalace mine` subprocess is started;
+- no direct `trimemo mine` subprocess is started;
 - no daemon is cold-started from the hook;
 - the hook log records the skipped operation;
 - the hook returns a visible `systemMessage`;
@@ -57,7 +57,7 @@ storage dependencies from a Stop or SessionEnd hook can exceed that budget.
 A supervised installation using `require` must start the daemon earlier, for
 example at login, plugin initialization, or session setup:
 
-    mempalace daemon start
+    trimemo daemon start
 
 SessionStart performs a fast health probe in `require` mode and warns early if
 the required daemon is unavailable.

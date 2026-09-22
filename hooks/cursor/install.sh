@@ -28,7 +28,7 @@
 #                          Default: full.
 #   --dry-run              Print the would-be JSON to stdout, do not write
 #                          and do not copy scripts.
-#   --uninstall            Remove MemPalace entries from the target
+#   --uninstall            Remove TriMemo entries from the target
 #                          hooks.json (preserves unrelated hooks).
 #                          Does NOT delete the installed scripts.
 #   -h, --help             Show this help and exit.
@@ -191,7 +191,7 @@ fi
 #   * tolerating a missing or empty hooks.json (starts from {})
 #   * preserving unrelated hook entries on install
 #   * preserving unrelated hook entries on uninstall
-#   * recognising MemPalace entries by basename in the `command` field
+#   * recognising TriMemo entries by basename in the `command` field
 #   * idempotent install (re-running does not duplicate entries)
 
 # mktemp portability: pass an explicit absolute template so we sidestep
@@ -229,7 +229,7 @@ wake_cmd = sys.argv[6]
 
 # Recognise our entries by basename. The three filenames below are
 # the unique product-of-our-naming convention; any entry whose command
-# ends in one of them is treated as a MemPalace entry on
+# ends in one of them is treated as a TriMemo entry on
 # install (so we replace rather than duplicate it) and on uninstall
 # (so we remove it without touching unrelated entries). Matching on
 # basename rather than a full-path substring lets users pick any
@@ -312,7 +312,7 @@ else:
         upsert("preCompact", {"command": precompact_cmd})
         upsert("sessionStart", {"command": wake_cmd})
 
-# Stable key order for the events MemPalace touches, then preserve
+# Stable key order for the events TriMemo touches, then preserve
 # any unrelated event names in their original order so future Cursor
 # events we don't know about yet still round-trip.
 known_order = [
@@ -392,7 +392,7 @@ printf '%s\n' "$NEW_JSON" > "$TMP_FILE"
 mv "$TMP_FILE" "$TARGET_FILE"
 
 if [ "$UNINSTALL" -eq 1 ]; then
-    printf 'install.sh: removed MemPalace entries from %s\n' "$TARGET_FILE" >&2
+    printf 'install.sh: removed TriMemo entries from %s\n' "$TARGET_FILE" >&2
 else
     printf 'install.sh: wrote %s\n' "$TARGET_FILE" >&2
     printf 'install.sh: restart Cursor (or wait for it to reload hooks.json)\n' >&2

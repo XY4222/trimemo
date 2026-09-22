@@ -1,12 +1,12 @@
 {
-  "name": "mempalace",
+  "name": "trimemo",
   "version": "3.10.0",
   "description": "Give your AI a memory — mine projects and conversations into a searchable palace. 44 MCP tools, auto-save hooks, and guided setup.",
   "author": {
     "name": "milla-jovovich"
   },
-  "homepage": "https://github.com/MemPalace/mempalace",
-  "repository": "https://github.com/MemPalace/mempalace",
+  "homepage": "https://github.com/MemPalace/trimemo",
+  "repository": "https://github.com/MemPalace/trimemo",
   "license": "MIT",
   "keywords": [
     "memory",
@@ -20,7 +20,7 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "MemPalace",
+    "displayName": "TriMemo",
     "shortDescription": "AI memory system for Codex",
     "longDescription": "Give your AI a persistent memory — mine projects and conversations into a searchable palace backed by ChromaDB, with 44 MCP tools, auto-save hooks, and guided skills.",
     "developerName": "milla-jovovich",
@@ -30,9 +30,9 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/MemPalace/mempalace",
-    "privacyPolicyURL": "https://github.com/MemPalace/mempalace",
-    "termsOfServiceURL": "https://github.com/MemPalace/mempalace",
+    "websiteURL": "https://github.com/MemPalace/trimemo",
+    "privacyPolicyURL": "https://github.com/MemPalace/trimemo",
+    "termsOfServiceURL": "https://github.com/MemPalace/trimemo",
     "defaultPrompt": [
       "Search my memories for recent decisions",
       "Mine this project into my memory palace",

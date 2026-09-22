@@ -20,7 +20,7 @@ from unittest import mock
 import pytest
 
 
-# ── Stub heavy deps so we can import mempalace modules in isolation ─────────
+# ── Stub heavy deps so we can import trimemo modules in isolation ─────────
 #
 # These names are only stubbed for the DURATION OF THIS MODULE's collection +
 # test run, via the autouse fixture below. Mutating sys.modules at import
@@ -30,10 +30,10 @@ import pytest
 # silently get our fake module instead, with no error and no obvious cause.
 # (Maintainer review on #1832.)
 _STUB_MODULE_NAMES = [
-    "mempalace.knowledge_graph",
-    "mempalace.searcher",
-    "mempalace.palace_graph",
-    "mempalace.config",
+    "trimemo.knowledge_graph",
+    "trimemo.searcher",
+    "trimemo.palace_graph",
+    "trimemo.config",
 ]
 
 
@@ -45,7 +45,7 @@ def _build_stub(name: str) -> types.ModuleType:
     m.find_tunnels = lambda *a, **kw: {}
     m.graph_stats = lambda *a, **kw: {}
     m.MempalaceConfig = lambda: types.SimpleNamespace(
-        palace_path="~/.mempalace/palace", collection_name="mempalace"
+        palace_path="~/.mempalace/palace", collection_name="trimemo"
     )
     return m
 
@@ -71,13 +71,13 @@ def _stub_heavy_deps(monkeypatch):
 # during this file's first import below and during every test.
 import numpy  # noqa: E402,F401
 
-from mempalace.backends.base import (  # noqa: E402
+from trimemo.backends.base import (  # noqa: E402
     BaseCollection,
     GetResult,
     PalaceRef,
 )
-from mempalace.backends import qdrant as qdrant_mod  # noqa: E402
-from mempalace.backends.qdrant import QdrantCollection, _QdrantConfig  # noqa: E402
+from trimemo.backends import qdrant as qdrant_mod  # noqa: E402
+from trimemo.backends.qdrant import QdrantCollection, _QdrantConfig  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +206,7 @@ def _make_qdrant_collection(monkeypatch, scroll_pages):
         client=client,
         config=config,
         palace=palace,
-        collection_name="mempalace",
+        collection_name="trimemo",
         remote_collection="mempalace_abc123_mempalace",
     )
     return col, call_log
@@ -544,7 +544,7 @@ class TestScrollPageSizeBump:
 # automatic link between the two. (Diagnosed during review on #1832 after
 # two successive ImportErrors chasing the stub graph -- see PR discussion.)
 #
-# Real source as of this writing (mempalace/mcp_server.py):
+# Real source as of this writing (trimemo/mcp_server.py):
 #
 #     def _fetch_all_metadata(col, where=None):
 #         get_all = getattr(col, "get_all_metadata", None)

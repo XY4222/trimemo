@@ -16,7 +16,7 @@ are preserved verbatim in the translated output.
 ⚠️  PRIVACY NOTE: The default model (`kimi-k2.6:cloud`) sends the prose to a
 remote Ollama-hosted endpoint. This is fine for the synthetic benchmark
 fixtures in this repo, but DO NOT run this script over real user data
-(diary entries, conversation transcripts, palace drawers). MemPalace is
+(diary entries, conversation transcripts, palace drawers). TriMemo is
 local-first by design — for real data, pass `--model` pointing to a
 locally-hosted model (e.g. `qwen3:4b-instruct-2507-q8_0`).
 """

@@ -24,7 +24,7 @@ REASON = "HNSW index holds 803 elements but sqlite has 820 embeddings"
 @pytest.fixture
 def diverged(monkeypatch):
     """A palace whose vector index is known-diverged, probe counted."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     probes = {"n": 0}
 
@@ -41,7 +41,7 @@ def diverged(monkeypatch):
 
 
 def test_vector_write_refused_while_index_diverged(diverged):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     err = mcp_server._mcp_diverged_index_refusal(req_id=7, tool_name="mempalace_add_drawer")
 
@@ -71,7 +71,7 @@ def test_vector_write_refused_while_index_diverged(diverged):
     ),
 )
 def test_every_vector_write_tool_is_gated(diverged, tool):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert tool in mcp_server._MUTATING_TOOLS, "the vector set must stay a subset"
     assert mcp_server._mcp_diverged_index_refusal(req_id=1, tool_name=tool) is not None
@@ -91,7 +91,7 @@ def test_every_vector_write_tool_is_gated(diverged, tool):
 def test_non_vector_writes_are_not_gated(diverged, tool):
     """The knowledge graph and hallways keep their own state — a broken HNSW
     segment has no say over them, and must not even cost them a probe."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert mcp_server._mcp_diverged_index_refusal(req_id=1, tool_name=tool) is None
     assert diverged["n"] == 0
@@ -99,13 +99,13 @@ def test_non_vector_writes_are_not_gated(diverged, tool):
 
 def test_read_tools_are_not_gated(diverged):
     """Reads have their own fallback (BM25); refusing them here would break it."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert mcp_server._mcp_diverged_index_refusal(req_id=1, tool_name="mempalace_search") is None
 
 
 def test_healthy_index_allows_the_write(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_refresh_vector_disabled_flag", lambda: None)
     monkeypatch.setattr(mcp_server, "_vector_disabled", False)
@@ -117,8 +117,8 @@ def test_healthy_index_allows_the_write(monkeypatch):
 
 def test_gate_re_probes_so_a_repair_un_gates_without_restart(diverged):
     """The gate must consult the probe on every call: a long-lived stdio server
-    has to notice `mempalace repair` finishing in another process."""
-    from mempalace import mcp_server
+    has to notice `trimemo repair` finishing in another process."""
+    from trimemo import mcp_server
 
     mcp_server._mcp_diverged_index_refusal(req_id=1, tool_name="mempalace_add_drawer")
     mcp_server._mcp_diverged_index_refusal(req_id=2, tool_name="mempalace_add_drawer")
@@ -129,7 +129,7 @@ def test_gate_re_probes_so_a_repair_un_gates_without_restart(diverged):
 def test_preflight_reports_divergence_ahead_of_the_peer_writer_lock(diverged, monkeypatch):
     """Both gates can be up at once — a peer holds the lease *because* this
     palace is wedged. The diverged verdict is the actionable one."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_mcp_read_only_refusal", lambda req_id, tool_name: None)
     monkeypatch.setattr(mcp_server, "_mcp_sqlite_integrity_refusal", lambda req_id, tool_name: None)
@@ -145,7 +145,7 @@ def test_preflight_reports_divergence_ahead_of_the_peer_writer_lock(diverged, mo
 
 
 def test_dispatch_refuses_before_the_handler_runs(diverged, monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_mcp_sqlite_integrity_refusal", lambda req_id, tool_name: None)
     monkeypatch.setattr(mcp_server, "_mcp_peer_writer_refusal", lambda req_id, tool_name: None)
@@ -173,7 +173,7 @@ def test_dispatch_refuses_before_the_handler_runs(diverged, monkeypatch):
 
 
 def test_stall_action_warns_once_then_stays_quiet():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert mcp_server._write_stall_action(59.0, 60.0, 0.0, False) is None
     assert mcp_server._write_stall_action(60.0, 60.0, 0.0, False) == "warn"
@@ -181,7 +181,7 @@ def test_stall_action_warns_once_then_stays_quiet():
 
 
 def test_stall_action_escalates_to_exit_when_opted_in():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert mcp_server._write_stall_action(299.0, 60.0, 300.0, True) is None
     assert mcp_server._write_stall_action(300.0, 60.0, 300.0, True) == "exit"
@@ -190,13 +190,13 @@ def test_stall_action_escalates_to_exit_when_opted_in():
 
 
 def test_stall_action_respects_disabled_thresholds():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     assert mcp_server._write_stall_action(10_000.0, 0.0, 0.0, False) is None
 
 
 def test_stall_secs_falls_back_on_garbage(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setenv(mcp_server._WRITE_STALL_WARN_ENV, "soon")
     assert mcp_server._write_stall_secs(mcp_server._WRITE_STALL_WARN_ENV, 60.0) == 60.0
@@ -209,7 +209,7 @@ def test_stall_secs_falls_back_on_garbage(monkeypatch):
 
 
 def test_stall_watch_registers_the_write_and_clears_it():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     with mcp_server._write_stall_watch("mempalace_add_drawer"):
         inflight = mcp_server._write_stall_inflight
@@ -223,7 +223,7 @@ def test_stall_watch_registers_the_write_and_clears_it():
 def test_stall_watch_clears_on_failure():
     """A raising handler must not leave a phantom write in flight — the next
     write would inherit its clock and trip the watchdog."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     with pytest.raises(RuntimeError):
         with mcp_server._write_stall_watch("mempalace_checkpoint"):
@@ -233,14 +233,14 @@ def test_stall_watch_clears_on_failure():
 
 
 def test_stall_watch_ignores_tools_that_never_reach_chromadb():
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     with mcp_server._write_stall_watch("mempalace_search"):
         assert mcp_server._write_stall_inflight is None
 
 
 def test_watchdog_thread_not_started_when_both_thresholds_are_zero(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setenv(mcp_server._WRITE_STALL_WARN_ENV, "0")
     monkeypatch.setenv(mcp_server._WRITE_STALL_EXIT_ENV, "0")

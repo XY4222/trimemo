@@ -197,7 +197,7 @@ python benchmarks/longmemeval_bench.py data/longmemeval_s_cleaned.json --mode hy
 ```bash
 # Setup
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 
 # Download data

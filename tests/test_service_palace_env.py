@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from mempalace import service
+from trimemo import service
 
 _ENV = "MEMPALACE_PALACE_PATH"
 

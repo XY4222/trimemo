@@ -10,8 +10,8 @@ import pytest
 
 from _chroma_palace_helper import make_minimal_chroma_sqlite, make_minimal_sqlite_exact_sqlite
 
-import mempalace.backends.sqlite_exact as sqlite_exact_module
-from mempalace.backends import (
+import trimemo.backends.sqlite_exact as sqlite_exact_module
+from trimemo.backends import (
     BackendMismatchError,
     CollectionNotInitializedError,
     DimensionMismatchError,
@@ -20,7 +20,7 @@ from mempalace.backends import (
     UnsupportedCapabilityError,
     available_backends,
 )
-from mempalace.backends.sqlite_exact import SQLiteExactBackend
+from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
 
 def _collection(tmp_path, name="mempalace_drawers", create=True):
@@ -485,8 +485,8 @@ def test_sqlite_exact_read_only_open_sees_active_writer_wal(tmp_path):
     try:
         reader_code = """
 import sys
-from mempalace.backends import PalaceRef
-from mempalace.backends.sqlite_exact import SQLiteExactBackend
+from trimemo.backends import PalaceRef
+from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
 backend = SQLiteExactBackend()
 palace = PalaceRef(id=sys.argv[1], local_path=sys.argv[1])
@@ -630,13 +630,13 @@ def test_sqlite_exact_immutable_reader_keeps_cache_on_partial_wal_sidecar(tmp_pa
 
 
 def test_sqlite_exact_direct_write_contends_with_palace_owner(tmp_path, monkeypatch):
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     backend, col = _collection(tmp_path)
     holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -670,7 +670,7 @@ def test_sqlite_exact_waiting_thread_reacquires_palace_lease(tmp_path, monkeypat
     released. An external process acquires the palace before B continues. B
     must contend again and refuse both ordinary writes and VACUUM.
     """
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     backend, col = _collection(tmp_path)
@@ -757,7 +757,7 @@ def test_sqlite_exact_waiting_thread_reacquires_palace_lease(tmp_path, monkeypat
 
         holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -793,8 +793,8 @@ with mine_palace_lock(sys.argv[1]):
 
 
 def test_palace_wrapper_embeds_for_sqlite_exact(tmp_path, monkeypatch):
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace.palace import get_collection
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo.palace import get_collection
 
     monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
     monkeypatch.setattr(
@@ -811,7 +811,7 @@ def test_palace_wrapper_embeds_for_sqlite_exact(tmp_path, monkeypatch):
 
 
 def test_backend_mismatch_protection(tmp_path, monkeypatch):
-    from mempalace.palace import get_collection
+    from trimemo.palace import get_collection
 
     make_minimal_chroma_sqlite(tmp_path)
     monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
@@ -821,7 +821,7 @@ def test_backend_mismatch_protection(tmp_path, monkeypatch):
 
 
 def test_mixed_backend_artifacts_are_rejected_even_when_chroma_selected(tmp_path, monkeypatch):
-    from mempalace.palace import resolve_backend_name
+    from trimemo.palace import resolve_backend_name
 
     make_minimal_chroma_sqlite(tmp_path)
     make_minimal_sqlite_exact_sqlite(tmp_path)
@@ -879,9 +879,9 @@ def test_sqlite_exact_exact_ranking_uses_cosine(tmp_path):
 
 
 def test_search_union_uses_sqlite_exact_lexical_search(tmp_path, monkeypatch):
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace.palace import get_collection
-    from mempalace.searcher import search_memories
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo.palace import get_collection
+    from trimemo.searcher import search_memories
 
     def fake_embed(texts):
         vectors = []
@@ -928,10 +928,10 @@ def test_search_union_uses_sqlite_exact_lexical_search(tmp_path, monkeypatch):
 
 
 def test_search_closets_use_lexical_not_vector_on_sqlite_exact(tmp_path, monkeypatch):
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace.backends.sqlite_exact import SQLiteExactCollection
-    from mempalace.palace import get_collection, get_closets_collection
-    from mempalace.searcher import search_memories
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo.backends.sqlite_exact import SQLiteExactCollection
+    from trimemo.palace import get_collection, get_closets_collection
+    from trimemo.searcher import search_memories
 
     monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
     monkeypatch.setattr(
@@ -975,7 +975,7 @@ def test_search_closets_use_lexical_not_vector_on_sqlite_exact(tmp_path, monkeyp
 
 
 def test_search_union_reports_unsupported_lexical_capability(monkeypatch, tmp_path):
-    import mempalace.searcher as searcher
+    import trimemo.searcher as searcher
 
     class NoLexicalCollection:
         def query(self, **_kwargs):
@@ -1007,7 +1007,7 @@ def test_search_union_reports_unsupported_lexical_capability(monkeypatch, tmp_pa
 
 
 def test_search_vector_disabled_fallback_is_chroma_only(tmp_path, monkeypatch):
-    from mempalace.searcher import search_memories
+    from trimemo.searcher import search_memories
 
     monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
 
@@ -1079,7 +1079,7 @@ def test_sqlite_exact_backend_advertises_supports_metadata_facets():
 def test_sqlite_exact_collection_exposes_backend(tmp_path):
     backend, col = _collection(tmp_path)
     assert col._backend is backend
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
 
     wrapped = EmbeddingCollection(col)
     assert wrapped._backend is backend
@@ -1276,7 +1276,7 @@ def test_sqlite_exact_query_cache_invalidates_after_external_handle_write(tmp_pa
 
 
 def test_sqlite_exact_wing_room_counts(tmp_path):
-    from mempalace.backends.sqlite_exact import sqlite_wing_room_counts
+    from trimemo.backends.sqlite_exact import sqlite_wing_room_counts
 
     _backend, col = _collection(tmp_path)
     col.add(
@@ -1313,7 +1313,7 @@ def test_sqlite_exact_get_metadatas_skips_document_and_embedding(tmp_path):
 
 
 def test_sqlite_exact_room_wing_hall_counts(tmp_path):
-    from mempalace.backends.sqlite_exact import sqlite_room_wing_hall_counts
+    from trimemo.backends.sqlite_exact import sqlite_room_wing_hall_counts
 
     _backend, col = _collection(tmp_path)
     col.add(
@@ -1334,7 +1334,7 @@ def test_sqlite_exact_room_wing_hall_counts(tmp_path):
 
 
 def test_sqlite_exact_locus_columns_and_index(tmp_path):
-    from mempalace.backends.sqlite_exact import _LOCUS_FIELDS, _LOCUS_INDEX
+    from trimemo.backends.sqlite_exact import _LOCUS_FIELDS, _LOCUS_INDEX
 
     _backend, col = _collection(tmp_path)
     col.add(
@@ -1344,7 +1344,7 @@ def test_sqlite_exact_locus_columns_and_index(tmp_path):
         embeddings=[[1.0, 0.0]],
     )
     conn = col._handle.conn
-    from mempalace.backends.sqlite_exact import _document_column_names
+    from trimemo.backends.sqlite_exact import _document_column_names
 
     cols = _document_column_names(conn)
     assert set(_LOCUS_FIELDS) <= cols
@@ -1376,7 +1376,7 @@ def test_sqlite_exact_equality_where_uses_locus_column(tmp_path):
 
 def test_sqlite_exact_migrates_locus_columns_on_existing_palace(tmp_path):
     import numpy as np
-    from mempalace.backends.sqlite_exact import (
+    from trimemo.backends.sqlite_exact import (
         _LOCUS_FIELDS,
         _LOCUS_INDEX,
         _SOURCE_FILE_INDEX,
@@ -1421,7 +1421,7 @@ def test_sqlite_exact_migrates_locus_columns_on_existing_palace(tmp_path):
 
     _backend, col = _collection(tmp_path, create=False)
     handle = col._handle.conn
-    from mempalace.backends.sqlite_exact import _document_column_names
+    from trimemo.backends.sqlite_exact import _document_column_names
 
     cols = _document_column_names(handle)
     assert set(_LOCUS_FIELDS) <= cols
@@ -1441,7 +1441,7 @@ def test_sqlite_exact_migrates_locus_columns_on_existing_palace(tmp_path):
         "notes",
         "db",
     )
-    from mempalace.backends.sqlite_exact import sqlite_wing_room_counts
+    from trimemo.backends.sqlite_exact import sqlite_wing_room_counts
 
     total, wings = sqlite_wing_room_counts(str(tmp_path), "mempalace_drawers")
     assert total == 1
@@ -1450,7 +1450,7 @@ def test_sqlite_exact_migrates_locus_columns_on_existing_palace(tmp_path):
 
 def test_sqlite_exact_source_file_index_used_for_equality_get(tmp_path):
     """The closet-enrichment source filter must use its expression index."""
-    from mempalace.backends.sqlite_exact import _SOURCE_FILE_INDEX
+    from trimemo.backends.sqlite_exact import _SOURCE_FILE_INDEX
 
     _backend, col = _collection(tmp_path)
     col.add(
@@ -1497,15 +1497,15 @@ def test_top_k_preserves_stable_cutoff_ties(tmp_path, k):
 def test_search_open_works_while_other_process_holds_writer_lease(
     tmp_path, monkeypatch, backend_name
 ):
-    from mempalace.searcher import _open_search_collection
-    from mempalace.palace import _open_collection_or_explain
+    from trimemo.searcher import _open_search_collection
+    from trimemo.palace import _open_collection_or_explain
 
     monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", backend_name)
     backend, col = _collection(tmp_path)
     col.add(ids=["a"], documents=["alpha"], embeddings=[[1.0, 0.0]])
     holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -1533,7 +1533,7 @@ with mine_palace_lock(sys.argv[1]):
 
 @pytest.mark.parametrize("backend_name", ["sqlite_exact", "rust_exact"])
 def test_read_only_cache_refreshes_after_completed_writer_cycle(tmp_path, backend_name):
-    from mempalace.backends import get_backend_class
+    from trimemo.backends import get_backend_class
 
     writer_backend, writer = _collection(tmp_path)
     writer.add(ids=["a"], documents=["alpha"], embeddings=[[1.0, 0.0]])
@@ -1548,7 +1548,7 @@ def test_read_only_cache_refreshes_after_completed_writer_cycle(tmp_path, backen
         assert first._handle.immutable
         code = """
 import sys
-from mempalace.backends.sqlite_exact import SQLiteExactBackend
+from trimemo.backends.sqlite_exact import SQLiteExactBackend
 b = SQLiteExactBackend()
 c = b.get_collection(sys.argv[1], "mempalace_drawers", create=False)
 c.add(ids=["b"], documents=["beta"], embeddings=[[0.0, 1.0]])
@@ -1576,8 +1576,8 @@ b.close()
 def test_legacy_schema_search_is_read_only(tmp_path, monkeypatch, backend_name, dimension_column):
     import json
     import struct
-    from mempalace.searcher import _open_search_collection
-    from mempalace.palace import get_backend
+    from trimemo.searcher import _open_search_collection
+    from trimemo.palace import get_backend
 
     db_path = tmp_path / "sqlite_exact.sqlite3"
     with sqlite3.connect(db_path) as conn:
@@ -1600,7 +1600,7 @@ INSERT INTO collections VALUES(1, 'mempalace_drawers');
     # Any attempted preflight migration would need this lease and fail.
     holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -1633,9 +1633,9 @@ with mine_palace_lock(sys.argv[1]):
 
 @pytest.mark.parametrize("backend_name", ["sqlite_exact", "rust_exact"])
 def test_hybrid_search_keeps_closet_boost_under_writer_lease(tmp_path, monkeypatch, backend_name):
-    from mempalace.backends import get_backend
-    from mempalace.searcher import search_memories
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
+    from trimemo.backends import get_backend
+    from trimemo.searcher import search_memories
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
 
     backend, drawers = _collection(tmp_path)
     closets = backend.get_collection(str(tmp_path), "mempalace_closets", create=True)
@@ -1651,7 +1651,7 @@ def test_hybrid_search_keeps_closet_boost_under_writer_lease(tmp_path, monkeypat
     )
     holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -1676,8 +1676,8 @@ with mine_palace_lock(sys.argv[1]):
 
 @pytest.mark.parametrize("backend_name", ["sqlite_exact", "rust_exact"])
 def test_retired_reader_wrappers_reconnect_but_explicit_close_stays_closed(tmp_path, backend_name):
-    from mempalace.backends import get_backend
-    from mempalace.backends.base import BackendClosedError
+    from trimemo.backends import get_backend
+    from trimemo.backends.base import BackendClosedError
 
     backend = type(get_backend(backend_name))()
     peer = SQLiteExactBackend()
@@ -1725,7 +1725,7 @@ def test_retired_reader_wrappers_reconnect_but_explicit_close_stays_closed(tmp_p
 def test_exact_query_retries_entire_batch_across_all_engines(
     tmp_path, monkeypatch, backend_name, operation, boundary
 ):
-    from mempalace.backends.rust_exact import RustExactBackend, _NativeVectorIndex
+    from trimemo.backends.rust_exact import RustExactBackend, _NativeVectorIndex
 
     backend = SQLiteExactBackend() if backend_name == "sqlite_exact" else RustExactBackend()
     peer = SQLiteExactBackend()

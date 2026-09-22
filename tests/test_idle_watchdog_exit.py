@@ -19,7 +19,7 @@ import sys
 import threading
 import time
 
-import mempalace.mcp_server as mcp
+import trimemo.mcp_server as mcp
 
 
 def test_the_watchdog_exit_runs_registered_cleanup_before_exiting(monkeypatch):

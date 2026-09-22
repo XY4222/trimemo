@@ -3,7 +3,7 @@
 import json
 import os
 
-from mempalace.config import MempalaceConfig
+from trimemo.config import MempalaceConfig
 
 
 def test_config_bad_json(tmp_path):

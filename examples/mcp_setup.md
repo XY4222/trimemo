@@ -5,18 +5,18 @@
 Run the MCP server:
 
 ```bash
-mempalace-mcp
+trimemo-mcp
 ```
 
 Or add it to Claude Code:
 
 ```bash
-claude mcp add mempalace -- mempalace-mcp
+claude mcp add trimemo -- trimemo-mcp
 ```
 
 ## Available Tools
 
-The server exposes the full MemPalace MCP toolset. Common entry points include:
+The server exposes the full TriMemo MCP toolset. Common entry points include:
 
 - **mempalace_status** — palace stats (wings, rooms, drawer counts)
 - **mempalace_search** — semantic search across all memories

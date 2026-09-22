@@ -30,7 +30,7 @@ candidates:
     tier: 1
     notes: "Higher precision comparator for the q4_K_M baseline."
 
-  # Pure reasoning variants are excluded by policy. MemPalace
+  # Pure reasoning variants are excluded by policy. TriMemo
   # classification tasks always run with thinking disabled
   # (see benchmarks/model_eval/runner.py and the project memory
   # "no reasoning models for classification"). To benchmark a

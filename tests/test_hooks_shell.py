@@ -4,12 +4,12 @@ Integration tests for the legacy ``.sh`` hook scripts.
 The shell hooks do their own Python resolution (unlike the Python
 ``hooks_cli.py`` which uses ``sys.executable`` — trivially correct).
 GUI-launched harnesses on macOS provide a minimal PATH that often lacks
-the Python where ``mempalace`` is installed, so the shell path needs to:
+the Python where ``trimemo`` is installed, so the shell path needs to:
 
   1. honour ``$MEMPAL_PYTHON`` as an explicit user override;
   2. fall back to ``$(command -v python3)`` / bare ``python3``;
   3. *never* crash the hook when the resolved interpreter can't import
-     mempalace — log and skip the auto-ingest instead, so Claude Code
+     trimemo — log and skip the auto-ingest instead, so Claude Code
      doesn't see a non-zero exit from its Stop hook.
 
 These regressions matter because every failure mode they catch produced
@@ -47,7 +47,7 @@ def _write_fake_python(
 ) -> Path:
     """Create a python3 shim that proxies to the real interpreter so
     the hook's JSON-parsing calls still work, but fails ``-c 'import
-    mempalace'`` / ``-m mempalace`` when ``can_import_mempalace`` is
+    trimemo'`` / ``-m trimemo`` when ``can_import_mempalace`` is
     False.
 
     Every invocation appends the shim name to ``marker_file`` so tests
@@ -58,18 +58,18 @@ def _write_fake_python(
     marker = str(marker_file) if marker_file is not None else ""
     shim_src = f"""#!/bin/bash
 # Fake python3 shim: proxy to the real interpreter, drop a marker,
-# and simulate a missing mempalace install when configured that way.
+# and simulate a missing trimemo install when configured that way.
 MARKER_FILE="{marker}"
 if [ -n "$MARKER_FILE" ]; then
     echo "{path.name}" >> "$MARKER_FILE"
 fi
 CAN_IMPORT={"1" if can_import_mempalace else "0"}
-# Simulate the "mempalace is not installed in this interpreter" case.
+# Simulate the "trimemo is not installed in this interpreter" case.
 if [ "$CAN_IMPORT" = "0" ]; then
-    if [ "$1" = "-c" ] && echo "$2" | grep -q "import mempalace"; then
+    if [ "$1" = "-c" ] && echo "$2" | grep -q "import trimemo"; then
         exit 1
     fi
-    if [ "$1" = "-m" ] && [ "$2" = "mempalace" ]; then
+    if [ "$1" = "-m" ] && [ "$2" = "trimemo" ]; then
         exit 1
     fi
 fi
@@ -179,7 +179,7 @@ class TestMempalPythonOverride:
 def _write_recording_mempalace(
     path: Path, args_file: Path, *, sleep_secs: float = 0.0, done_file: Path | None = None
 ) -> Path:
-    """A fake ``mempalace`` that consumes stdin, optionally sleeps, then records
+    """A fake ``trimemo`` that consumes stdin, optionally sleeps, then records
     its argv to ``args_file`` (and touches ``done_file``). Lets a test observe a
     *backgrounded* dispatch after the wrapper's foreground has already returned.
     """
@@ -213,7 +213,7 @@ class TestSessionEndWrapper:
         args_file = tmp_path / "args.log"
         done_file = tmp_path / "worker.done"
         fake = _write_recording_mempalace(
-            tmp_path / "mempalace", args_file, sleep_secs=2.0, done_file=done_file
+            tmp_path / "trimemo", args_file, sleep_secs=2.0, done_file=done_file
         )
         t0 = time.monotonic()
         result = _run_hook(
@@ -238,7 +238,7 @@ class TestSessionEndWrapper:
         shim.write_text(
             f"""#!/bin/bash
 if [ "$1" = "-c" ]; then exit 0; fi
-if [ "$1" = "-m" ] && [ "$2" = "mempalace" ]; then
+if [ "$1" = "-m" ] && [ "$2" = "trimemo" ]; then
   shift 2
   cat >/dev/null
   printf '%s' "$*" > "{args_file}"
@@ -266,7 +266,7 @@ exit 1
 
     def test_harness_override_is_forwarded(self, tmp_path):
         args_file = tmp_path / "args.log"
-        fake = _write_recording_mempalace(tmp_path / "mempalace", args_file)
+        fake = _write_recording_mempalace(tmp_path / "trimemo", args_file)
         result = _run_hook(
             SESSION_END_HOOK,
             {"session_id": "abc", "transcript_path": ""},
@@ -283,7 +283,7 @@ class TestPluginSessionEndWrapper:
         args_file = tmp_path / "args.log"
         done_file = tmp_path / "worker.done"
         fake = _write_recording_mempalace(
-            tmp_path / "mempalace", args_file, sleep_secs=2.0, done_file=done_file
+            tmp_path / "trimemo", args_file, sleep_secs=2.0, done_file=done_file
         )
         t0 = time.monotonic()
         result = _run_hook(

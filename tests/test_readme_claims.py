@@ -20,7 +20,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-MEMPALACE_PKG = REPO_ROOT / "mempalace"
+MEMPALACE_PKG = REPO_ROOT / "trimemo"
 README_PATH = REPO_ROOT / "README.md"
 MCP_TOOLS_DOC_PATH = REPO_ROOT / "website" / "reference" / "mcp-tools.md"
 MODULES_DOC_PATH = REPO_ROOT / "website" / "reference" / "modules.md"
@@ -106,7 +106,7 @@ class TestReadmeToolsExistInCode:
     def test_every_readme_tool_exists_in_tools_dict(self):
         """Claim: the MCP tools reference (website/reference/mcp-tools.md)
         lists tools like mempalace_get_aaak_spec. Each one must actually be
-        registered in the TOOLS dict in mempalace/mcp_server.py.
+        registered in the TOOLS dict in trimemo/mcp_server.py.
 
         Pre-#875 this parsed the tool table that lived in README.md; that
         table has moved to the website docs and README now links out.
@@ -167,8 +167,8 @@ class TestClosetsExist:
         )
 
     def test_closets_importable(self):
-        """get_closets_collection should be importable from mempalace.palace."""
-        from mempalace.palace import get_closets_collection
+        """get_closets_collection should be importable from trimemo.palace."""
+        from trimemo.palace import get_closets_collection
 
         assert callable(get_closets_collection)
 
@@ -269,8 +269,8 @@ class TestStripNoise:
         )
 
     def test_strip_noise_importable(self):
-        """strip_noise should be importable from mempalace.normalize."""
-        from mempalace.normalize import strip_noise
+        """strip_noise should be importable from trimemo.normalize."""
+        from trimemo.normalize import strip_noise
 
         assert callable(strip_noise)
 
@@ -285,20 +285,20 @@ class TestDiaryIngest:
 
     def test_diary_ingest_module_exists(self):
         """Claim: diary_ingest.py is a shipped module.
-        File must exist at mempalace/diary_ingest.py."""
+        File must exist at trimemo/diary_ingest.py."""
         path = MEMPALACE_PKG / "diary_ingest.py"
         assert path.is_file(), (
-            "mempalace/diary_ingest.py does not exist. "
+            "trimemo/diary_ingest.py does not exist. "
             "README describes diary ingest but the module is missing (still in an unmerged PR?)."
         )
 
     def test_diary_ingest_importable(self):
         """diary_ingest should be importable."""
         try:
-            importlib.import_module("mempalace.diary_ingest")
+            importlib.import_module("trimemo.diary_ingest")
         except ImportError:
             pytest.fail(
-                "mempalace.diary_ingest is not importable. Module must exist and import cleanly."
+                "trimemo.diary_ingest is not importable. Module must exist and import cleanly."
             )
 
 
@@ -312,20 +312,20 @@ class TestFactChecker:
 
     def test_fact_checker_module_exists(self):
         """Claim: contradiction detection is shipped.
-        fact_checker.py must exist at mempalace/fact_checker.py."""
+        fact_checker.py must exist at trimemo/fact_checker.py."""
         path = MEMPALACE_PKG / "fact_checker.py"
         assert path.is_file(), (
-            "mempalace/fact_checker.py does not exist. "
+            "trimemo/fact_checker.py does not exist. "
             "README describes contradiction detection but the module is missing."
         )
 
     def test_fact_checker_importable(self):
         """fact_checker should be importable."""
         try:
-            importlib.import_module("mempalace.fact_checker")
+            importlib.import_module("trimemo.fact_checker")
         except ImportError:
             pytest.fail(
-                "mempalace.fact_checker is not importable. Module must exist and import cleanly."
+                "trimemo.fact_checker is not importable. Module must exist and import cleanly."
             )
 
 
@@ -359,7 +359,7 @@ class TestTunnelFunctions:
 
     def test_tunnel_functions_importable(self):
         """find_tunnels, traverse, graph_stats should be importable."""
-        from mempalace.palace_graph import find_tunnels, traverse, graph_stats
+        from trimemo.palace_graph import find_tunnels, traverse, graph_stats
 
         assert callable(find_tunnels)
         assert callable(traverse)
@@ -376,20 +376,20 @@ class TestClosetLLM:
 
     def test_closet_llm_module_exists(self):
         """Claim: LLM-based closet regen is shipped.
-        closet_llm.py must exist at mempalace/closet_llm.py."""
+        closet_llm.py must exist at trimemo/closet_llm.py."""
         path = MEMPALACE_PKG / "closet_llm.py"
         assert path.is_file(), (
-            "mempalace/closet_llm.py does not exist. "
+            "trimemo/closet_llm.py does not exist. "
             "README describes LLM closet regeneration but the module is missing."
         )
 
     def test_closet_llm_importable(self):
         """closet_llm should be importable."""
         try:
-            importlib.import_module("mempalace.closet_llm")
+            importlib.import_module("trimemo.closet_llm")
         except ImportError:
             pytest.fail(
-                "mempalace.closet_llm is not importable. Module must exist and import cleanly."
+                "trimemo.closet_llm is not importable. Module must exist and import cleanly."
             )
 
 
@@ -411,8 +411,8 @@ class TestMineLock:
         )
 
     def test_mine_lock_importable(self):
-        """mine_lock should be importable from mempalace.palace."""
-        from mempalace.palace import mine_lock
+        """mine_lock should be importable from trimemo.palace."""
+        from trimemo.palace import mine_lock
 
         assert callable(mine_lock)
 
@@ -615,7 +615,7 @@ class TestBackendAbstraction:
         backends/base.py must define an abstract base class."""
         path = MEMPALACE_PKG / "backends" / "base.py"
         assert path.is_file(), (
-            "mempalace/backends/base.py does not exist. Backend abstraction layer is missing."
+            "trimemo/backends/base.py does not exist. Backend abstraction layer is missing."
         )
         src = _read(path)
         assert "ABC" in src or "abstractmethod" in src, (
@@ -626,7 +626,7 @@ class TestBackendAbstraction:
         """Claim: ChromaDB backend implementation.
         backends/chroma.py must exist and subclass the base."""
         path = MEMPALACE_PKG / "backends" / "chroma.py"
-        assert path.is_file(), "mempalace/backends/chroma.py does not exist."
+        assert path.is_file(), "trimemo/backends/chroma.py does not exist."
         src = _read(path)
         assert "BaseCollection" in src or "base" in src, (
             "backends/chroma.py does not reference the base class."
@@ -634,8 +634,8 @@ class TestBackendAbstraction:
 
     def test_backends_importable(self):
         """Both backend modules should be importable."""
-        from mempalace.backends.base import BaseCollection
-        from mempalace.backends.chroma import ChromaBackend
+        from trimemo.backends.base import BaseCollection
+        from trimemo.backends.chroma import ChromaBackend
 
         assert BaseCollection is not None
         assert ChromaBackend is not None
@@ -652,7 +652,7 @@ class TestI18n:
     def test_i18n_directory_exists(self):
         """i18n directory must exist."""
         path = MEMPALACE_PKG / "i18n"
-        assert path.is_dir(), "mempalace/i18n/ directory does not exist."
+        assert path.is_dir(), "trimemo/i18n/ directory does not exist."
 
     def test_at_least_8_language_files(self):
         """Claim: 8 languages supported.
@@ -668,7 +668,7 @@ class TestI18n:
         """en.json must exist as the baseline language file."""
         path = MEMPALACE_PKG / "i18n" / "en.json"
         assert path.is_file(), (
-            "mempalace/i18n/en.json does not exist. English baseline is required."
+            "trimemo/i18n/en.json does not exist. English baseline is required."
         )
 
 

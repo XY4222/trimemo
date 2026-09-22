@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-benchmarks/test_ninfer_qwen27b.py — Evaluation of qwen3.8-27b-nvfp4 on MemPalace.
+benchmarks/test_ninfer_qwen27b.py — Evaluation of qwen3.8-27b-nvfp4 on TriMemo.
 
 Target endpoint: http://x870e-9950x3d:8010/v1
 Model: qwen3.8-27b-nvfp4
@@ -26,17 +26,17 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 
-from mempalace.config import MempalaceConfig
-from mempalace.knowledge_graph import KnowledgeGraph
-from mempalace.logstream import Logstream
-from mempalace import mcp_server, mcp_light_server
-from mempalace.mcp_light_server import (
+from trimemo.config import MempalaceConfig
+from trimemo.knowledge_graph import KnowledgeGraph
+from trimemo.logstream import Logstream
+from trimemo import mcp_server, mcp_light_server
+from trimemo.mcp_light_server import (
     LIGHT_TOOLS,
     tool_palace_query,
     tool_palace_exec,
     tool_palace_coordinate,
 )
-from mempalace.palace_graph import create_tunnel, invalidate_graph_cache
+from trimemo.palace_graph import create_tunnel, invalidate_graph_cache
 
 API_URL = os.environ.get("NINFER_API_URL", "http://x870e-9950x3d:8010/v1/chat/completions")
 API_KEY_PATH = Path("P:/models/ninfer-api-key.txt")
@@ -105,7 +105,7 @@ def run_routine_single_test(
             for name, t in LIGHT_TOOLS.items()
         ]
         sys_prompt = (
-            "You are an AI assistant with access to MemPalace tools: palace_query (for searching/reading/graph/stats/status), "
+            "You are an AI assistant with access to TriMemo tools: palace_query (for searching/reading/graph/stats/status), "
             "palace_exec (for writing/adding drawers/KG/tunnels), and palace_coordinate (for multi-agent tasks/events). "
             "Always call the appropriate tool."
         )
@@ -122,7 +122,7 @@ def run_routine_single_test(
             }
             for name, t in LEGACY_TOOLS.items()
         ]
-        sys_prompt = "You are an AI assistant with access to MemPalace MCP tools. Call the appropriate tool."
+        sys_prompt = "You are an AI assistant with access to TriMemo MCP tools. Call the appropriate tool."
 
     messages = [
         {"role": "system", "content": sys_prompt},
@@ -283,7 +283,7 @@ def run_stress_single_test(
     ]
 
     system_prompt = (
-        "You are an expert clinical and private memory AI assistant connected to a MemPalace database. "
+        "You are an expert clinical and private memory AI assistant connected to a TriMemo database. "
         "Always query the palace using palace_query or mutate using palace_exec. Never hallucinate facts. "
         "Always respect temporal validity (ignore obsolete superseded facts), check allergies before medications, "
         "and isolate the exact patient ID. If a question requires cross-referencing patient records and guidelines, "

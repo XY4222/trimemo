@@ -24,7 +24,7 @@ def _restore_sqlite_integrity_globals():
     fail. They are written as a group by one function, so they are restored as
     a group here.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     names = (
         "_sqlite_integrity_checked",
@@ -41,7 +41,7 @@ def _restore_sqlite_integrity_globals():
 
 
 def test_peer_writer_guard_refuses_mutating_tool_before_handler(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     called = {"value": False}
 
@@ -94,7 +94,7 @@ def test_peer_writer_guard_refuses_mutating_tool_before_handler(monkeypatch):
 
 
 def test_peer_writer_guard_does_not_gate_read_tool(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     def forbidden_lock():
         raise AssertionError("read tools should not acquire the peer-writer lock")
@@ -129,7 +129,7 @@ def test_read_only_refuses_exactly_the_refused_set(monkeypatch):
     renamed or removed while the set still lists it would gate nothing, and the
     two sides would stop matching.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_READ_ONLY", True)
 
@@ -157,7 +157,7 @@ def test_read_only_refuses_every_daemon_write_tool():
     calls a write while read-only serves it is the exact gap this fixes, and
     mempalace_hook_settings was that tool.
     """
-    from mempalace import mcp_server, service
+    from trimemo import mcp_server, service
 
     assert service.WRITE_TOOLS <= mcp_server._READ_ONLY_REFUSED_TOOLS
     assert "mempalace_hook_settings" in service.WRITE_TOOLS
@@ -172,7 +172,7 @@ def test_peer_writer_guard_does_not_gate_hook_settings(monkeypatch):
     _MUTATING_TOOLS, a peer holding the lease would refuse it with -32001,
     including the no-argument form that only reads the current settings.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     def forbidden_lock():
         raise AssertionError("hook_settings should not acquire the peer-writer lock")
@@ -202,7 +202,7 @@ def test_peer_writer_guard_does_not_gate_hook_settings(monkeypatch):
 
 
 def test_status_tool_does_not_acquire_peer_writer_lock(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     def forbidden_lock():
         raise AssertionError("status should not acquire the peer-writer lock")
@@ -223,7 +223,7 @@ def test_status_tool_does_not_acquire_peer_writer_lock(monkeypatch):
 
 
 def test_peer_writer_lock_setup_failure_retries_and_recovers(monkeypatch):
-    from mempalace import mcp_server, palace
+    from trimemo import mcp_server, palace
 
     class _DummyLock:
         def __enter__(self):
@@ -263,7 +263,7 @@ def test_peer_writer_lock_setup_failure_retries_and_recovers(monkeypatch):
 
 
 def test_peer_writer_override_cannot_bypass_local_backend_lock(monkeypatch):
-    from mempalace import mcp_server, palace
+    from trimemo import mcp_server, palace
 
     class _DummyLock:
         def __enter__(self):
@@ -294,7 +294,7 @@ def test_peer_writer_override_cannot_bypass_local_backend_lock(monkeypatch):
 
 
 def test_peer_writer_override_remains_available_for_remote_backend(monkeypatch):
-    from mempalace import mcp_server, palace
+    from trimemo import mcp_server, palace
 
     monkeypatch.setenv(mcp_server._MCP_ALLOW_PEER_WRITER_ENV, "1")
     monkeypatch.setattr(palace, "resolve_backend_name", lambda path: "qdrant")
@@ -314,7 +314,7 @@ def test_peer_writer_override_remains_available_for_remote_backend(monkeypatch):
 def test_peer_writer_readonly_self_heals_after_peer_exits(monkeypatch):
     """A server that came up read-only must retry the flock and promote itself
     to writer once the peer holding the lease exits — no restart required."""
-    from mempalace import mcp_server, palace
+    from trimemo import mcp_server, palace
 
     class _DummyLock:
         def __enter__(self):
@@ -356,7 +356,7 @@ def test_peer_writer_readonly_self_heals_after_peer_exits(monkeypatch):
 
 
 def test_sqlite_integrity_gate_refuses_non_status_tool(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
     monkeypatch.setattr(
@@ -384,7 +384,7 @@ def test_sqlite_integrity_gate_refuses_non_status_tool(monkeypatch):
 def test_sqlite_integrity_status_surfaces_payload_without_chroma(monkeypatch):
     import json
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
     monkeypatch.setattr(
@@ -424,7 +424,7 @@ def test_sqlite_integrity_payload_not_applicable_on_non_chroma_backend(monkeypat
     Before the fix the payload reported ``checked=True``/``ok=True`` and a
     ``chroma.sqlite3`` path that does not exist for the active backend.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_selected_backend_name", lambda: "qdrant")
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
@@ -453,7 +453,7 @@ def test_a_recorded_chroma_reason_does_not_speak_for_another_backend(monkeypatch
     running. Only the order of the two questions decides this, so nothing about
     the payload's shape catches it.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_selected_backend_name", lambda: "qdrant")
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
@@ -485,7 +485,7 @@ def test_sqlite_integrity_payload_reports_no_verdict_when_the_database_is_absent
     was never created therefore still answered ``checked``/``ok`` true, stating
     a quick_check that never ran.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(
         type(mcp_server._config), "palace_path", property(lambda self: str(tmp_path))
@@ -513,7 +513,7 @@ def test_sqlite_integrity_payload_reports_no_verdict_when_the_database_is_absent
 
 def test_refresh_sqlite_integrity_status_records_absence_not_a_clean_verdict(monkeypatch, tmp_path):
     """The palace directory exists and holds no database: no verdict, no errors."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(
         type(mcp_server._config), "palace_path", property(lambda self: str(tmp_path))
@@ -543,7 +543,7 @@ def test_refresh_sqlite_integrity_status_clears_absence_once_a_database_exists(
     The probe is the real one, against a real minimal database, so the clearing
     is observed rather than arranged.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     make_minimal_chroma_sqlite(tmp_path)
     # The payload call below resolves the backend for real, and resolution
@@ -586,7 +586,7 @@ def test_refresh_sqlite_integrity_status_clears_absence_on_the_exits_that_never_
     is why it matters, since ``_sqlite_integrity_payload`` would publish a kept
     reason there while naming no palace at all.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(type(mcp_server._config), "palace_path", property(lambda self: palace_path))
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: is_chroma)
@@ -622,7 +622,7 @@ def test_absence_reason_is_written_first_entering_and_last_leaving():
     import ast
     import inspect
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     tree = ast.parse(inspect.getsource(mcp_server._refresh_sqlite_integrity_status_locked))
 
@@ -672,7 +672,7 @@ def test_sqlite_integrity_payload_reports_unknown_when_backend_unresolvable(monk
     """#1931: if backend resolution raises, status still must not claim an
     integrity pass; it reports not-applicable for an unknown backend.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     def _boom():
         raise RuntimeError("backend registry unavailable")
@@ -694,7 +694,7 @@ def test_sqlite_integrity_payload_full_shape_on_chroma_backend(monkeypatch):
     the full integrity payload; the not-applicable branch must not swallow the
     chroma path.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_selected_backend_name", lambda: "chroma")
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
@@ -725,7 +725,7 @@ def test_sqlite_integrity_payload_names_the_sqlite_build(monkeypatch):
     is a property of the process, not of the backend, and the shapes are
     deliberately kept parallel so a client can read it unconditionally.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     monkeypatch.setattr(mcp_server, "_selected_backend_name", lambda: "chroma")
     monkeypatch.setattr(mcp_server, "_sqlite_integrity_checked", True)
@@ -759,7 +759,7 @@ def test_sqlite_integrity_payload_names_the_sqlite_build(monkeypatch):
 
 
 def test_sqlite_integrity_reconnect_allowed_when_corrupt(monkeypatch):
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     called = {"value": False}
 
@@ -798,7 +798,7 @@ def test_sqlite_integrity_reconnect_allowed_when_corrupt(monkeypatch):
 
 
 def test_refresh_sqlite_integrity_status_records_quick_check_errors(monkeypatch, tmp_path):
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     # The database path resolves: the probe reports a verdict wherever the file
     # is not provably absent, and this test is about the verdict's contents.
@@ -832,7 +832,7 @@ def test_refresh_sqlite_integrity_status_records_quick_check_errors(monkeypatch,
 
 def test_refresh_sqlite_integrity_status_skips_oversized_db(monkeypatch, tmp_path):
     """Oversized chroma.sqlite3 must NOT run the O(size) startup quick_check."""
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * (2 * 1024 * 1024))  # 2 MB
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -881,7 +881,7 @@ def test_sqlite_integrity_payload_reports_no_verdict_when_probe_was_skipped(monk
     the default limit, so this is the shape its operator would actually see.
     Reuses the not-applicable shape #1931 introduced for the same reason.
     """
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * (2 * 1024 * 1024))
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -929,7 +929,7 @@ def test_skip_reason_states_a_size_that_exceeds_the_limit(monkeypatch, tmp_path)
     reading it has no way to see why the probe was skipped. The limit is parsed
     as a float, so a sub-megabyte one produced "0 MB, over the 0 MB limit".
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * int(1.4 * 1024 * 1024))
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -965,7 +965,7 @@ def test_skip_records_its_reason_before_the_rest_of_the_state():
     import ast
     import inspect
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     tree = ast.parse(inspect.getsource(mcp_server._refresh_sqlite_integrity_status_locked))
 
@@ -1018,7 +1018,7 @@ def test_integrity_failure_log_names_the_sqlite_build(monkeypatch, tmp_path, cap
     This line is what an operator pastes into a report, and #2240 is a report
     where the same palace read clean on one build and malformed on another.
     """
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * 1024)
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -1048,7 +1048,7 @@ def test_integrity_failure_log_names_the_sqlite_build(monkeypatch, tmp_path, cap
 
 def test_rendered_mb_keeps_the_two_values_apart():
     """_rendered_mb widens precision only as far as it has to."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     mb = 1024 * 1024
     assert mcp_server._rendered_mb(1954 * mb, 512 * mb) == ("1954", "512")
@@ -1073,7 +1073,7 @@ def test_sqlite_integrity_payload_never_reads_clean_mid_refresh(monkeypatch, tmp
     the `os.path.getsize` call the reason is derived from, rather than by
     racing threads.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * (2 * 1024 * 1024))
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -1107,7 +1107,7 @@ def test_sqlite_integrity_payload_never_reads_clean_mid_refresh(monkeypatch, tmp
 
 def test_refresh_sqlite_integrity_status_runs_when_under_limit(monkeypatch, tmp_path):
     """A DB under the limit still runs the quick_check (behaviour preserved)."""
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * (512 * 1024))  # 0.5 MB
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -1136,7 +1136,7 @@ def test_refresh_sqlite_integrity_status_runs_when_under_limit(monkeypatch, tmp_
 
 def test_startup_integrity_size_gate_disabled_with_zero(monkeypatch, tmp_path):
     """MEMPALACE_STARTUP_INTEGRITY_MAX_MB=0 disables the gate: check always runs."""
-    from mempalace import mcp_server, repair
+    from trimemo import mcp_server, repair
 
     (tmp_path / "chroma.sqlite3").write_bytes(b"\0" * (4 * 1024 * 1024))  # 4 MB
     monkeypatch.setattr(mcp_server, "_is_chroma_backend", lambda: True)
@@ -1171,7 +1171,7 @@ def test_sqlite_integrity_refusal_handles_none_palace_path(monkeypatch):
     would otherwise crash the server on every mutating tool call while
     the palace is unconfigured and integrity errors are present.
     """
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     # palace_path is a read-only @property on MempalaceConfig (no setter),
     # so monkeypatch.setattr on the instance fails. Patch the class-level
@@ -1202,7 +1202,7 @@ def test_startup_preflight_does_not_block_initialize(monkeypatch):
     import threading
     import time
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     probe_started = threading.Event()
     release_probe = threading.Event()
@@ -1232,7 +1232,7 @@ def test_startup_preflight_does_not_block_initialize(monkeypatch):
         )
         elapsed = time.monotonic() - started
 
-        assert response["result"]["serverInfo"]["name"] == "mempalace"
+        assert response["result"]["serverInfo"]["name"] == "trimemo"
         assert elapsed < 1.0, f"initialize blocked {elapsed:.2f}s behind the startup probe"
     finally:
         release_probe.set()
@@ -1246,7 +1246,7 @@ def test_ensure_sqlite_integrity_status_joins_inflight_probe(monkeypatch):
     quick_check concurrently, and not proceed without a verdict."""
     import threading
 
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     probe_calls = []
     probe_started = threading.Event()

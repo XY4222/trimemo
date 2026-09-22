@@ -1,5 +1,5 @@
 [project]
-name = "mempalace"
+name = "trimemo"
 version = "3.10.0"
 description = "Give your AI a memory — mine projects and conversations into a searchable palace. No API key required."
 readme = "README.md"
@@ -50,27 +50,27 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MemPalace/mempalace"
-Repository = "https://github.com/MemPalace/mempalace"
-"Bug Tracker" = "https://github.com/MemPalace/mempalace/issues"
+Homepage = "https://github.com/XY4222/trimemo"
+Repository = "https://github.com/XY4222/trimemo"
+"Bug Tracker" = "https://github.com/XY4222/trimemo/issues"
 
 [project.scripts]
-mempalace = "mempalace.cli:main"
-mempalace-mcp = "mempalace.mcp_proxy:main"
-mempalace-light-mcp = "mempalace.mcp_light_server:main"
+trimemo = "trimemo.cli:main"
+trimemo-mcp = "trimemo.mcp_proxy:main"
+trimemo-light-mcp = "trimemo.mcp_light_server:main"
 
 [project.entry-points."mempalace.backends"]
-chroma = "mempalace.backends.chroma:ChromaBackend"
-milvus = "mempalace.backends.milvus:MilvusBackend"
-pgvector = "mempalace.backends.pgvector:PgVectorBackend"
-qdrant = "mempalace.backends.qdrant:QdrantBackend"
-sqlite_exact = "mempalace.backends.sqlite_exact:SQLiteExactBackend"
-rust_exact = "mempalace.backends.rust_exact:RustExactBackend"
+chroma = "trimemo.backends.chroma:ChromaBackend"
+milvus = "trimemo.backends.milvus:MilvusBackend"
+pgvector = "trimemo.backends.pgvector:PgVectorBackend"
+qdrant = "trimemo.backends.qdrant:QdrantBackend"
+sqlite_exact = "trimemo.backends.sqlite_exact:SQLiteExactBackend"
+rust_exact = "trimemo.backends.rust_exact:RustExactBackend"
 
 # RFC 002 source-adapter entry-point group. Core publishes no first-party
 # adapters under this group yet; ``miner.py`` and ``convo_miner.py`` migrate
 # onto ``BaseSourceAdapter`` in a follow-up PR. Third-party adapter packages
-# (``mempalace-source-cursor``, ``mempalace-source-git``, …) register here.
+# (``trimemo-source-cursor``, ``trimemo-source-git``, …) register here.
 [project.entry-points."mempalace.sources"]
 
 [project.optional-dependencies]
@@ -97,7 +97,7 @@ dev = [
     # mypy — static type checker. Catches lazy ``list`` / ``dict``
     # annotations that should be ``list[str]`` / ``dict[str, int]``,
     # missing return types, mismatched signatures across call sites.
-    # Run ad-hoc with ``mypy mempalace/``; CI doesn't gate on it yet but
+    # Run ad-hoc with ``mypy trimemo/``; CI doesn't gate on it yet but
     # contributors should fix mypy errors they see before pushing.
     "mypy>=1.0",
 ]
@@ -115,17 +115,17 @@ milvus = [
 # default (Chroma) install.
 pgvector = ["psycopg[binary]>=3.1"]
 # Hardware acceleration for the ONNX embedding model. Install exactly one:
-#   pip install mempalace[gpu]       — NVIDIA CUDA
-#   pip install mempalace[dml]       — DirectML (Windows AMD/Intel/NVIDIA)
-#   pip install mempalace[coreml]    — macOS Neural Engine
+#   pip install trimemo[gpu]       — NVIDIA CUDA
+#   pip install trimemo[dml]       — DirectML (Windows AMD/Intel/NVIDIA)
+#   pip install trimemo[coreml]    — macOS Neural Engine
 # After install, set MEMPALACE_EMBEDDING_DEVICE=cuda|dml|coreml (or "auto").
 gpu = ["onnxruntime-gpu>=1.16"]
 dml = ["onnxruntime-directml>=1.16"]
 coreml = ["onnxruntime>=1.16"]
 # Multilingual extra kept as a no-op alias for back-compat with
-# `pip install mempalace[multilingual]` — these deps now ship in core.
+# `pip install trimemo[multilingual]` — these deps now ship in core.
 multilingual = []
-# Binary-format extraction for `mempalace mine --mode extract`. Per-format
+# Binary-format extraction for `trimemo mine --mode extract`. Per-format
 # transformer routing: striprtf for .rtf, MarkItDown for .pdf/.docx/.pptx/
 # .xlsx/.epub. MarkItDown requires Python ≥ 3.10 (env marker ensures it
 # only installs where supported; Python 3.9 users still get RTF coverage).
@@ -161,7 +161,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["mempalace"]
+packages = ["trimemo"]
 
 [tool.ruff]
 line-length = 100
@@ -180,26 +180,26 @@ ignore = ["E501"]
 # mcp_server fragments exec into the package namespace. Names they use live
 # in __init__.py and earlier fragments, so F821 is expected; __init__.py
 # imports those names for the fragments, so F401 is expected there too.
-"mempalace/mcp_server/__init__.py" = ["F401"]
-"mempalace/mcp_server/_*.py" = ["F821"]
-"mempalace/mcp_server/tools_*.py" = ["F821"]
-"mempalace/mcp_server/schemas.py" = ["F821"]
-"mempalace/mcp_server/protocol.py" = ["F821"]
-"mempalace/mcp_server/http.py" = ["F821"]
-"mempalace/mcp_server/runtime.py" = ["F821"]
+"trimemo/mcp_server/__init__.py" = ["F401"]
+"trimemo/mcp_server/_*.py" = ["F821"]
+"trimemo/mcp_server/tools_*.py" = ["F821"]
+"trimemo/mcp_server/schemas.py" = ["F821"]
+"trimemo/mcp_server/protocol.py" = ["F821"]
+"trimemo/mcp_server/http.py" = ["F821"]
+"trimemo/mcp_server/runtime.py" = ["F821"]
 # cli fragments exec into the package namespace. Names they use live in
 # __init__.py and earlier fragments, so F821 is expected; __init__.py
 # imports those names for the fragments, so F401 is expected there too.
-"mempalace/cli/__init__.py" = ["F401"]
-"mempalace/cli/_*.py" = ["F821"]
-"mempalace/cli/cmd_*.py" = ["F821"]
-"mempalace/cli/parser.py" = ["F821"]
+"trimemo/cli/__init__.py" = ["F401"]
+"trimemo/cli/_*.py" = ["F821"]
+"trimemo/cli/cmd_*.py" = ["F821"]
+"trimemo/cli/parser.py" = ["F821"]
 # searcher fragments exec into the package namespace.
-"mempalace/searcher/__init__.py" = ["F401"]
-"mempalace/searcher/*.py" = ["F821"]
+"trimemo/searcher/__init__.py" = ["F401"]
+"trimemo/searcher/*.py" = ["F821"]
 # palace fragments exec into the package namespace.
-"mempalace/palace/__init__.py" = ["F401"]
-"mempalace/palace/*.py" = ["F821"]
+"trimemo/palace/__init__.py" = ["F401"]
+"trimemo/palace/*.py" = ["F821"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25
@@ -221,13 +221,13 @@ filterwarnings = [
     # identity), which correctly emits this on open. The behavior itself is
     # asserted in tests/test_embedder_identity.py; ignore the fixture noise.
     # Matched by message (not by class path) so pytest does not import the
-    # mempalace package at config time — importing it before coverage starts
+    # trimemo package at config time — importing it before coverage starts
     # would drop module-level lines from the report.
     "ignore:palace collection.*has no recorded embedder identity",
 ]
 
 [tool.coverage.run]
-source = ["mempalace"]
+source = ["trimemo"]
 
 [tool.coverage.report]
 fail_under = 85

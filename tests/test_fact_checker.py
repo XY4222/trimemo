@@ -26,14 +26,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mempalace.fact_checker import (
+from trimemo.fact_checker import (
     _check_entity_confusion,
     _edit_distance,
     _extract_claims,
     _flatten_names,
     check_text,
 )
-from mempalace.knowledge_graph import KnowledgeGraph
+from trimemo.knowledge_graph import KnowledgeGraph
 
 
 # ── claim extraction ─────────────────────────────────────────────────
@@ -250,7 +250,7 @@ class TestCheckTextContract:
         # Bypass the real registry by pointing cache at a temp file.
         registry = tmp_path / "known_entities.json"
         registry.write_text(json.dumps({"people": ["Milla", "Mila"]}))
-        from mempalace import miner
+        from trimemo import miner
 
         monkeypatch.setattr(miner, "_ENTITY_REGISTRY_PATH", str(registry))
         miner._ENTITY_REGISTRY_CACHE.update({"mtime": None, "names": frozenset(), "raw": {}})
@@ -287,7 +287,7 @@ class TestCLI:
             [
                 sys.executable,
                 "-m",
-                "mempalace.fact_checker",
+                "trimemo.fact_checker",
                 "Mila said hi",
                 "--palace",
                 str(tmp_path / "palace"),
@@ -313,7 +313,7 @@ class TestCLI:
         import io
         import sys
 
-        from mempalace.fact_checker import _reconfigure_stdio_utf8_on_windows
+        from trimemo.fact_checker import _reconfigure_stdio_utf8_on_windows
 
         class _ReconfigurableStringIO(io.StringIO):
             def __init__(self, initial_value=""):
@@ -347,7 +347,7 @@ class TestCLI:
         import io
         import sys
 
-        from mempalace.fact_checker import _reconfigure_stdio_utf8_on_windows
+        from trimemo.fact_checker import _reconfigure_stdio_utf8_on_windows
 
         class _ReconfigurableStringIO(io.StringIO):
             def __init__(self):
@@ -376,6 +376,6 @@ class TestCLI:
         monkeypatch.delenv("MEMPALACE_PALACE_PATH", raising=False)
         monkeypatch.delenv("MEMPAL_PALACE_PATH", raising=False)
 
-        from mempalace.fact_checker import _default_palace_path
+        from trimemo.fact_checker import _default_palace_path
 
         assert _default_palace_path() == str(fake_config / "palace")

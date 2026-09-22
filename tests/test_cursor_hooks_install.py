@@ -1,12 +1,12 @@
 """Contract tests for ``hooks/cursor/install.sh``.
 
-The installer's job is to merge MemPalace hook entries into a Cursor
+The installer's job is to merge TriMemo hook entries into a Cursor
 ``hooks.json`` file without:
 
 - modifying unrelated hook entries already in the file,
-- duplicating MemPalace entries when re-run,
+- duplicating TriMemo entries when re-run,
 - writing to disk when ``--dry-run`` is passed,
-- leaving stale MemPalace entries behind on ``--uninstall``.
+- leaving stale TriMemo entries behind on ``--uninstall``.
 
 These four contracts are what protects a user's existing Cursor
 configuration. Tests use ``--scope project --target <tmp_path>`` so
@@ -206,7 +206,7 @@ class TestMergePreservation:
         ], "unrelated beforeShellExecution entry must survive merge"
 
     def test_preserves_other_entries_on_same_event(self, tmp_path):
-        # User has their own `stop` hook. We must add MemPalace's
+        # User has their own `stop` hook. We must add TriMemo's
         # entry alongside, not replace.
         _seed(
             tmp_path,
@@ -223,7 +223,7 @@ class TestMergePreservation:
         result = json.loads(_hooks_file(tmp_path).read_text())
         stop_entries = result["hooks"]["stop"]
         assert len(stop_entries) == 2, (
-            f"expected user entry + MemPalace entry; got {stop_entries!r}"
+            f"expected user entry + TriMemo entry; got {stop_entries!r}"
         )
         commands = {e["command"] for e in stop_entries}
         assert "/usr/local/bin/my-stop-hook.sh" in commands
@@ -263,7 +263,7 @@ class TestIdempotency:
             "re-running install.sh must produce an identical config "
             f"(idempotency); first={first!r} second={second!r}"
         )
-        # And specifically no duplicate MemPalace entry on `stop`.
+        # And specifically no duplicate TriMemo entry on `stop`.
         stop = second["hooks"]["stop"]
         mempal_entries = [e for e in stop if "mempal_save_hook_cursor.sh" in e["command"]]
         assert len(mempal_entries) == 1, (
@@ -292,10 +292,10 @@ class TestUninstall:
             },
         )
         _run_install(target=tmp_path, home=tmp_path)
-        # MemPalace is now wired alongside the user's entries.
+        # TriMemo is now wired alongside the user's entries.
         _run_install("--uninstall", target=tmp_path, home=tmp_path)
         cfg = json.loads(_hooks_file(tmp_path).read_text())
-        # User's stop hook must remain; MemPalace's must be gone.
+        # User's stop hook must remain; TriMemo's must be gone.
         commands = {e["command"] for e in cfg["hooks"].get("stop", [])}
         assert commands == {"/usr/local/bin/my-stop-hook.sh"}
         # Unrelated event untouched.

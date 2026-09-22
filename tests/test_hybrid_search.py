@@ -7,14 +7,14 @@ regex extraction on narrative content) could hide drawers that direct
 search would have found.
 """
 
-import mempalace.searcher as searcher_mod
-from mempalace.palace import (
+import trimemo.searcher as searcher_mod
+from trimemo.palace import (
     get_backend_for_palace,
     get_closets_collection,
     get_collection,
     upsert_closet_lines,
 )
-from mempalace.searcher import (
+from trimemo.searcher import (
     _hybrid_rank,
     _resolve_hybrid_rank_weights,
     search_memories,

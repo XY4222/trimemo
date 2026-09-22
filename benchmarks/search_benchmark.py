@@ -147,8 +147,8 @@ class LocalPalaceSearchSource:
         current_search=None,
         collection_opener=None,
     ):
-        from mempalace.palace import get_collection
-        from mempalace.searcher import search_memories
+        from trimemo.palace import get_collection
+        from trimemo.searcher import search_memories
 
         self.palace_path = palace_path
         self.collection_name = collection_name
@@ -162,7 +162,7 @@ class LocalPalaceSearchSource:
         self._hub_current_search = None if current_search else _live_hub_search(palace_path)
 
     def _open_collection(self):
-        from mempalace.palace import resolve_backend_name
+        from trimemo.palace import resolve_backend_name
 
         backend_name = resolve_backend_name(self.palace_path, explicit=self.backend)
         if backend_name != "sqlite_exact":
@@ -195,9 +195,9 @@ class LocalPalaceSearchSource:
         }
 
     def vector_ranking(self, case: BenchmarkCase, depth: int) -> Sequence[SearchHit]:
-        from mempalace.date_window import filed_at_in_window, parse_window
-        from mempalace.query_sanitizer import sanitize_query
-        from mempalace.searcher import (
+        from trimemo.date_window import filed_at_in_window, parse_window
+        from trimemo.query_sanitizer import sanitize_query
+        from trimemo.searcher import (
             _distance_to_similarity,
             _result_drawer_id,
             build_where_filter,
@@ -261,9 +261,9 @@ class LocalPalaceSearchSource:
         return hits
 
     def lexical_ranking(self, case: BenchmarkCase, depth: int) -> Sequence[SearchHit]:
-        from mempalace.date_window import filed_at_in_window, parse_window
-        from mempalace.query_sanitizer import sanitize_query
-        from mempalace.searcher import _result_drawer_id, build_where_filter
+        from trimemo.date_window import filed_at_in_window, parse_window
+        from trimemo.query_sanitizer import sanitize_query
+        from trimemo.searcher import _result_drawer_id, build_where_filter
 
         query = sanitize_query(case.query)["clean_query"]
         where = build_where_filter(
@@ -307,7 +307,7 @@ class LocalPalaceSearchSource:
         *,
         candidate_strategy: str,
     ) -> Sequence[SearchHit]:
-        from mempalace.query_sanitizer import sanitize_query
+        from trimemo.query_sanitizer import sanitize_query
 
         query = sanitize_query(case.query)["clean_query"]
         if self._injected_current_search is not None:
@@ -373,7 +373,7 @@ class HubSearchClient:
         self._headers = dict(headers)
 
     def __call__(self, query: str, palace_path: str, **kwargs) -> dict:
-        from mempalace.hub_client import forward_json_rpc
+        from trimemo.hub_client import forward_json_rpc
 
         if kwargs.get("candidate_strategy") != "vector":
             raise RuntimeError(
@@ -416,7 +416,7 @@ class HubSearchClient:
 
 
 def _live_hub_search(palace_path: str):
-    from mempalace.hub_client import discover_hub
+    from trimemo.hub_client import discover_hub
 
     target = discover_hub(palace_path)
     if target is None:
@@ -919,7 +919,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "init":
         return _init_dataset(args.dataset)
 
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     config = MempalaceConfig()
     cases = load_benchmark_cases(args.dataset)

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-import mempalace.palace as palace_module
-from mempalace.palace import (
+import trimemo.palace as palace_module
+from trimemo.palace import (
     _lock_mine_lock_file,
     _mine_lock_path,
     _open_mine_lock_file,
@@ -48,7 +48,7 @@ def _stale_waiter_target(
     result_q,
 ) -> None:
     try:
-        from mempalace.palace import (
+        from trimemo.palace import (
             _acquire_open_mine_lock_file as acquire_open,
             _open_mine_lock_file as open_lock,
             _unlock_mine_lock_file as unlock_file,

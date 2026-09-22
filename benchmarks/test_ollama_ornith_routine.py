@@ -31,13 +31,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 
-from mempalace.config import MempalaceConfig
-from mempalace.knowledge_graph import KnowledgeGraph
-from mempalace.logstream import Logstream
-from mempalace import mcp_server, mcp_light_server
-from mempalace.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec, tool_palace_coordinate
-from mempalace.mcp_server import TOOLS as LEGACY_TOOLS
-from mempalace.palace_graph import create_tunnel, invalidate_graph_cache
+from trimemo.config import MempalaceConfig
+from trimemo.knowledge_graph import KnowledgeGraph
+from trimemo.logstream import Logstream
+from trimemo import mcp_server, mcp_light_server
+from trimemo.mcp_light_server import LIGHT_TOOLS, tool_palace_query, tool_palace_exec, tool_palace_coordinate
+from trimemo.mcp_server import TOOLS as LEGACY_TOOLS
+from trimemo.palace_graph import create_tunnel, invalidate_graph_cache
 
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
 MODEL_NAME = "ornith-1.5:9b"
@@ -204,7 +204,7 @@ TEST_SUITE: List[TestCase] = [
     TestCase(
         id="coord_task_create",
         category="Multi-Agent Flow",
-        user_prompt="Delegate a task for project 'mempalace' from 'windows:antigravity:mempalace' to 'windows:claude:mempalace'. Goal: 'Implement Passkey WebAuthn endpoints', Branch: 'feat/passkeys', Base commit: 'a1b2c3d4e5f6', Definition of done: 'All WebAuthn integration tests pass'.",
+        user_prompt="Delegate a task for project 'trimemo' from 'windows:antigravity:trimemo' to 'windows:claude:trimemo'. Goal: 'Implement Passkey WebAuthn endpoints', Branch: 'feat/passkeys', Base commit: 'a1b2c3d4e5f6', Definition of done: 'All WebAuthn integration tests pass'.",
         expected_tool_type="coordinate",
         expected_keywords_in_query=["task", "create", "passkey", "claude"],
         description="Create an immutable task.request event in logstream",
@@ -212,9 +212,9 @@ TEST_SUITE: List[TestCase] = [
     TestCase(
         id="coord_event_list",
         category="Multi-Agent Flow",
-        user_prompt="List all coordination events in stream 'project/mempalace' sent to agent 'windows:antigravity:mempalace'.",
+        user_prompt="List all coordination events in stream 'project/trimemo' sent to agent 'windows:antigravity:trimemo'.",
         expected_tool_type="coordinate",
-        expected_keywords_in_query=["event", "list", "logstream", "mempalace"],
+        expected_keywords_in_query=["event", "list", "logstream", "trimemo"],
         description="Filter and list logstream coordination events",
     ),
     TestCase(
@@ -289,7 +289,7 @@ class TestPalaceEnvironment:
         invalidate_graph_cache()
 
     def _seed_diaries(self):
-        from mempalace.ids import make_drawer_id_from_content
+        from trimemo.ids import make_drawer_id_from_content
         entry = "SESSION:2026-08-28|optimized search ranking + benchmarked hybrid backend|ALC.req:fast.mcp|★★★"
         drw_id = make_drawer_id_from_content("wing_antigravity", "diary", entry)
         self.collection.add(
@@ -303,10 +303,10 @@ class TestPalaceEnvironment:
         ls = Logstream(db_path=ls_path)
         ls.append_event(
             type="task.request",
-            stream="project/mempalace",
+            stream="project/trimemo",
             room="delegation",
-            from_agent="windows:claude:mempalace",
-            to_agent="windows:antigravity:mempalace",
+            from_agent="windows:claude:trimemo",
+            to_agent="windows:antigravity:trimemo",
             correlation_id="task_seed_101",
             body="Review lightweight MCP parser implementation",
             status="open",
@@ -444,7 +444,7 @@ def run_single_test(
     tools = get_light_ollama_tools() if mode == "lightweight" else get_legacy_ollama_tools()
 
     system_prompt = (
-        "You are an AI assistant equipped with MemPalace tools to recall, manage, and coordinate "
+        "You are an AI assistant equipped with TriMemo tools to recall, manage, and coordinate "
         "memories, facts, and tasks. Always choose and invoke the appropriate tool when asked about "
         "stored decisions, facts, or palace management."
     )

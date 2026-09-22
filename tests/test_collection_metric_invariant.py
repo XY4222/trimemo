@@ -12,8 +12,8 @@ This test file locks the invariant so a future refactor that drops the
 gets caught at test time rather than silently degrading search quality.
 """
 
-from mempalace.backends.chroma import ChromaBackend
-from mempalace.palace import get_collection
+from trimemo.backends.chroma import ChromaBackend
+from trimemo.palace import get_collection
 
 
 EXPECTED_METRIC = "cosine"

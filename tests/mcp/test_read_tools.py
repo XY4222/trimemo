@@ -22,7 +22,7 @@ class TestReadTools:
     def test_status_cold_start_no_collection(self, monkeypatch, config, palace_path, kg):
         """Status on a valid palace with no ChromaDB collection yet (#830).
 
-        After `mempalace init`, chroma.sqlite3 exists but the mempalace_drawers
+        After `trimemo init`, chroma.sqlite3 exists but the mempalace_drawers
         collection has not been created (no mine or add_drawer yet).  Status
         should return total_drawers: 0, not 'No palace found'.
         """
@@ -32,7 +32,7 @@ class TestReadTools:
         # Create the DB file (init does this) but NOT the collection
         client = chromadb.PersistentClient(path=palace_path)
         del client
-        from mempalace.mcp_server import tool_status
+        from trimemo.mcp_server import tool_status
 
         result = tool_status()
         assert "error" not in result, f"cold-start should not error: {result}"
@@ -42,7 +42,7 @@ class TestReadTools:
         _patch_mcp_server(monkeypatch, config, kg)
         _client, _col = _get_collection(palace_path, create=True)
         del _client
-        from mempalace.mcp_server import tool_status
+        from trimemo.mcp_server import tool_status
 
         result = tool_status()
         assert result["total_drawers"] == 0
@@ -50,7 +50,7 @@ class TestReadTools:
 
     def test_status_with_data(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_status
+        from trimemo.mcp_server import tool_status
 
         result = tool_status()
         assert result["total_drawers"] == 4
@@ -60,8 +60,8 @@ class TestReadTools:
     def test_status_sqlite_exact_backend_has_no_hnsw_fields(
         self, monkeypatch, config, palace_path, kg
     ):
-        import mempalace.backends.embedding_wrapper as embedding_wrapper
-        from mempalace.palace import get_collection
+        import trimemo.backends.embedding_wrapper as embedding_wrapper
+        from trimemo.palace import get_collection
 
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
         monkeypatch.setattr(
@@ -77,7 +77,7 @@ class TestReadTools:
         )
 
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_collection_cache", None)
         result = mcp_server.tool_status()
@@ -92,9 +92,9 @@ class TestReadTools:
     ):
         """A real MCP read must use sqlite_exact's read-only connection path,
         not the normal schema/WAL initialization path."""
-        import mempalace.backends.embedding_wrapper as embedding_wrapper
-        from mempalace import mcp_server, palace
-        from mempalace.backends import PalaceRef
+        import trimemo.backends.embedding_wrapper as embedding_wrapper
+        from trimemo import mcp_server, palace
+        from trimemo.backends import PalaceRef
 
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
         monkeypatch.setattr(
@@ -151,9 +151,9 @@ class TestReadTools:
         """A writable-capable stdio server must recall through a read-only
         handle while a peer owns the palace, then discard that handle when it
         successfully promotes to writer."""
-        import mempalace.backends.embedding_wrapper as embedding_wrapper
-        from mempalace import mcp_server, palace
-        from mempalace.backends import PalaceRef
+        import trimemo.backends.embedding_wrapper as embedding_wrapper
+        from trimemo import mcp_server, palace
+        from trimemo.backends import PalaceRef
 
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", backend_name)
         monkeypatch.setattr(
@@ -174,7 +174,7 @@ class TestReadTools:
 
         holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -216,7 +216,7 @@ with mine_palace_lock(sys.argv[1]):
             assert holder.returncode == 0
 
             # Complete a writer/checkpoint cycle while MCP retains its wrapper.
-            from mempalace.backends.sqlite_exact import SQLiteExactBackend
+            from trimemo.backends.sqlite_exact import SQLiteExactBackend
 
             peer = SQLiteExactBackend()
             try:
@@ -251,10 +251,10 @@ with mine_palace_lock(sys.argv[1]):
         """A read-only open of an empty collection must not stick identity
         validation across promotion — the first writable open still records
         the active model on disk."""
-        import mempalace.backends.embedding_wrapper as embedding_wrapper
-        from mempalace import mcp_server, palace
-        from mempalace.backends import PalaceRef
-        from mempalace.backends.base import EmbedderIdentity
+        import trimemo.backends.embedding_wrapper as embedding_wrapper
+        from trimemo import mcp_server, palace
+        from trimemo.backends import PalaceRef
+        from trimemo.backends.base import EmbedderIdentity
 
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
         monkeypatch.setenv("MEMPALACE_EMBEDDING_MODEL", "minilm")
@@ -292,7 +292,7 @@ with mine_palace_lock(sys.argv[1]):
         # validates without recording identity on an empty collection.
         holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -343,7 +343,7 @@ with mine_palace_lock(sys.argv[1]):
             palace._VALIDATED_IDENTITY.clear()
 
     def test_status_qdrant_backend_has_no_hnsw_fields(self, monkeypatch, config, palace_path, kg):
-        from mempalace.backends import GetResult
+        from trimemo.backends import GetResult
 
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "qdrant")
         monkeypatch.setenv("MEMPALACE_BACKEND", "qdrant")
@@ -351,7 +351,7 @@ with mine_palace_lock(sys.argv[1]):
             json.dump({"backend": "qdrant"}, f)
 
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         class _FakeQdrantCollection:
             def count(self):
@@ -393,14 +393,14 @@ with mine_palace_lock(sys.argv[1]):
         from unittest.mock import patch as _patch
 
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_status
+        from trimemo.mcp_server import tool_status
 
         # Inject a metadata cache where one entry is None
-        with _patch("mempalace.mcp_server._get_collection") as mock_get_col:
+        with _patch("trimemo.mcp_server._get_collection") as mock_get_col:
             fake_col = type("C", (), {"count": lambda self: 2})()
             mock_get_col.return_value = fake_col
             with _patch(
-                "mempalace.mcp_server._get_cached_metadata",
+                "trimemo.mcp_server._get_cached_metadata",
                 return_value=[{"wing": "proj", "room": "r"}, None],
             ):
                 result = tool_status()
@@ -415,7 +415,7 @@ with mine_palace_lock(sys.argv[1]):
 
     def test_list_wings(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_wings
+        from trimemo.mcp_server import tool_list_wings
 
         result = tool_list_wings()
         assert result["wings"]["project"] == 3
@@ -423,7 +423,7 @@ with mine_palace_lock(sys.argv[1]):
 
     def test_list_rooms_all(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_rooms
+        from trimemo.mcp_server import tool_list_rooms
 
         result = tool_list_rooms()
         assert "backend" in result["rooms"]
@@ -432,7 +432,7 @@ with mine_palace_lock(sys.argv[1]):
 
     def test_list_rooms_filtered(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_list_rooms
+        from trimemo.mcp_server import tool_list_rooms
 
         result = tool_list_rooms(wing="project")
         assert "backend" in result["rooms"]
@@ -440,7 +440,7 @@ with mine_palace_lock(sys.argv[1]):
 
     def test_get_taxonomy(self, monkeypatch, config, palace_path, seeded_collection, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_get_taxonomy
+        from trimemo.mcp_server import tool_get_taxonomy
 
         result = tool_get_taxonomy()
         assert result["taxonomy"]["project"]["backend"] == 2
@@ -455,7 +455,7 @@ with mine_palace_lock(sys.argv[1]):
         the pagination helper fails loudly if the fast path regresses to the
         slow client path that times out on large palaces."""
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         def _boom(*_a, **_k):
             raise AssertionError("pagination path used instead of sqlite fast path")
@@ -488,7 +488,7 @@ with mine_palace_lock(sys.argv[1]):
             metadatas=[{"source_file": "loose.txt"}],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_metadata_cache", None)
 
@@ -525,7 +525,7 @@ with mine_palace_lock(sys.argv[1]):
             ],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         def _boom(*_a, **_k):
             raise AssertionError("build_graph client path used instead of sqlite fast path")
@@ -559,7 +559,7 @@ with mine_palace_lock(sys.argv[1]):
             ],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         def _no_client_open(*_a, **_k):
             raise AssertionError("chroma collection opened — find_tunnels must use sqlite")
@@ -576,19 +576,19 @@ with mine_palace_lock(sys.argv[1]):
             ids=["keep", "drop"],
             documents=["keep me", "drop me"],
             metadatas=[
-                {"wing": "mempalace", "room": "notes"},
+                {"wing": "trimemo", "room": "notes"},
                 {"wing": "other", "room": "notes"},
             ],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         def _boom(*_a, **_k):
             raise AssertionError("list_drawers paged col.get instead of chroma sqlite")
 
         monkeypatch.setattr(mcp_server, "_fetch_drawer_rows", _boom)
         monkeypatch.setattr(mcp_server, "_get_collection", _boom)
-        result = mcp_server.tool_list_drawers(wing="mempalace", limit=20)
+        result = mcp_server.tool_list_drawers(wing="trimemo", limit=20)
         assert result["total"] == 1
         assert result["drawers"][0]["drawer_id"] == "keep"
         assert "keep me" in result["drawers"][0]["content_preview"]
@@ -608,13 +608,13 @@ with mine_palace_lock(sys.argv[1]):
             ids=["keep", "drop"],
             documents=["keep me", "drop me"],
             metadatas=[
-                {"wing": "mempalace", "room": "notes"},
+                {"wing": "trimemo", "room": "notes"},
                 {"wing": "other", "room": "notes"},
             ],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
-        from mempalace.backends import chroma as chroma_backend
+        from trimemo import mcp_server
+        from trimemo.backends import chroma as chroma_backend
 
         statements = []
         real_connect = chroma_backend.sqlite3.connect
@@ -628,7 +628,7 @@ with mine_palace_lock(sys.argv[1]):
         monkeypatch.setattr(mcp_server, "_fetch_drawer_rows", _unexpected_client_read)
         monkeypatch.setattr(mcp_server, "_get_collection", _unexpected_client_read)
 
-        result = mcp_server.tool_list_drawers(wing="mempalace", limit=20)
+        result = mcp_server.tool_list_drawers(wing="trimemo", limit=20)
         assert result["total"] == 1
         assert "keep me" in result["drawers"][0]["content_preview"]
 
@@ -661,7 +661,7 @@ with mine_palace_lock(sys.argv[1]):
             ],
         )
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         monkeypatch.setattr(mcp_server, "_get_collection", _unexpected_client_read)
         tunnels = mcp_server.tool_find_tunnels()
@@ -675,7 +675,7 @@ with mine_palace_lock(sys.argv[1]):
         could not be opened at all.
         """
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         tunnels = mcp_server.tool_find_tunnels()
         assert isinstance(tunnels, dict) and tunnels.get("error")
@@ -686,7 +686,7 @@ with mine_palace_lock(sys.argv[1]):
 
     def test_no_palace_returns_error(self, monkeypatch, config, kg):
         _patch_mcp_server(monkeypatch, config, kg)
-        from mempalace.mcp_server import tool_status
+        from trimemo.mcp_server import tool_status
 
         result = tool_status()
         assert "error" in result
@@ -697,7 +697,7 @@ with mine_palace_lock(sys.argv[1]):
 
 class TestMetadataFacets:
     def test_tool_status_uses_metadata_facets(self, monkeypatch):
-        import mempalace.mcp_server as mcp
+        import trimemo.mcp_server as mcp
 
         monkeypatch.setattr(mcp, "_sqlite_taxonomy", lambda: None)
         monkeypatch.setattr(mcp, "_supports_metadata_facets", lambda _: True)
@@ -723,7 +723,7 @@ class TestMetadataFacets:
         assert col.facet_counts.call_count == 2
 
     def test_tool_list_wings_uses_metadata_facets(self, monkeypatch):
-        import mempalace.mcp_server as mcp
+        import trimemo.mcp_server as mcp
 
         monkeypatch.setattr(mcp, "_sqlite_taxonomy", lambda: None)
         monkeypatch.setattr(mcp, "_supports_metadata_facets", lambda _: True)
@@ -746,7 +746,7 @@ class TestMetadataFacets:
 
     def test_tool_list_rooms_uses_metadata_facets(self, monkeypatch):
 
-        import mempalace.mcp_server as mcp
+        import trimemo.mcp_server as mcp
 
         monkeypatch.setattr(mcp, "_sqlite_taxonomy", lambda: None)
         monkeypatch.setattr(mcp, "_supports_metadata_facets", lambda _: True)
@@ -776,7 +776,7 @@ class TestMetadataFacets:
 
     def test_tool_get_taxonomy_uses_metadata_facets(self, monkeypatch):
         from unittest.mock import call
-        import mempalace.mcp_server as mcp
+        import trimemo.mcp_server as mcp
 
         monkeypatch.setattr(mcp, "_sqlite_taxonomy", lambda: None)
         monkeypatch.setattr(mcp, "_supports_metadata_facets", lambda _: True)
@@ -837,7 +837,7 @@ class TestNoneMetadataSafety:
     """
 
     def test_safe_meta_helper_coerces_none_to_empty_dict(self):
-        from mempalace.mcp_server import _safe_meta
+        from trimemo.mcp_server import _safe_meta
 
         assert _safe_meta(None) == {}
         assert _safe_meta({}) == {}
@@ -850,7 +850,7 @@ class TestNoneMetadataSafety:
     def test_get_drawer_tolerates_none_metadata(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         stub_col = MagicMock()
         stub_col.get.return_value = {
@@ -871,7 +871,7 @@ class TestNoneMetadataSafety:
     def test_list_drawers_tolerates_none_metadata(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         stub_col = MagicMock()
         stub_col.get.return_value = {
@@ -892,7 +892,7 @@ class TestNoneMetadataSafety:
     def test_update_drawer_tolerates_none_metadata(self, monkeypatch, config, palace_path, kg):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         stub_col = MagicMock()
         stub_col.get.return_value = {
@@ -916,7 +916,7 @@ class TestNoneMetadataSafety:
     ):
         _patch_mcp_server(monkeypatch, config, kg)
 
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         stub_col = MagicMock()
         stub_col.get.return_value = {
@@ -939,26 +939,26 @@ class TestListDrawersDateFilters:
     """Unit tests for the #1128 date-filter helpers in mcp_server."""
 
     def test_parse_date_filter_none_and_blank(self):
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         assert _parse_date_filter(None, "since") is None
         assert _parse_date_filter("   ", "since") is None
 
     def test_parse_date_filter_date_only(self):
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         assert _parse_date_filter("2026-04-01", "since") == datetime(2026, 4, 1)
 
     def test_parse_date_filter_full_timestamp(self):
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         assert _parse_date_filter("2026-04-01T09:30:00", "since") == datetime(2026, 4, 1, 9, 30)
 
     def test_parse_date_filter_drops_timezone(self):
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         # tz offset dropped -> naive wall-clock, never raises vs naive filed_at.
         parsed = _parse_date_filter("2026-04-01T09:30:00+02:00", "since")
@@ -968,7 +968,7 @@ class TestListDrawersDateFilters:
     def test_parse_date_filter_rejects_garbage(self):
         import pytest
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         with pytest.raises(ValueError, match="since"):
             _parse_date_filter("not-a-date", "since")
@@ -976,14 +976,14 @@ class TestListDrawersDateFilters:
     def test_parse_date_filter_rejects_impossible_date(self):
         import pytest
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         with pytest.raises(ValueError):
             _parse_date_filter("2026-13-40", "before")
 
     def test_filed_at_in_window_since_inclusive(self):
 
-        from mempalace.mcp_server import _filed_at_in_window
+        from trimemo.mcp_server import _filed_at_in_window
 
         since = datetime(2026, 1, 2)
         assert _filed_at_in_window("2026-01-02T00:00:00", since, None) is True
@@ -991,7 +991,7 @@ class TestListDrawersDateFilters:
 
     def test_filed_at_in_window_before_exclusive(self):
 
-        from mempalace.mcp_server import _filed_at_in_window
+        from trimemo.mcp_server import _filed_at_in_window
 
         before = datetime(2026, 1, 3)
         assert _filed_at_in_window("2026-01-02T23:59:59", None, before) is True
@@ -999,7 +999,7 @@ class TestListDrawersDateFilters:
 
     def test_filed_at_in_window_missing_or_malformed_excluded(self):
 
-        from mempalace.mcp_server import _filed_at_in_window
+        from trimemo.mcp_server import _filed_at_in_window
 
         since = datetime(2026, 1, 1)
         assert _filed_at_in_window(None, since, None) is False
@@ -1009,7 +1009,7 @@ class TestListDrawersDateFilters:
 
     def test_filed_at_in_window_tz_aware_wall_clock(self):
 
-        from mempalace.mcp_server import _filed_at_in_window
+        from trimemo.mcp_server import _filed_at_in_window
 
         # tz dropped on both sides -> wall-clock compare, no TypeError raised.
         since = datetime(2026, 1, 2)
@@ -1017,7 +1017,7 @@ class TestListDrawersDateFilters:
 
     def test_parse_date_filter_accepts_zulu_suffix(self):
 
-        from mempalace.mcp_server import _parse_date_filter
+        from trimemo.mcp_server import _parse_date_filter
 
         # "Z" is not accepted by datetime.fromisoformat before 3.11; the helper
         # strips it so Zulu inputs parse on the 3.9 floor, tz then dropped.
@@ -1036,7 +1036,7 @@ class TestListDrawersDateFilters:
 
     def test_filed_at_in_window_accepts_zulu_filed_at(self):
 
-        from mempalace.mcp_server import _filed_at_in_window
+        from trimemo.mcp_server import _filed_at_in_window
 
         since = datetime(2026, 1, 2)
         assert _filed_at_in_window("2026-01-02T08:00:00Z", since, None) is True
@@ -1050,8 +1050,8 @@ class TestListDrawersDateFilters:
 
 class TestFetchDrawerRowsDelegation:
     def test_backend_collection_uses_get_all_rows(self):
-        from mempalace import mcp_server
-        from mempalace.backends.base import BaseCollection, GetResult
+        from trimemo import mcp_server
+        from trimemo.backends.base import BaseCollection, GetResult
 
         class _Col(BaseCollection):
             def __init__(self):
@@ -1097,7 +1097,7 @@ class TestFetchDrawerRowsDelegation:
         assert col.calls == [{"where": {"wing": "w"}, "include": ["metadatas"]}]
 
     def test_plain_collection_keeps_the_offset_loop(self):
-        from mempalace import mcp_server
+        from trimemo import mcp_server
 
         pages = [
             {"ids": ["a"], "documents": ["doc a"], "metadatas": [{"wing": "w"}]},

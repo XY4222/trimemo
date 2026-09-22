@@ -1,13 +1,13 @@
 """Tests for no-LLM structural entity extraction."""
 
-from mempalace.entities import entities_metadata, extract_structural_entities
+from trimemo.entities import entities_metadata, extract_structural_entities
 
 
 def test_extracts_code_symbols_paths_urls():
     text = (
         "We patched `_extract_authored_at` in rag/convo_miner.py so MemoryStack and "
         "ChromaBackend agree. See module.func and pkg.Class.method, plus do_thing_now. "
-        "Ref https://github.com/MemPalace/mempalace/pull/1890 for details."
+        "Ref https://github.com/MemPalace/trimemo/pull/1890 for details."
     )
     ents = set(extract_structural_entities(text))
     assert "_extract_authored_at" in ents

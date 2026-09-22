@@ -9,12 +9,12 @@ You can run both — they share the same `~/.mempalace/hook_state/`
 directory and the same kill switches.
 
 ::: tip Pair this with the Cursor plugin
-The hooks here only handle the auto-save side. To also get MemPalace's
-MCP server, slash commands (`/mempalace-search`, etc.), and the
-guided `mempalace` skill, install the bundled
-[Cursor plugin](https://github.com/MemPalace/mempalace/blob/main/.cursor-plugin/README.md) —
+The hooks here only handle the auto-save side. To also get TriMemo's
+MCP server, slash commands (`/trimemo-search`, etc.), and the
+guided `trimemo` skill, install the bundled
+[Cursor plugin](https://github.com/MemPalace/trimemo/blob/main/.cursor-plugin/README.md) —
 it's the `.cursor-plugin/` folder at the repo root, dropped into
-`~/.cursor/plugins/local/mempalace`. The plugin and the hooks are
+`~/.cursor/plugins/local/trimemo`. The plugin and the hooks are
 orthogonal: install whichever you want, in any order. The plugin
 deliberately does **not** wire hooks itself because Cursor's hooks
 system is configured per-user/per-project (in `~/.cursor/hooks.json`),
@@ -23,17 +23,17 @@ not per-plugin.
 
 ## Three layers of recall
 
-The `sessionStart` wake hook is one of three orthogonal ways MemPalace
+The `sessionStart` wake hook is one of three orthogonal ways TriMemo
 gets the agent to read the palace before answering. Install any
 combination — they reinforce each other and all reference the same
 canonical protocol in
-[`integrations/shared/recall-protocol.md`](https://github.com/MemPalace/mempalace/blob/develop/integrations/shared/recall-protocol.md).
+[`integrations/shared/recall-protocol.md`](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/recall-protocol.md).
 
 | Layer | Fires | Scope | Get it from |
 |-------|-------|-------|-------------|
 | **`sessionStart` hook** | Once per new conversation | Injects wing-scoped recall context up front | The hooks on this page |
-| **`mempalace-recall` skill** | When a request matches its description, or when attached | Full search-before-answer protocol | The [Cursor plugin](https://github.com/MemPalace/mempalace/blob/main/.cursor-plugin/README.md) (`skills/`) |
-| **Recall rule** | When Cursor's matcher judges the turn recall-relevant | A short nudge to search first | The plugin (`rules/mempalace-recall.mdc`, `alwaysApply: false`) or [`examples/cursor/rules/`](https://github.com/MemPalace/mempalace/blob/develop/examples/cursor/rules/README.md) |
+| **`trimemo-recall` skill** | When a request matches its description, or when attached | Full search-before-answer protocol | The [Cursor plugin](https://github.com/MemPalace/trimemo/blob/main/.cursor-plugin/README.md) (`skills/`) |
+| **Recall rule** | When Cursor's matcher judges the turn recall-relevant | A short nudge to search first | The plugin (`rules/trimemo-recall.mdc`, `alwaysApply: false`) or [`examples/cursor/rules/`](https://github.com/MemPalace/trimemo/blob/develop/examples/cursor/rules/README.md) |
 
 The hook is the only layer that fires *automatically and exactly once*
 per chat. The skill and rule are demand-driven: they kick in when the
@@ -48,8 +48,8 @@ opt-in.
 | Hook | When It Fires | What Happens |
 |------|---------------|--------------|
 | **Wake Hook** | `sessionStart` — when a new Cursor conversation opens | Returns `additional_context` telling the agent to recall scoped to the wing inferred from the workspace root. Cursor-only — Claude Code has no equivalent. |
-| **Save Hook** | `stop` — after every agent turn | Counts stop invocations per conversation. Every 15 (default), emits a `followup_message` telling the agent to file the session into MemPalace and write a diary entry. |
-| **PreCompact Hook** | `preCompact` — right before context compaction | Runs `mempalace mine` synchronously on the transcript before compaction summarises it. Drops a pending-save marker so the next stop forces a save followup. |
+| **Save Hook** | `stop` — after every agent turn | Counts stop invocations per conversation. Every 15 (default), emits a `followup_message` telling the agent to file the session into TriMemo and write a diary entry. |
+| **PreCompact Hook** | `preCompact` — right before context compaction | Runs `trimemo mine` synchronously on the transcript before compaction summarises it. Drops a pending-save marker so the next stop forces a save followup. |
 
 **Two-layer capture:** the save and precompact hooks both mine the JSONL
 transcript directly into the palace (capturing verbatim tool output — Shell
@@ -82,7 +82,7 @@ The installer copies the three hook scripts to `~/.mempalace/hooks/cursor/`,
 merges the entries into your `hooks.json`, and preserves any unrelated
 hooks already in that file. Re-running is idempotent. Pass `--variant
 minimal` for the `stop`-only setup, or `--uninstall` to remove the
-MemPalace entries (leaves other hooks intact).
+TriMemo entries (leaves other hooks intact).
 
 ### Manual install — `~/.cursor/hooks.json` (user scope)
 
@@ -150,7 +150,7 @@ where they overlap.
   JSON parsing and the install script's JSON merge use this. Resolution
   order: `$MEMPAL_PYTHON` → `command -v python3` → bare `python3`. Set
   this when Cursor is launched from a GUI on macOS and the inherited
-  PATH lacks the Python where you installed MemPalace.
+  PATH lacks the Python where you installed TriMemo.
 - **`MEMPAL_DISABLE_HOOK=1`** — emergency kill switch. Disables all
   three hooks; they emit `{}` and exit 0.
 - **`MEMPALACE_HOOKS_AUTO_SAVE=false`** — same effect as
@@ -182,7 +182,7 @@ Cursor opens new conversation → sessionStart fires
 Cursor's `sessionStart` is fire-and-forget — the agent loop does not wait
 for a blocking response and does not consume `continue` / `user_message`.
 But it does honour `additional_context`, and that is the only field
-MemPalace emits.
+TriMemo emits.
 
 ### Save Hook (`stop` event)
 
@@ -207,7 +207,7 @@ User sends message → agent responds → Cursor fires stop hook
               │
               └── counter % SAVE_INTERVAL == 0
                                   ↓
-                 Background: mempalace mine <transcript_dir>
+                 Background: trimemo mine <transcript_dir>
                                   ↓
                   Emit {"followup_message": "save key topics..."}
                                   ↓
@@ -230,7 +230,7 @@ is the Cursor equivalent of Claude Code's `stop_hook_active` flag. The
 ```
 Context window near full → Cursor fires preCompact (observational)
                                        ↓
-                Synchronously: mempalace mine <transcript_dir>
+                Synchronously: trimemo mine <transcript_dir>
                                        ↓
                 Drop pending-save marker for this conversation_id
                                        ↓
@@ -253,7 +253,7 @@ The pre-compaction mine runs **synchronously** on purpose: compaction is
 irreversible, so we must finish ingesting before the hook returns —
 background mining would race the compaction. On a very large transcript
 this can exceed Cursor's per-hook timeout, in which case Cursor kills the
-mine mid-run. That is safe: `mempalace mine` is incremental and
+mine mid-run. That is safe: `trimemo mine` is incremental and
 append-only, so a killed mine resumes cleanly on the next invocation
 rather than corrupting the palace, and the pending-save marker still
 forces a re-mine plus a verbatim save nudge on the next `stop`.
@@ -271,7 +271,7 @@ because their hook surfaces do not expose the necessary events.
   reference](https://cursor.com/docs/hooks.md) section "sessionStart".
 - **Per-script `loop_limit`.** Cursor's `loop_limit` (default 5,
   configurable per script) is a hard cap on how many auto-followups
-  Cursor will issue. MemPalace sets it to `1` in the example
+  Cursor will issue. TriMemo sets it to `1` in the example
   `hooks.json` as defense-in-depth on top of its own `loop_count`
   check.
 - **Inferred wing from `workspace_roots`.** Both the wake hook and the
@@ -319,7 +319,7 @@ the user would otherwise make. To suppress it entirely, set
 
 ## Why the followup is on by default
 
-The Claude Code hook is **silent by default**: its background `mempalace
+The Claude Code hook is **silent by default**: its background `trimemo
 mine --mode convos` captures the verbatim transcript on its own (because
 `normalize.py` has a Claude Code JSONL parser), and the LLM-driven diary
 nudge is opt-in behind `MEMPAL_VERBOSE`.
@@ -349,8 +349,8 @@ default flips to silent to match Claude.
 - **`preCompact` cannot block.** See the diagram above. The
   pending-save marker is the workaround.
 - **Transcript file format is opaque.** Cursor does not document the
-  schema of the file at `transcript_path`, and `mempalace/normalize.py`
-  has no Cursor parser yet, so the background `mempalace mine --mode
+  schema of the file at `transcript_path`, and `trimemo/normalize.py`
+  has no Cursor parser yet, so the background `trimemo mine --mode
   convos` is **best-effort** for Cursor — it does not yet produce clean
   verbatim conversation drawers. The `followup_message` is the
   load-bearing capture path (see below). Adding a Cursor parser to
@@ -361,7 +361,7 @@ default flips to silent to match Claude.
 
 - [Auto-Save Hooks (Claude Code + Codex)](/guide/hooks) — the analogous
   feature for those tools.
-- [`hooks/cursor/STDIN_SHAPE.md`](https://github.com/MemPalace/mempalace/blob/develop/hooks/cursor/STDIN_SHAPE.md)
+- [`hooks/cursor/STDIN_SHAPE.md`](https://github.com/MemPalace/trimemo/blob/develop/hooks/cursor/STDIN_SHAPE.md)
   — per-event JSON schema with citations.
 - [Claude Code Retention](/guide/claude-code-retention) — broader
   setup checklist if you mix Cursor with Claude Code.

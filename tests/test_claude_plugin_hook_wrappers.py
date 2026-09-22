@@ -79,7 +79,7 @@ def test_plugin_hook_wrapper_prefers_mempalace_cli(
     bin_dir = _make_bin_dir(
         tmp_path,
         {
-            "mempalace": (
+            "trimemo": (
                 "#!/bin/sh\n"
                 f'printf \'%s\' "$*" > "{_shell_path(args_file)}"\n'
                 f"{_capture_stdin_to(stdin_file)}"
@@ -128,7 +128,7 @@ def test_plugin_hook_wrapper_falls_back_to_importable_python(
     assert result.stdout == "{}\n"
     assert (
         args_file.read_text(encoding="utf-8")
-        == f"-m mempalace hook run --hook {hook_name} --harness claude-code"
+        == f"-m trimemo hook run --hook {hook_name} --harness claude-code"
     )
     assert stdin_file.read_text(encoding="utf-8") == payload
 
@@ -144,7 +144,7 @@ def test_plugin_hook_wrapper_errors_cleanly_when_no_runner_exists(
 
     assert result.returncode != 0
     assert result.stdout == ""
-    assert "could not find a runnable mempalace command or module" in result.stderr
+    assert "could not find a runnable trimemo command or module" in result.stderr
 
 
 @pytest.mark.parametrize(("script_name", "hook_name"), SCRIPT_CASES)
@@ -164,7 +164,7 @@ def test_plugin_hook_wrapper_falls_back_to_python_when_python3_cannot_import(
                 "  exit 1\n"
                 "fi\n"
                 f"printf 'used' > \"{_shell_path(bad_python3_used)}\"\n"
-                "echo 'No module named mempalace' >&2\n"
+                "echo 'No module named trimemo' >&2\n"
                 "exit 1\n"
             ),
             "python": (
@@ -186,7 +186,7 @@ def test_plugin_hook_wrapper_falls_back_to_python_when_python3_cannot_import(
     assert result.stdout == "{}\n"
     assert (
         args_file.read_text(encoding="utf-8")
-        == f"-m mempalace hook run --hook {hook_name} --harness claude-code"
+        == f"-m trimemo hook run --hook {hook_name} --harness claude-code"
     )
     assert stdin_file.read_text(encoding="utf-8") == payload
     assert not bad_python3_used.exists()

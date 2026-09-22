@@ -1,10 +1,10 @@
 ---
-description: Save the current Claude Code session into MemPalace. Idempotent — won't dupe.
+description: Save the current Claude Code session into TriMemo. Idempotent — won't dupe.
 ---
 
 # /save
 
-Save the current Claude Code session into MemPalace. Run this when you
+Save the current Claude Code session into TriMemo. Run this when you
 want a checkpoint. Safe to run repeatedly — drawer IDs are content-hashed
 so re-running on the same session overwrites in place, no duplicates.
 
@@ -15,7 +15,7 @@ Behavior:
 2. Run via bash:
 
    ```
-   mempalace mine "<TRANSCRIPT_PATH>" --mode convos --wing claude_imports
+   trimemo mine "<TRANSCRIPT_PATH>" --mode convos --wing claude_imports
    ```
 
 3. If the user supplied an argument after `/save`, use it as the wing name
@@ -23,7 +23,7 @@ Behavior:
    `--wing my_research`).
 4. Report back: how many drawers were filed, into which wing/room.
 
-Requires `mempalace` to be installed (`uv tool install mempalace` recommended, or `pip install mempalace`).
+Requires `trimemo` to be installed (`uv tool install trimemo` recommended, or `pip install trimemo`).
 
 For the full setup and retention checklist, including hooks, JSONL backup, and
 one-time backfill, see [`website/guide/claude-code-retention.md`](../website/guide/claude-code-retention.md).

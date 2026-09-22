@@ -7,7 +7,7 @@ stay discoverable under the new name, merging collisions. IDs are left untouched
 (they are opaque keys), and the pass is idempotent.
 """
 
-from mempalace.migrate import migrate_wing_names, plan_wing_renames
+from trimemo.migrate import migrate_wing_names, plan_wing_renames
 
 
 # --- pure planner ---------------------------------------------------------
@@ -62,7 +62,7 @@ def test_plan_renames_collision_maps_both_to_same_target():
 
 
 def _seed(palace, rows):
-    from mempalace.palace import get_collection
+    from trimemo.palace import get_collection
 
     col = get_collection(str(palace), create=True)
     # Explicit embeddings keep the test hermetic (no embedding model needed) —
@@ -77,7 +77,7 @@ def _seed(palace, rows):
 
 
 def _wing_ids(palace, wing):
-    from mempalace.palace import get_collection
+    from trimemo.palace import get_collection
 
     col = get_collection(str(palace), create=False)
     res = col.get(where={"wing": wing}, include=["metadatas"])

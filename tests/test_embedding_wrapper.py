@@ -6,7 +6,7 @@ character and breaks length alignment with ids/metadatas on explicit-vector
 backends.
 """
 
-from mempalace.backends import embedding_wrapper as ew
+from trimemo.backends import embedding_wrapper as ew
 
 
 class _FakeInner:
@@ -41,7 +41,7 @@ class _FakeInner:
 
     def query(self, *, query_texts=None, query_embeddings=None, **_kw):
         self.calls["query"] = {"query_texts": query_texts, "query_embeddings": query_embeddings}
-        from mempalace.backends.base import QueryResult
+        from trimemo.backends.base import QueryResult
 
         return QueryResult.empty()
 
@@ -169,7 +169,7 @@ def test_get_all_metadata_forwards_to_inner():
         # makes a wrong delegation observable: the test would receive
         # ``[{"WRONG"}]``, not the inner's real list.
         def get(self, **_kw):
-            from mempalace.backends.base import GetResult
+            from trimemo.backends.base import GetResult
 
             return GetResult(ids=["bad"], documents=[""], metadatas=[{"WRONG": True}])
 
@@ -197,8 +197,8 @@ def test_wrapper_forwards_all_concrete_basecollection_methods():
     that calls ``self._inner.<name>(...)``."""
     import inspect
 
-    from mempalace.backends.base import BaseCollection
-    from mempalace.backends.embedding_wrapper import EmbeddingCollection
+    from trimemo.backends.base import BaseCollection
+    from trimemo.backends.embedding_wrapper import EmbeddingCollection
 
     concrete: set[str] = set()
     for name, member in inspect.getmembers(BaseCollection):

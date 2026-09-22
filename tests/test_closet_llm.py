@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mempalace.closet_llm import (
+from trimemo.closet_llm import (
     LLMConfig,
     _call_llm,
     _parsed_to_closet_lines,
@@ -203,7 +203,7 @@ class TestCallLLM:
 
         with (
             patch("urllib.request.urlopen", side_effect=fake_urlopen),
-            patch("mempalace.closet_llm.time.sleep"),
+            patch("trimemo.closet_llm.time.sleep"),
         ):
             parsed, _ = _call_llm(cfg, "/tmp/x", "w", "r", "c")
         assert parsed is None
@@ -223,7 +223,7 @@ class TestCallLLM:
 
         with (
             patch("urllib.request.urlopen", side_effect=fake_urlopen),
-            patch("mempalace.closet_llm.time.sleep"),
+            patch("trimemo.closet_llm.time.sleep"),
         ):
             parsed, _ = _call_llm(cfg, "/tmp/x", "w", "r", "c")
         assert parsed is None
@@ -246,8 +246,8 @@ class TestRegenerateClosets:
         """The non-dry-run operation must contend for process-lifetime palace
         ownership before it opens sqlite_exact or performs expensive/external
         work."""
-        from mempalace import closet_llm as closet_llm_mod
-        from mempalace.palace import MineAlreadyRunning
+        from trimemo import closet_llm as closet_llm_mod
+        from trimemo.palace import MineAlreadyRunning
 
         palace = str(tmp_path / "palace")
         os.makedirs(palace)
@@ -255,7 +255,7 @@ class TestRegenerateClosets:
         monkeypatch.setenv("MEMPALACE_BACKEND_EXPLICIT", "sqlite_exact")
         holder_code = """
 import sys
-from mempalace.palace import mine_palace_lock
+from trimemo.palace import mine_palace_lock
 with mine_palace_lock(sys.argv[1]):
     print("ready", flush=True)
     sys.stdin.read()
@@ -316,7 +316,7 @@ with mine_palace_lock(sys.argv[1]):
         Now we go through ``purge_file_closets`` + ``mine_lock`` + stamp
         ``NORMALIZE_VERSION`` so the next mine's stale-version gate doesn't
         treat the LLM closets as leftovers to rebuild over."""
-        from mempalace.palace import (
+        from trimemo.palace import (
             NORMALIZE_VERSION,
             get_closets_collection,
             get_collection,
@@ -398,7 +398,7 @@ with mine_palace_lock(sys.argv[1]):
         more than SQLite's SQLITE_MAX_VARIABLE_NUMBER (32766) drawers
         blows up inside chromadb. Matches the miner.status pattern
         introduced in #851 (see #802, #850, #1073)."""
-        from mempalace import closet_llm as closet_llm_mod
+        from trimemo import closet_llm as closet_llm_mod
 
         palace = str(tmp_path / "palace")
 
@@ -489,7 +489,7 @@ with mine_palace_lock(sys.argv[1]):
     def test_regen_by_source_aggregates_across_batches(self, tmp_path):
         """Pagination must not change the by_source grouping — drawers for
         the same source_file split across batches still land in one group."""
-        from mempalace import closet_llm as closet_llm_mod
+        from trimemo import closet_llm as closet_llm_mod
 
         palace = str(tmp_path / "palace")
 
@@ -572,7 +572,7 @@ with mine_palace_lock(sys.argv[1]):
         """Regression: the old closet_id base used ``source.split('/')[-1]``
         which silently degrades on Windows paths (``C:\\proj\\a.md`` →
         the whole string). ``os.path.basename`` handles both separators."""
-        from mempalace.palace import get_collection, get_closets_collection
+        from trimemo.palace import get_collection, get_closets_collection
 
         palace = str(tmp_path / "palace")
         # Use a path whose basename differs between '/' split and

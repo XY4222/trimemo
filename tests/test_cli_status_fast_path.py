@@ -46,11 +46,11 @@ class _LegacyCollection:
 @pytest.fixture
 def _stub_deps(monkeypatch):
     monkeypatch.setattr(
-        "mempalace.backends.chroma._sqlite_wing_room_counts",
+        "trimemo.backends.chroma._sqlite_wing_room_counts",
         lambda palace_path, collection_name: None,
     )
     monkeypatch.setattr(
-        "mempalace.backends.chroma.hnsw_capacity_status",
+        "trimemo.backends.chroma.hnsw_capacity_status",
         lambda palace_path, collection_name: {"diverged": False, "status": "unknown"},
     )
     yield
@@ -58,7 +58,7 @@ def _stub_deps(monkeypatch):
 
 class TestFastPath:
     def test_uses_get_all_metadata(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _make_collection_with_get_all(
             [
@@ -76,7 +76,7 @@ class TestFastPath:
         assert col.get_calls == []
 
     def test_does_not_call_count(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _make_collection_with_get_all([{"wing": "a", "room": "b"}])
         col.count = mock.MagicMock(side_effect=AssertionError("count() should not be called"))
@@ -86,7 +86,7 @@ class TestFastPath:
         col.count.assert_not_called()
 
     def test_handles_none_metadata(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _make_collection_with_get_all(
             [
@@ -103,7 +103,7 @@ class TestFastPath:
         assert "?" in out
 
     def test_large_collection_single_pass(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _make_collection_with_get_all([{"wing": "a", "room": "b"}] * 10000)
         monkeypatch.setattr(miner, "_open_collection_or_explain", lambda p: col)
@@ -114,7 +114,7 @@ class TestFastPath:
 
 class TestFallback:
     def test_offset_loop_when_no_get_all(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _LegacyCollection([{"wing": "a", "room": "x"}, {"wing": "b", "room": "y"}])
         monkeypatch.setattr(miner, "_open_collection_or_explain", lambda p: col)
@@ -125,7 +125,7 @@ class TestFallback:
         assert "2 drawers" in out
 
     def test_empty_collection(self, _stub_deps, monkeypatch, capsys):
-        from mempalace import miner
+        from trimemo import miner
 
         col = _LegacyCollection([])
         monkeypatch.setattr(miner, "_open_collection_or_explain", lambda p: col)

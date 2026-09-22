@@ -1,11 +1,11 @@
 {
-  "name": "mempalace",
+  "name": "trimemo",
   "interface": {
-    "displayName": "MemPalace"
+    "displayName": "TriMemo"
   },
   "plugins": [
     {
-      "name": "mempalace",
+      "name": "trimemo",
       "source": {
         "source": "local",
         "path": "./"

@@ -12,7 +12,7 @@ import threading
 
 import pytest
 
-from mempalace import mcp_server
+from trimemo import mcp_server
 
 
 LOGSTREAM_TOOLS = frozenset(
@@ -68,7 +68,7 @@ def _result(response):
 
 APPEND_ARGS = {
     "type": "task.request",
-    "stream": "project/mempalace",
+    "stream": "project/trimemo",
     "room": "delegation",
     "from_agent": "mac-codex",
     "to_agent": "windows-codex",
@@ -107,7 +107,7 @@ class TestDispatch:
                 patched_server,
                 "mempalace_task_create",
                 {
-                    "project": "mempalace",
+                    "project": "trimemo",
                     "from_agent": "mac-claude",
                     "to_agent": "windows-codex",
                     "goal": "Fix remote task creation.",
@@ -121,11 +121,11 @@ class TestDispatch:
         assert created["success"] is True
         assert created["task"]["type"] == "task.request"
         assert created["task"]["correlation_id"].startswith("task_fix_remote_task_creation_")
-        assert created["handoff"].startswith("Open MemPalace task task_fix_remote_task_creation_")
+        assert created["handoff"].startswith("Open TriMemo task task_fix_remote_task_creation_")
         assert created["task"]["body"] == (
             "Goal:\nFix remote task creation.\n\n"
             "Definition of done:\nFocused tests pass and a patch is submitted.\n\n"
-            "Delivery:\nClose the loop through MemPalace: claim the request, then submit a patch "
+            "Delivery:\nClose the loop through TriMemo: claim the request, then submit a patch "
             "with mempalace_patch_submit or reply with blocked/failed evidence."
         )
 
@@ -135,7 +135,7 @@ class TestDispatch:
                 patched_server,
                 "mempalace_task_create",
                 {
-                    "project": "mempalace",
+                    "project": "trimemo",
                     "from_agent": "mac-claude",
                     "to_agent": "windows-codex",
                     "goal": "Fix remote task creation.",
@@ -164,7 +164,7 @@ class TestDispatch:
             _call(
                 patched_server,
                 "mempalace_event_list",
-                {"stream": "project/mempalace", "correlation_id": "task_mcp"},
+                {"stream": "project/trimemo", "correlation_id": "task_mcp"},
             )
         )
         assert listed["count"] == 1
@@ -350,7 +350,7 @@ class TestDispatch:
                 {
                     "content": "diff --git a/y b/y\n+2\n",
                     "from_agent": "windows-codex",
-                    "stream": "project/mempalace",
+                    "stream": "project/trimemo",
                     "to_agent": "mac-codex",
                     "correlation_id": "task_mcp",
                 },
@@ -540,7 +540,7 @@ class TestTopicAndOrderMcp:
                 {
                     "content": "diff --git a/a b/b\n",
                     "from_agent": "mac-codex",
-                    "stream": "project/mempalace",
+                    "stream": "project/trimemo",
                     "topic": "feature-patch",
                 },
             )

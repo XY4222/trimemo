@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from mempalace.cli import (
+from trimemo.cli import (
     cmd_compress,
     cmd_hook,
     cmd_init,
@@ -37,7 +37,7 @@ _LEAK_PREFIX = "/__mempalace_cli_leak_sentinel__"
 
 
 def test_cli_main_strips_leaked_pythonpath_from_env():
-    """mempalace.cli:main must drop PYTHONPATH from the process env so
+    """trimemo.cli:main must drop PYTHONPATH from the process env so
     any subprocess the CLI spawns starts clean. Mirrors the
     sys.path-filter test in test_init.py but for the env half of the
     split fix. See #1423.
@@ -62,11 +62,11 @@ def test_cli_main_strips_leaked_pythonpath_from_env():
     # so the assertion is observable.
     code = (
         "import os, sys\n"
-        "from mempalace.cli import main\n"
+        "from trimemo.cli import main\n"
         f"prefix = {_LEAK_PREFIX!r}\n"
         "print('ENV_MID:', repr(os.environ.get('PYTHONPATH')))\n"
         "print('SENTINEL_IN_PATH:', any(prefix in (p or '') for p in sys.path))\n"
-        "sys.argv = ['mempalace', '--version']\n"
+        "sys.argv = ['trimemo', '--version']\n"
         "try:\n"
         "    main()\n"
         "except SystemExit as exc:\n"
@@ -95,21 +95,21 @@ def test_cli_main_strips_leaked_pythonpath_from_env():
 # ── cmd_status ─────────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_status_default_palace(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(palace=None)
     mock_miner = MagicMock()
-    with patch.dict("sys.modules", {"mempalace.miner": mock_miner}):
+    with patch.dict("sys.modules", {"trimemo.miner": mock_miner}):
         cmd_status(args)
         mock_miner.status.assert_called_once_with(palace_path="/fake/palace")
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_status_custom_palace(mock_config_cls):
     args = argparse.Namespace(palace="~/my_palace")
     mock_miner = MagicMock()
-    with patch.dict("sys.modules", {"mempalace.miner": mock_miner}):
+    with patch.dict("sys.modules", {"trimemo.miner": mock_miner}):
         cmd_status(args)
         import os
 
@@ -120,7 +120,7 @@ def test_cmd_status_custom_palace(mock_config_cls):
 # ── cmd_search ─────────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_search_calls_search(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -132,7 +132,7 @@ def test_cmd_search_calls_search(mock_config_cls):
         since="2026-04-01",
         before=None,
     )
-    with patch("mempalace.searcher.search") as mock_search:
+    with patch("trimemo.searcher.search") as mock_search:
         cmd_search(args)
         mock_search.assert_called_once_with(
             query="test query",
@@ -145,15 +145,15 @@ def test_cmd_search_calls_search(mock_config_cls):
         )
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_search_error_exits(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
         palace=None, query="q", wing=None, room=None, results=5, since=None, before=None
     )
-    from mempalace.searcher import SearchError
+    from trimemo.searcher import SearchError
 
-    with patch("mempalace.searcher.search", side_effect=SearchError("fail")):
+    with patch("trimemo.searcher.search", side_effect=SearchError("fail")):
         with pytest.raises(SystemExit) as exc_info:
             cmd_search(args)
         assert exc_info.value.code == 1
@@ -164,7 +164,7 @@ def test_cmd_search_error_exits(mock_config_cls):
 
 def test_cmd_instructions_calls_run_instructions():
     args = argparse.Namespace(name="help")
-    with patch("mempalace.instructions_cli.run_instructions") as mock_run:
+    with patch("trimemo.instructions_cli.run_instructions") as mock_run:
         cmd_instructions(args)
         mock_run.assert_called_once_with(name="help")
 
@@ -174,14 +174,14 @@ def test_cmd_instructions_calls_run_instructions():
 
 def test_cmd_hook_calls_run_hook():
     args = argparse.Namespace(hook="session-start", harness="claude-code")
-    with patch("mempalace.hooks_cli.run_hook") as mock_run:
+    with patch("trimemo.hooks_cli.run_hook") as mock_run:
         cmd_hook(args)
         mock_run.assert_called_once_with(hook_name="session-start", harness="claude-code")
 
 
 def test_cmd_hook_session_end_calls_run_hook():
     args = argparse.Namespace(hook="session-end", harness="claude-code")
-    with patch("mempalace.hooks_cli.run_hook") as mock_run:
+    with patch("trimemo.hooks_cli.run_hook") as mock_run:
         cmd_hook(args)
         mock_run.assert_called_once_with(hook_name="session-end", harness="claude-code")
 
@@ -189,42 +189,42 @@ def test_cmd_hook_session_end_calls_run_hook():
 # ── cmd_init ───────────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_init_no_entities(mock_config_cls, tmp_path):
     args = argparse.Namespace(dir=str(tmp_path), yes=True)
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=[]),
-        patch("mempalace.room_detector_local.detect_rooms_local") as mock_rooms,
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=[]),
+        patch("trimemo.room_detector_local.detect_rooms_local") as mock_rooms,
+        patch("trimemo.cli._maybe_run_mine_after_init"),
     ):
         cmd_init(args)
         mock_rooms.assert_called_once_with(project_dir=str(tmp_path), yes=True)
         mock_config_cls.return_value.init.assert_called_once()
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_init_with_entities(mock_config_cls, tmp_path):
     fake_files = [tmp_path / "a.txt"]
     detected = {"people": [{"name": "Alice"}], "projects": [], "uncertain": []}
     confirmed = {"people": ["Alice"], "projects": []}
     args = argparse.Namespace(dir=str(tmp_path), yes=True)
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=fake_files),
-        patch("mempalace.entity_detector.detect_entities", return_value=detected),
-        patch("mempalace.entity_detector.confirm_entities", return_value=confirmed),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=fake_files),
+        patch("trimemo.entity_detector.detect_entities", return_value=detected),
+        patch("trimemo.entity_detector.confirm_entities", return_value=confirmed),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         # Pass 0 (corpus_origin) needs real file IO; this test mocks
         # builtins.open globally for the entities.json write, which would
         # break Pass 0's file-reading path. Patch Pass 0 out — a separate
         # suite (tests/test_corpus_origin_integration.py) covers it directly.
-        patch("mempalace.cli._run_pass_zero", return_value=None),
+        patch("trimemo.cli._run_pass_zero", return_value=None),
         patch("builtins.open", MagicMock()),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
     ):
         cmd_init(args)
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_init_normalizes_wing_name_for_topics_registry(mock_config_cls, tmp_path):
     """Regression for #1194: hyphenated dir names must be normalized to the
     same slug ``mempalace.yaml`` uses, otherwise ``topics_by_wing`` keys
@@ -242,18 +242,18 @@ def test_cmd_init_normalizes_wing_name_for_topics_registry(mock_config_cls, tmp_
     confirmed = {"people": ["Alice"], "projects": [], "topics": ["Bun"]}
     args = argparse.Namespace(dir=str(project), yes=True)
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=fake_files),
-        patch("mempalace.entity_detector.detect_entities", return_value=detected),
-        patch("mempalace.entity_detector.confirm_entities", return_value=confirmed),
-        patch("mempalace.miner.add_to_known_entities") as mock_register,
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=fake_files),
+        patch("trimemo.entity_detector.detect_entities", return_value=detected),
+        patch("trimemo.entity_detector.confirm_entities", return_value=confirmed),
+        patch("trimemo.miner.add_to_known_entities") as mock_register,
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.open", MagicMock()),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
         # Pass-zero corpus-origin detection runs unconditionally inside
         # cmd_init now (#1221 / #1223). It accesses MempalaceConfig fields
         # that don't survive MagicMock stringification, so stub it out —
         # this test only cares about the wing-slug write to the registry.
-        patch("mempalace.cli._run_pass_zero", return_value=None),
+        patch("trimemo.cli._run_pass_zero", return_value=None),
     ):
         mock_register.return_value = "/tmp/known_entities.json"
         cmd_init(args)
@@ -261,7 +261,7 @@ def test_cmd_init_normalizes_wing_name_for_topics_registry(mock_config_cls, tmp_
         assert mock_register.call_args.kwargs["wing"] == "my_cool_app"
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_init_does_not_report_a_registry_update_that_did_not_happen(
     mock_config_cls, tmp_path, capsys
 ):
@@ -279,14 +279,14 @@ def test_cmd_init_does_not_report_a_registry_update_that_did_not_happen(
     confirmed = {"people": ["Alice"], "projects": [], "topics": []}
     args = argparse.Namespace(dir=str(project), yes=True)
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=[project / "a.txt"]),
-        patch("mempalace.entity_detector.detect_entities", return_value=detected),
-        patch("mempalace.entity_detector.confirm_entities", return_value=confirmed),
-        patch("mempalace.miner.add_to_known_entities", return_value=None),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=[project / "a.txt"]),
+        patch("trimemo.entity_detector.detect_entities", return_value=detected),
+        patch("trimemo.entity_detector.confirm_entities", return_value=confirmed),
+        patch("trimemo.miner.add_to_known_entities", return_value=None),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
         patch("builtins.open", MagicMock()),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
-        patch("mempalace.cli._run_pass_zero", return_value=None),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
+        patch("trimemo.cli._run_pass_zero", return_value=None),
     ):
         cmd_init(args)
 
@@ -318,10 +318,10 @@ def test_cmd_init_honors_palace_flag(tmp_path, monkeypatch):
     # cmd_init's MempalaceConfig() has no config_dir, so an unpatched call
     # here now persists this test's tmp_path into the shared ~/.mempalace
     # (#2366's fix made init() write what actually resolved, not a constant).
-    from mempalace.config import MempalaceConfig
+    from trimemo.config import MempalaceConfig
 
     monkeypatch.setattr(
-        "mempalace.cli.MempalaceConfig",
+        "trimemo.cli.MempalaceConfig",
         lambda *a, **kw: MempalaceConfig(*a, config_dir=str(tmp_path / ".mempalace"), **kw),
     )
 
@@ -341,10 +341,10 @@ def test_cmd_init_honors_palace_flag(tmp_path, monkeypatch):
         return None
 
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=[]),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
-        patch("mempalace.cli._run_pass_zero", side_effect=fake_pass_zero),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=[]),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli._run_pass_zero", side_effect=fake_pass_zero),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
     ):
         cmd_init(args)
 
@@ -358,17 +358,17 @@ def test_cmd_init_honors_palace_flag(tmp_path, monkeypatch):
     assert os.environ.get("MEMPALACE_PALACE_PATH") == os.path.abspath(expected)
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_init_with_entities_zero_total(mock_config_cls, tmp_path, capsys):
     """When entities detected but total is 0, prints 'No entities' message."""
     fake_files = [tmp_path / "a.txt"]
     detected = {"people": [], "projects": [], "uncertain": []}
     args = argparse.Namespace(dir=str(tmp_path), yes=False)
     with (
-        patch("mempalace.entity_detector.scan_for_detection", return_value=fake_files),
-        patch("mempalace.entity_detector.detect_entities", return_value=detected),
-        patch("mempalace.room_detector_local.detect_rooms_local"),
-        patch("mempalace.cli._maybe_run_mine_after_init"),
+        patch("trimemo.entity_detector.scan_for_detection", return_value=fake_files),
+        patch("trimemo.entity_detector.detect_entities", return_value=detected),
+        patch("trimemo.room_detector_local.detect_rooms_local"),
+        patch("trimemo.cli._maybe_run_mine_after_init"),
     ):
         cmd_init(args)
     out = capsys.readouterr().out
@@ -400,14 +400,14 @@ def _fake_scanned(tmp_path, n=3):
 
 def test_maybe_run_mine_prompt_accepted_runs_mine(tmp_path):
     """Empty / 'y' / 'yes' on the prompt triggers mine() in-process."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     scanned = _fake_scanned(tmp_path, n=3)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=scanned),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=scanned),
         patch("builtins.input", return_value=""),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -420,13 +420,13 @@ def test_maybe_run_mine_prompt_accepted_runs_mine(tmp_path):
 
 def test_maybe_run_mine_prompt_yes_accepted_runs_mine(tmp_path):
     """Explicit 'y' answer also runs mine()."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", return_value="Y"),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -435,13 +435,13 @@ def test_maybe_run_mine_prompt_yes_accepted_runs_mine(tmp_path):
 
 def test_maybe_run_mine_prompt_declined_prints_hint(tmp_path, capsys):
     """'n' answer skips mine() and prints the resume hint."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", return_value="n"),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -450,7 +450,7 @@ def test_maybe_run_mine_prompt_declined_prints_hint(tmp_path, capsys):
     # shlex.quote is a no-op on POSIX-safe paths but wraps Windows paths
     # (which contain backslashes) in single quotes, so the assertion has
     # to mirror what the production code actually emits.
-    assert f"mempalace mine {shlex.quote(str(tmp_path))}" in out
+    assert f"trimemo mine {shlex.quote(str(tmp_path))}" in out
     assert "Skipped" in out
 
 
@@ -461,13 +461,13 @@ def test_maybe_run_mine_yes_alone_still_prompts(tmp_path):
     `--yes` to also auto-mine would silently change behaviour for scripted
     callers and turn a fast command into a minutes-long ChromaDB write.
     """
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=True, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", return_value="n") as mock_input,
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -477,14 +477,14 @@ def test_maybe_run_mine_yes_alone_still_prompts(tmp_path):
 
 def test_maybe_run_mine_auto_mine_skips_prompt(tmp_path):
     """`--auto-mine` runs mine() automatically without calling input()."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=True)
     cfg = _fake_cfg(tmp_path)
     scanned = _fake_scanned(tmp_path, n=2)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=scanned),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=scanned),
         patch("builtins.input", side_effect=AssertionError("input() must not be called")),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -497,13 +497,13 @@ def test_maybe_run_mine_auto_mine_skips_prompt(tmp_path):
 
 def test_maybe_run_mine_yes_and_auto_mine_fully_noninteractive(tmp_path):
     """`--yes --auto-mine` together: never call input(), always mine."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=True, auto_mine=True)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", side_effect=AssertionError("input() must not be called")),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -513,15 +513,15 @@ def test_maybe_run_mine_yes_and_auto_mine_fully_noninteractive(tmp_path):
 def test_maybe_run_mine_decline_quotes_path_with_spaces(tmp_path, capsys):
     """The resume hint must shell-quote the project dir so paths with
     spaces / metacharacters produce a copy-paste-safe command."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     spaced_dir = tmp_path / "my project dir"
     spaced_dir.mkdir()
     args = argparse.Namespace(dir=str(spaced_dir), yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine"),
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine"),
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", return_value="n"),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -529,21 +529,21 @@ def test_maybe_run_mine_decline_quotes_path_with_spaces(tmp_path, capsys):
     # shlex.quote wraps paths with spaces (and Windows backslashes) in
     # single quotes — the assertion must use the same shlex form so the
     # test passes on every platform's tmp_path layout.
-    assert f"mempalace mine {shlex.quote(str(spaced_dir))}" in out
+    assert f"trimemo mine {shlex.quote(str(spaced_dir))}" in out
     # Bare unquoted form must NOT appear — that's the bug we're guarding.
-    assert f"mempalace mine {spaced_dir} " not in out
-    assert f"mempalace mine {spaced_dir}`" not in out
+    assert f"trimemo mine {spaced_dir} " not in out
+    assert f"trimemo mine {spaced_dir}`" not in out
 
 
 def test_maybe_run_mine_eof_on_stdin_treated_as_decline(tmp_path, capsys):
     """Piped / non-interactive stdin (EOFError) declines without crashing."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine") as mock_mine,
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine") as mock_mine,
+        patch("trimemo.miner.scan_project", return_value=[]),
         patch("builtins.input", side_effect=EOFError),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -553,13 +553,13 @@ def test_maybe_run_mine_eof_on_stdin_treated_as_decline(tmp_path, capsys):
 
 def test_maybe_run_mine_failure_surfaces_via_exit(tmp_path, capsys):
     """Mine errors are not swallowed — they exit non-zero with an error line."""
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=True)
     cfg = _fake_cfg(tmp_path)
     with (
-        patch("mempalace.miner.mine", side_effect=RuntimeError("boom")),
-        patch("mempalace.miner.scan_project", return_value=[]),
+        patch("trimemo.miner.mine", side_effect=RuntimeError("boom")),
+        patch("trimemo.miner.scan_project", return_value=[]),
     ):
         with pytest.raises(SystemExit) as exc_info:
             _maybe_run_mine_after_init(args, cfg)
@@ -575,7 +575,7 @@ def test_maybe_run_mine_estimate_appears_before_prompt(tmp_path, capsys):
     info is a footgun on a real corpus where mine takes minutes. The user
     must see scope before being asked to confirm.
     """
-    from mempalace.cli import _maybe_run_mine_after_init
+    from trimemo.cli import _maybe_run_mine_after_init
 
     args = _init_args(tmp_path, yes=False, auto_mine=False)
     cfg = _fake_cfg(tmp_path)
@@ -588,8 +588,8 @@ def test_maybe_run_mine_estimate_appears_before_prompt(tmp_path, capsys):
         return "n"
 
     with (
-        patch("mempalace.miner.mine"),
-        patch("mempalace.miner.scan_project", return_value=scanned),
+        patch("trimemo.miner.mine"),
+        patch("trimemo.miner.scan_project", return_value=scanned),
         patch("builtins.input", side_effect=fake_input),
     ):
         _maybe_run_mine_after_init(args, cfg)
@@ -603,7 +603,7 @@ def test_maybe_run_mine_estimate_appears_before_prompt(tmp_path, capsys):
 # ── cmd_mine ───────────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_projects_mode(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -611,20 +611,20 @@ def test_cmd_mine_projects_mode(mock_config_cls):
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
         include_ignored=[],
         extract="exchange",
     )
-    with patch("mempalace.miner.mine") as mock_mine:
+    with patch("trimemo.miner.mine") as mock_mine:
         cmd_mine(args)
         mock_mine.assert_called_once_with(
             project_dir="/src",
             palace_path="/fake/palace",
             wing_override=None,
-            agent="mempalace",
+            agent="trimemo",
             limit=0,
             dry_run=False,
             respect_gitignore=True,
@@ -633,7 +633,7 @@ def test_cmd_mine_projects_mode(mock_config_cls):
         )
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_convos_mode(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -649,7 +649,7 @@ def test_cmd_mine_convos_mode(mock_config_cls):
         extract="general",
         include_subagents=False,
     )
-    with patch("mempalace.convo_miner.mine_convos") as mock_mine:
+    with patch("trimemo.convo_miner.mine_convos") as mock_mine:
         cmd_mine(args)
         mock_mine.assert_called_once_with(
             convo_dir="/chats",
@@ -663,7 +663,7 @@ def test_cmd_mine_convos_mode(mock_config_cls):
         )
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_convos_mode_threads_include_subagents_flag(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -679,13 +679,13 @@ def test_cmd_mine_convos_mode_threads_include_subagents_flag(mock_config_cls):
         extract="exchange",
         include_subagents=True,
     )
-    with patch("mempalace.convo_miner.mine_convos") as mock_mine:
+    with patch("trimemo.convo_miner.mine_convos") as mock_mine:
         cmd_mine(args)
         kwargs = mock_mine.call_args.kwargs
         assert kwargs["include_subagents"] is True
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_include_ignored_comma_split(mock_config_cls):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -693,21 +693,21 @@ def test_cmd_mine_include_ignored_comma_split(mock_config_cls):
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
         include_ignored=["a.txt,b.txt", "c.txt"],
         extract="exchange",
     )
-    with patch("mempalace.miner.mine") as mock_mine:
+    with patch("trimemo.miner.mine") as mock_mine:
         cmd_mine(args)
         mock_mine.assert_called_once()
         call_kwargs = mock_mine.call_args[1]
         assert call_kwargs["include_ignored"] == ["a.txt", "b.txt", "c.txt"]
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_daemon_background_submits_job(mock_config_cls, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -715,7 +715,7 @@ def test_cmd_mine_daemon_background_submits_job(mock_config_cls, capsys):
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
@@ -728,8 +728,8 @@ def test_cmd_mine_daemon_background_submits_job(mock_config_cls, capsys):
         max_chunks_per_file=None,
         redetect_origin=False,
     )
-    with patch("mempalace.daemon.submit_job", return_value={"id": "job-1"}) as mock_submit:
-        with patch("mempalace.miner.mine") as mock_mine:
+    with patch("trimemo.daemon.submit_job", return_value={"id": "job-1"}) as mock_submit:
+        with patch("trimemo.miner.mine") as mock_mine:
             cmd_mine(args)
 
     mock_mine.assert_not_called()
@@ -742,7 +742,7 @@ def test_cmd_mine_daemon_background_submits_job(mock_config_cls, capsys):
     assert "job-1" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_daemon_resolves_relative_source_against_caller_cwd(
     mock_config_cls, tmp_path, monkeypatch
 ):
@@ -758,7 +758,7 @@ def test_cmd_mine_daemon_resolves_relative_source_against_caller_cwd(
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
@@ -771,8 +771,8 @@ def test_cmd_mine_daemon_resolves_relative_source_against_caller_cwd(
         max_chunks_per_file=None,
         redetect_origin=False,
     )
-    with patch("mempalace.daemon.submit_job", return_value={"id": "job-1"}) as mock_submit:
-        with patch("mempalace.miner.mine") as mock_mine:
+    with patch("trimemo.daemon.submit_job", return_value={"id": "job-1"}) as mock_submit:
+        with patch("trimemo.miner.mine") as mock_mine:
             cmd_mine(args)
 
     mock_mine.assert_not_called()
@@ -780,7 +780,7 @@ def test_cmd_mine_daemon_resolves_relative_source_against_caller_cwd(
     assert payload["source"] == expected_source
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_daemon_lock_deferral_reports_a_runnable_command(mock_config_cls, capsys):
     """A foreground mine refused the palace lock must say so and hand back a
     command that actually works. --palace is global, so it has to be echoed back
@@ -800,7 +800,7 @@ def test_cmd_mine_daemon_lock_deferral_reports_a_runnable_command(mock_config_cl
         palace="/my palace",  # non-default, and with a space to pin the quoting
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
@@ -813,7 +813,7 @@ def test_cmd_mine_daemon_lock_deferral_reports_a_runnable_command(mock_config_cl
         max_chunks_per_file=None,
         redetect_origin=False,
     )
-    with patch("mempalace.daemon.submit_job", return_value=parked) as mock_submit:
+    with patch("trimemo.daemon.submit_job", return_value=parked) as mock_submit:
         with pytest.raises(SystemExit) as exc:
             cmd_mine(args)
 
@@ -822,13 +822,13 @@ def test_cmd_mine_daemon_lock_deferral_reports_a_runnable_command(mock_config_cl
     err = capsys.readouterr().err
     assert "is held by PID 999" in err  # the holder, not a generic failure
     assert "daemon submission failed" not in err  # the submission did not fail
-    assert f"mempalace --palace {shlex.quote('/my palace')} daemon jobs" in err
+    assert f"trimemo --palace {shlex.quote('/my palace')} daemon jobs" in err
     # Not `daemon wait`: this branch exists because we would not wait out the
     # holder, so it must not hand back a command that does exactly that.
     assert "daemon wait" not in err
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_background_requires_daemon(mock_config_cls, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -836,7 +836,7 @@ def test_cmd_mine_background_requires_daemon(mock_config_cls, capsys):
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
@@ -851,7 +851,7 @@ def test_cmd_mine_background_requires_daemon(mock_config_cls, capsys):
     assert "--background requires --daemon" in capsys.readouterr().err
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_mine_exits_nonzero_on_lock_holder(mock_config_cls, capsys):
     """Regression #1264: lock contention must exit non-zero with a clear message.
 
@@ -861,7 +861,7 @@ def test_cmd_mine_exits_nonzero_on_lock_holder(mock_config_cls, capsys):
     miner.mine() and cmd_mine catches it, printing the holder identity
     to stderr and exiting non-zero.
     """
-    from mempalace.palace import MineAlreadyRunning
+    from trimemo.palace import MineAlreadyRunning
 
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -869,7 +869,7 @@ def test_cmd_mine_exits_nonzero_on_lock_holder(mock_config_cls, capsys):
         palace=None,
         mode="projects",
         wing=None,
-        agent="mempalace",
+        agent="trimemo",
         limit=0,
         dry_run=False,
         no_gitignore=False,
@@ -877,9 +877,9 @@ def test_cmd_mine_exits_nonzero_on_lock_holder(mock_config_cls, capsys):
         extract="exchange",
     )
     with patch(
-        "mempalace.miner.mine",
+        "trimemo.miner.mine",
         side_effect=MineAlreadyRunning(
-            "palace /fake/palace is held by PID 12345 (mempalace mcp_server); wait for it to finish"
+            "palace /fake/palace is held by PID 12345 (trimemo mcp_server); wait for it to finish"
         ),
     ):
         with pytest.raises(SystemExit) as excinfo:
@@ -893,13 +893,13 @@ def test_cmd_mine_exits_nonzero_on_lock_holder(mock_config_cls, capsys):
 # ── cmd_wakeup ─────────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_wakeup(mock_config_cls, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(palace=None, wing=None)
     mock_stack = MagicMock()
     mock_stack.wake_up.return_value = "Hello world context"
-    with patch("mempalace.layers.MemoryStack", return_value=mock_stack):
+    with patch("trimemo.layers.MemoryStack", return_value=mock_stack):
         cmd_wakeup(args)
     out = capsys.readouterr().out
     assert "Hello world context" in out
@@ -911,34 +911,34 @@ def test_cmd_wakeup(mock_config_cls, capsys):
 
 def test_cmd_split_basic():
     args = argparse.Namespace(dir="/chats", output_dir=None, dry_run=False, min_sessions=2)
-    with patch("mempalace.split_mega_files.main") as mock_main:
+    with patch("trimemo.split_mega_files.main") as mock_main:
         cmd_split(args)
         mock_main.assert_called_once()
 
 
 def test_cmd_split_all_options():
     args = argparse.Namespace(dir="/chats", output_dir="/out", dry_run=True, min_sessions=5)
-    with patch("mempalace.split_mega_files.main") as mock_main:
+    with patch("trimemo.split_mega_files.main") as mock_main:
         cmd_split(args)
         mock_main.assert_called_once()
     # sys.argv should be restored
-    assert sys.argv[0] != "mempalace split"
+    assert sys.argv[0] != "trimemo split"
 
 
 # ── main() argparse dispatch ──────────────────────────────────────────
 
 
 def test_main_no_args_prints_help(capsys):
-    with patch("sys.argv", ["mempalace"]):
+    with patch("sys.argv", ["trimemo"]):
         main()
     out = capsys.readouterr().out
-    assert "MemPalace" in out
+    assert "TriMemo" in out
 
 
 def test_main_status_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "status"]),
-        patch("mempalace.cli.cmd_status") as mock_cmd,
+        patch("sys.argv", ["trimemo", "status"]),
+        patch("trimemo.cli.cmd_status") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -948,8 +948,8 @@ def test_main_backend_flag_sets_explicit_backend(monkeypatch):
     monkeypatch.delenv("MEMPALACE_BACKEND_EXPLICIT", raising=False)
     monkeypatch.delenv("MEMPALACE_BACKEND", raising=False)
     with (
-        patch("sys.argv", ["mempalace", "status", "--backend", "sqlite_exact"]),
-        patch("mempalace.cli.cmd_status") as mock_cmd,
+        patch("sys.argv", ["trimemo", "status", "--backend", "sqlite_exact"]),
+        patch("trimemo.cli.cmd_status") as mock_cmd,
     ):
         main()
 
@@ -965,8 +965,8 @@ def test_main_backend_flag_accepts_qdrant(monkeypatch):
     monkeypatch.delenv("MEMPALACE_BACKEND_EXPLICIT", raising=False)
     monkeypatch.delenv("MEMPALACE_BACKEND", raising=False)
     with (
-        patch("sys.argv", ["mempalace", "status", "--backend", "qdrant"]),
-        patch("mempalace.cli.cmd_status") as mock_cmd,
+        patch("sys.argv", ["trimemo", "status", "--backend", "qdrant"]),
+        patch("trimemo.cli.cmd_status") as mock_cmd,
     ):
         main()
 
@@ -980,8 +980,8 @@ def test_main_backend_flag_accepts_qdrant(monkeypatch):
 
 def test_main_search_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "search", "my query"]),
-        patch("mempalace.cli.cmd_search") as mock_cmd,
+        patch("sys.argv", ["trimemo", "search", "my query"]),
+        patch("trimemo.cli.cmd_search") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -989,8 +989,8 @@ def test_main_search_dispatches():
 
 def test_main_init_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "init", "/some/dir"]),
-        patch("mempalace.cli.cmd_init") as mock_cmd,
+        patch("sys.argv", ["trimemo", "init", "/some/dir"]),
+        patch("trimemo.cli.cmd_init") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -998,8 +998,8 @@ def test_main_init_dispatches():
 
 def test_main_mine_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "mine", "/some/dir"]),
-        patch("mempalace.cli.cmd_mine") as mock_cmd,
+        patch("sys.argv", ["trimemo", "mine", "/some/dir"]),
+        patch("trimemo.cli.cmd_mine") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1007,8 +1007,8 @@ def test_main_mine_dispatches():
 
 def test_main_wakeup_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "wake-up"]),
-        patch("mempalace.cli.cmd_wakeup") as mock_cmd,
+        patch("sys.argv", ["trimemo", "wake-up"]),
+        patch("trimemo.cli.cmd_wakeup") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1016,44 +1016,44 @@ def test_main_wakeup_dispatches():
 
 def test_main_split_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "split", "/chats"]),
-        patch("mempalace.cli.cmd_split") as mock_cmd,
+        patch("sys.argv", ["trimemo", "split", "/chats"]),
+        patch("trimemo.cli.cmd_split") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
 
 
 def test_mcp_command_prints_setup_guidance(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["mempalace", "mcp"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "mcp"])
 
     main()
 
     captured = capsys.readouterr()
-    assert "MemPalace MCP quick setup:" in captured.out
-    assert "claude mcp add mempalace -- mempalace-mcp" in captured.out
-    assert "codex mcp add mempalace -- mempalace-mcp" in captured.out
-    assert "claude mcp add mempalace-light -- mempalace-light-mcp" in captured.out
-    assert "codex mcp add mempalace-light -- mempalace-light-mcp" in captured.out
-    assert "claude mcp add mempalace -- mempalace-light-mcp" not in captured.out
+    assert "TriMemo MCP quick setup:" in captured.out
+    assert "claude mcp add trimemo -- trimemo-mcp" in captured.out
+    assert "codex mcp add trimemo -- trimemo-mcp" in captured.out
+    assert "claude mcp add trimemo-light -- trimemo-light-mcp" in captured.out
+    assert "codex mcp add trimemo-light -- trimemo-light-mcp" in captured.out
+    assert "claude mcp add trimemo -- trimemo-light-mcp" not in captured.out
     assert "\nOptional custom palace:\n" in captured.out
-    assert "mempalace-mcp --palace /path/to/palace" in captured.out
+    assert "trimemo-mcp --palace /path/to/palace" in captured.out
     assert "[--palace /path/to/palace]" not in captured.out
     assert captured.err == ""
 
 
 def test_mcp_command_uses_custom_palace_path_when_provided(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["mempalace", "--palace", "~/tmp/my palace", "mcp"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "--palace", "~/tmp/my palace", "mcp"])
 
     main()
 
     captured = capsys.readouterr()
     expanded = str(Path("~/tmp/my palace").expanduser())
 
-    assert "mempalace-mcp --palace" in captured.out
+    assert "trimemo-mcp --palace" in captured.out
     assert expanded in captured.out
-    assert "claude mcp add mempalace -- mempalace-mcp --palace" in captured.out
-    assert "codex mcp add mempalace -- mempalace-mcp --palace" in captured.out
-    assert "claude mcp add mempalace-light -- mempalace-light-mcp --palace" in captured.out
+    assert "claude mcp add trimemo -- trimemo-mcp --palace" in captured.out
+    assert "codex mcp add trimemo -- trimemo-mcp --palace" in captured.out
+    assert "claude mcp add trimemo-light -- trimemo-light-mcp --palace" in captured.out
     assert "Optional custom palace:" not in captured.out
     assert "[--palace /path/to/palace]" not in captured.out
     assert captured.err == ""
@@ -1062,13 +1062,13 @@ def test_mcp_command_uses_custom_palace_path_when_provided(monkeypatch, capsys):
 def test_mcp_command_includes_backend_when_provided(monkeypatch, capsys):
     monkeypatch.delenv("MEMPALACE_BACKEND_EXPLICIT", raising=False)
     monkeypatch.delenv("MEMPALACE_BACKEND", raising=False)
-    monkeypatch.setattr(sys, "argv", ["mempalace", "mcp", "--backend", "sqlite_exact"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "mcp", "--backend", "sqlite_exact"])
 
     main()
 
     captured = capsys.readouterr()
-    assert "mempalace-mcp --backend sqlite_exact" in captured.out
-    assert "mempalace-light-mcp --backend sqlite_exact" in captured.out
+    assert "trimemo-mcp --backend sqlite_exact" in captured.out
+    assert "trimemo-light-mcp --backend sqlite_exact" in captured.out
     assert captured.err == ""
     os.environ.pop("MEMPALACE_BACKEND_EXPLICIT", None)
     os.environ.pop("MEMPALACE_BACKEND", None)
@@ -1077,19 +1077,19 @@ def test_mcp_command_includes_backend_when_provided(monkeypatch, capsys):
 def test_mcp_command_includes_qdrant_backend(monkeypatch, capsys):
     monkeypatch.delenv("MEMPALACE_BACKEND_EXPLICIT", raising=False)
     monkeypatch.delenv("MEMPALACE_BACKEND", raising=False)
-    monkeypatch.setattr(sys, "argv", ["mempalace", "mcp", "--backend", "qdrant"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "mcp", "--backend", "qdrant"])
 
     main()
 
     captured = capsys.readouterr()
-    assert "mempalace-mcp --backend qdrant" in captured.out
+    assert "trimemo-mcp --backend qdrant" in captured.out
     assert captured.err == ""
     os.environ.pop("MEMPALACE_BACKEND_EXPLICIT", None)
     os.environ.pop("MEMPALACE_BACKEND", None)
 
 
 def test_main_hook_no_subcommand_prints_help(capsys):
-    with patch("sys.argv", ["mempalace", "hook"]):
+    with patch("sys.argv", ["trimemo", "hook"]):
         main()
     out = capsys.readouterr().out
     assert "hook" in out.lower() or "run" in out.lower()
@@ -1099,9 +1099,9 @@ def test_main_hook_run_dispatches():
     with (
         patch(
             "sys.argv",
-            ["mempalace", "hook", "run", "--hook", "session-start", "--harness", "claude-code"],
+            ["trimemo", "hook", "run", "--hook", "session-start", "--harness", "claude-code"],
         ),
-        patch("mempalace.cli.cmd_hook") as mock_cmd,
+        patch("trimemo.cli.cmd_hook") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1111,16 +1111,16 @@ def test_main_hook_run_dispatches_session_end():
     with (
         patch(
             "sys.argv",
-            ["mempalace", "hook", "run", "--hook", "session-end", "--harness", "claude-code"],
+            ["trimemo", "hook", "run", "--hook", "session-end", "--harness", "claude-code"],
         ),
-        patch("mempalace.cli.cmd_hook") as mock_cmd,
+        patch("trimemo.cli.cmd_hook") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
 
 
 def test_main_instructions_no_subcommand_prints_help(capsys):
-    with patch("sys.argv", ["mempalace", "instructions"]):
+    with patch("sys.argv", ["trimemo", "instructions"]):
         main()
     out = capsys.readouterr().out
     assert "instructions" in out.lower() or "init" in out.lower()
@@ -1128,8 +1128,8 @@ def test_main_instructions_no_subcommand_prints_help(capsys):
 
 def test_main_instructions_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "instructions", "help"]),
-        patch("mempalace.cli.cmd_instructions") as mock_cmd,
+        patch("sys.argv", ["trimemo", "instructions", "help"]),
+        patch("trimemo.cli.cmd_instructions") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1137,8 +1137,8 @@ def test_main_instructions_dispatches():
 
 def test_main_repair_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "repair"]),
-        patch("mempalace.cli.cmd_repair") as mock_cmd,
+        patch("sys.argv", ["trimemo", "repair"]),
+        patch("trimemo.cli.cmd_repair") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1146,8 +1146,8 @@ def test_main_repair_dispatches():
 
 def test_main_repair_rebuild_index_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "repair", "rebuild-index"]),
-        patch("mempalace.cli.cmd_repair") as mock_cmd,
+        patch("sys.argv", ["trimemo", "repair", "rebuild-index"]),
+        patch("trimemo.cli.cmd_repair") as mock_cmd,
     ):
         main()
         args = mock_cmd.call_args.args[0]
@@ -1156,8 +1156,8 @@ def test_main_repair_rebuild_index_dispatches():
 
 def test_main_compress_dispatches():
     with (
-        patch("sys.argv", ["mempalace", "compress"]),
-        patch("mempalace.cli.cmd_compress") as mock_cmd,
+        patch("sys.argv", ["trimemo", "compress"]),
+        patch("trimemo.cli.cmd_compress") as mock_cmd,
     ):
         main()
         mock_cmd.assert_called_once()
@@ -1176,29 +1176,29 @@ def _mock_backend_for(col=None, new_col=None):
     return mock_backend
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_no_palace(mock_config_cls, tmp_path, capsys):
     mock_config_cls.return_value.palace_path = str(tmp_path / "nonexistent")
     args = argparse.Namespace(palace=None)
-    with patch("mempalace.backends.chroma.ChromaBackend"):
+    with patch("trimemo.backends.chroma.ChromaBackend"):
         cmd_repair(args)
     out = capsys.readouterr().out
     assert "No palace found" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_requires_palace_database(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
     mock_config_cls.return_value.palace_path = str(palace_dir)
     args = argparse.Namespace(palace=None)
-    with patch("mempalace.backends.chroma.ChromaBackend"):
+    with patch("trimemo.backends.chroma.ChromaBackend"):
         cmd_repair(args)
     out = capsys.readouterr().out
     assert "No palace database found" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_error_reading(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
@@ -1208,13 +1208,13 @@ def test_cmd_repair_error_reading(mock_config_cls, tmp_path, capsys):
     args = argparse.Namespace(palace=None)
     mock_backend = MagicMock()
     mock_backend.get_collection.side_effect = Exception("corrupt db")
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
     out = capsys.readouterr().out
     assert "Error reading palace" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_error_reading_points_to_from_sqlite_not_remine(
     mock_config_cls, tmp_path, capsys
 ):
@@ -1236,14 +1236,14 @@ def test_cmd_repair_error_reading_points_to_from_sqlite_not_remine(
     )
     mock_backend = MagicMock()
     mock_backend.get_collection.return_value = mock_col
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
     out = capsys.readouterr().out
-    assert "mempalace repair --mode from-sqlite --archive-existing" in out
+    assert "trimemo repair --mode from-sqlite --archive-existing" in out
     assert "may need to be re-mined" not in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_zero_drawers(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
@@ -1254,13 +1254,13 @@ def test_cmd_repair_zero_drawers(mock_config_cls, tmp_path, capsys):
     mock_col = MagicMock()
     mock_col.count.return_value = 0
     mock_backend = _mock_backend_for(col=mock_col)
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
     out = capsys.readouterr().out
     assert "Nothing to repair" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_success(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
@@ -1281,7 +1281,7 @@ def test_cmd_repair_success(mock_config_cls, tmp_path, capsys):
     mock_new_col.count.return_value = 2
     mock_backend = _mock_backend_for(col=mock_col, new_col=mock_new_col)
     mock_backend.create_collection.side_effect = [mock_temp_col, mock_new_col]
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
     out = capsys.readouterr().out
     assert "Repair complete" in out
@@ -1300,7 +1300,7 @@ def test_cmd_repair_success(mock_config_cls, tmp_path, capsys):
     os.name == "nt" or not hasattr(socket, "AF_UNIX"),
     reason="Unix domain socket files are POSIX-only",
 )
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_survives_a_socket_in_the_palace_directory(
     mock_config_cls, tmp_path, monkeypatch, capsys
 ):
@@ -1351,7 +1351,7 @@ def test_cmd_repair_survives_a_socket_in_the_palace_directory(
     mock_backend = _mock_backend_for(col=mock_col, new_col=mock_new_col)
     mock_backend.create_collection.side_effect = [mock_temp_col, mock_new_col]
 
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
 
     out = capsys.readouterr().out
@@ -1369,7 +1369,7 @@ def test_cmd_repair_survives_a_socket_in_the_palace_directory(
     assert backed_up_link.read_text(encoding="utf-8") == "tunnel payload"
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_uses_configured_collection(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
@@ -1391,7 +1391,7 @@ def test_cmd_repair_uses_configured_collection(mock_config_cls, tmp_path, capsys
     mock_backend = _mock_backend_for(col=mock_col, new_col=mock_new_col)
     mock_backend.create_collection.side_effect = [mock_temp_col, mock_new_col]
 
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
 
     out = capsys.readouterr().out
@@ -1408,7 +1408,7 @@ def test_cmd_repair_uses_configured_collection(mock_config_cls, tmp_path, capsys
     ]
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_default_mode_dry_run_writes_nothing(mock_config_cls, tmp_path, capsys):
     """``repair --dry-run`` with no --mode must print a plan and leave the palace alone.
 
@@ -1433,9 +1433,9 @@ def test_cmd_repair_default_mode_dry_run_writes_nothing(mock_config_cls, tmp_pat
     mock_backend = _mock_backend_for(col=mock_col)
 
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=2) as mock_count,
-        patch("mempalace.migrate.confirm_destructive_action") as mock_confirm,
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=2) as mock_count,
+        patch("trimemo.migrate.confirm_destructive_action") as mock_confirm,
     ):
         cmd_repair(args)
 
@@ -1454,7 +1454,7 @@ def test_cmd_repair_default_mode_dry_run_writes_nothing(mock_config_cls, tmp_pat
     assert not (tmp_path / "palace.backup").exists()
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_default_mode_dry_run_honours_custom_collection(
     mock_config_cls, tmp_path, capsys
 ):
@@ -1467,8 +1467,8 @@ def test_cmd_repair_default_mode_dry_run_honours_custom_collection(
     args = argparse.Namespace(palace=None, yes=True, dry_run=True)
 
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=_mock_backend_for()),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=7) as mock_count,
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=_mock_backend_for()),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=7) as mock_count,
     ):
         cmd_repair(args)
 
@@ -1476,7 +1476,7 @@ def test_cmd_repair_default_mode_dry_run_honours_custom_collection(
     mock_count.assert_called_once_with(str(palace_dir), "custom_drawers")
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_default_mode_dry_run_reports_healable_fts5_and_continues(
     mock_config_cls, tmp_path, capsys
 ):
@@ -1494,12 +1494,12 @@ def test_cmd_repair_default_mode_dry_run_reports_healable_fts5_and_continues(
 
     with (
         patch(
-            "mempalace.repair.sqlite_integrity_errors",
+            "trimemo.repair.sqlite_integrity_errors",
             return_value=["malformed inverted index for FTS5 table x"],
         ),
-        patch("mempalace.repair.maybe_autoheal_fts5_index") as mock_autoheal,
-        patch("mempalace.repair.sqlite_drawer_count", return_value=4),
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=_mock_backend_for()),
+        patch("trimemo.repair.maybe_autoheal_fts5_index") as mock_autoheal,
+        patch("trimemo.repair.sqlite_drawer_count", return_value=4),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=_mock_backend_for()),
     ):
         cmd_repair(args)
 
@@ -1510,7 +1510,7 @@ def test_cmd_repair_default_mode_dry_run_reports_healable_fts5_and_continues(
     assert "holds 4 rows" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_default_mode_dry_run_still_aborts_on_broad_corruption(
     mock_config_cls, tmp_path, capsys
 ):
@@ -1524,11 +1524,11 @@ def test_cmd_repair_default_mode_dry_run_still_aborts_on_broad_corruption(
 
     with (
         patch(
-            "mempalace.repair.sqlite_integrity_errors",
+            "trimemo.repair.sqlite_integrity_errors",
             return_value=["*** in database main *** Page 42 is never used"],
         ),
-        patch("mempalace.repair.maybe_autoheal_fts5_index") as mock_autoheal,
-        patch("mempalace.backends.chroma.ChromaBackend"),
+        patch("trimemo.repair.maybe_autoheal_fts5_index") as mock_autoheal,
+        patch("trimemo.backends.chroma.ChromaBackend"),
         pytest.raises(SystemExit) as excinfo,
     ):
         cmd_repair(args)
@@ -1538,7 +1538,7 @@ def test_cmd_repair_default_mode_dry_run_still_aborts_on_broad_corruption(
     assert "ABORT" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_non_dry_run_still_autoheals_fts5(mock_config_cls, tmp_path, capsys):
     """The real path must keep calling the autoheal — the patch restructured this branch."""
     palace_dir = tmp_path / "palace"
@@ -1552,12 +1552,12 @@ def test_cmd_repair_non_dry_run_still_autoheals_fts5(mock_config_cls, tmp_path, 
 
     with (
         patch(
-            "mempalace.repair.sqlite_integrity_errors",
+            "trimemo.repair.sqlite_integrity_errors",
             return_value=["malformed inverted index for FTS5 table x"],
         ),
-        patch("mempalace.repair.maybe_autoheal_fts5_index", return_value=[]) as mock_autoheal,
+        patch("trimemo.repair.maybe_autoheal_fts5_index", return_value=[]) as mock_autoheal,
         patch(
-            "mempalace.backends.chroma.ChromaBackend",
+            "trimemo.backends.chroma.ChromaBackend",
             return_value=_mock_backend_for(col=mock_col),
         ),
     ):
@@ -1567,7 +1567,7 @@ def test_cmd_repair_non_dry_run_still_autoheals_fts5(mock_config_cls, tmp_path, 
     assert "Nothing to repair" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_default_mode_dry_run_refuses_to_invent_zero(mock_config_cls, tmp_path, capsys):
     """An unreadable count must refuse AND exit non-zero, like the from-sqlite preview.
 
@@ -1583,8 +1583,8 @@ def test_cmd_repair_default_mode_dry_run_refuses_to_invent_zero(mock_config_cls,
     mock_backend = _mock_backend_for(col=MagicMock())
 
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
-        patch("mempalace.repair.sqlite_drawer_count", return_value=None),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.repair.sqlite_drawer_count", return_value=None),
         pytest.raises(SystemExit) as excinfo,
     ):
         cmd_repair(args)
@@ -1597,7 +1597,7 @@ def test_cmd_repair_default_mode_dry_run_refuses_to_invent_zero(mock_config_cls,
     mock_backend.get_collection.assert_not_called()
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_restores_backup_on_live_rebuild_failure(mock_config_cls, tmp_path, capsys):
     """When the live swap fails after the delete, recovery must PROMOTE the
     verified temp copy instead of restoring a sqlite-only file backup."""
@@ -1624,7 +1624,7 @@ def test_cmd_repair_restores_backup_on_live_rebuild_failure(mock_config_cls, tmp
         RuntimeError("live build failed"),
         mock_promoted_col,
     ]
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         with pytest.raises(SystemExit) as excinfo:
             cmd_repair(args)
     out = capsys.readouterr().out
@@ -1669,7 +1669,7 @@ def _repair_backend_mocks(mock_config_cls, palace_dir, create_collection_results
     return mock_backend
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_closes_handles_then_rebuilds_fts5(mock_config_cls, tmp_path):
     """cmd_repair must close chroma handles, then run _vacuum_and_rebuild_fts5.
 
@@ -1686,13 +1686,13 @@ def test_cmd_repair_closes_handles_then_rebuilds_fts5(mock_config_cls, tmp_path)
 
     call_order = []
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
         patch(
-            "mempalace.repair._close_chroma_handles",
+            "trimemo.repair._close_chroma_handles",
             side_effect=lambda *a, **kw: call_order.append("close"),
         ) as mock_close,
         patch(
-            "mempalace.repair._vacuum_and_rebuild_fts5",
+            "trimemo.repair._vacuum_and_rebuild_fts5",
             side_effect=lambda *a, **kw: call_order.append("vacuum"),
         ) as mock_vacuum,
     ):
@@ -1705,7 +1705,7 @@ def test_cmd_repair_closes_handles_then_rebuilds_fts5(mock_config_cls, tmp_path)
     assert vacuum_args[0] == str(palace_dir)
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_success_rebuilds_fts5_and_vacuums(mock_config_cls, tmp_path, capsys):
     """A clean legacy repair leaves the FTS5 index rebuilt and the file vacuumed.
 
@@ -1727,7 +1727,7 @@ def test_cmd_repair_success_rebuilds_fts5_and_vacuums(mock_config_cls, tmp_path,
     args = argparse.Namespace(palace=None, yes=True)
     mock_backend = _repair_backend_mocks(mock_config_cls, palace_dir)
 
-    with patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend):
+    with patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend):
         cmd_repair(args)
 
     out = capsys.readouterr().out
@@ -1740,7 +1740,7 @@ def test_cmd_repair_success_rebuilds_fts5_and_vacuums(mock_config_cls, tmp_path,
     assert result == [("ok",)]
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_does_not_vacuum_when_rebuild_fails(mock_config_cls, tmp_path, capsys):
     """Post-run FTS5 cleanup must not fire when the rebuild itself failed."""
     palace_dir = tmp_path / "palace"
@@ -1756,8 +1756,8 @@ def test_cmd_repair_does_not_vacuum_when_rebuild_fails(mock_config_cls, tmp_path
     )
 
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
-        patch("mempalace.repair._vacuum_and_rebuild_fts5") as mock_vacuum,
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.repair._vacuum_and_rebuild_fts5") as mock_vacuum,
     ):
         with pytest.raises(SystemExit) as excinfo:
             cmd_repair(args)
@@ -1767,7 +1767,7 @@ def test_cmd_repair_does_not_vacuum_when_rebuild_fails(mock_config_cls, tmp_path
     mock_vacuum.assert_not_called()
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_aborts_without_confirmation(mock_config_cls, tmp_path, capsys):
     palace_dir = tmp_path / "palace"
     palace_dir.mkdir()
@@ -1779,7 +1779,7 @@ def test_cmd_repair_aborts_without_confirmation(mock_config_cls, tmp_path, capsy
     mock_col.count.return_value = 1
     mock_backend = _mock_backend_for(col=mock_col)
     with (
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
         patch("builtins.input", return_value="n"),
     ):
         cmd_repair(args)
@@ -1791,10 +1791,10 @@ def test_cmd_repair_aborts_without_confirmation(mock_config_cls, tmp_path, capsy
 # ── cmd_compress ───────────────────────────────────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_sync_no_palace_dir(mock_config_cls, tmp_path, capsys):
     """cmd_sync on a missing palace dir prints the State A message (#1498)."""
-    from mempalace.cli import cmd_sync
+    from trimemo.cli import cmd_sync
 
     palace_path = tmp_path / "nonexistent"
     mock_config_cls.return_value.palace_path = str(palace_path)
@@ -1804,11 +1804,11 @@ def test_cmd_sync_no_palace_dir(mock_config_cls, tmp_path, capsys):
     assert "No palace found" in captured.out + captured.err
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_sync_palace_dir_no_db(mock_config_cls, tmp_path, capsys):
     """cmd_sync on a palace dir without chroma.sqlite3 prints the State B
     message and does NOT trigger chromadb's lazy DB creation (#1498)."""
-    from mempalace.cli import cmd_sync
+    from trimemo.cli import cmd_sync
 
     mock_config_cls.return_value.palace_path = str(tmp_path)
     args = argparse.Namespace(palace=None, dir=None, root=[], wing=None, dry_run=False)
@@ -1819,9 +1819,9 @@ def test_cmd_sync_palace_dir_no_db(mock_config_cls, tmp_path, capsys):
     assert list(tmp_path.iterdir()) == []
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_sync_daemon_background_submits_job(mock_config_cls, capsys):
-    from mempalace.cli import cmd_sync
+    from trimemo.cli import cmd_sync
 
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(
@@ -1835,7 +1835,7 @@ def test_cmd_sync_daemon_background_submits_job(mock_config_cls, capsys):
         backend=None,
         global_backend=None,
     )
-    with patch("mempalace.daemon.submit_job", return_value={"id": "sync-job"}) as mock_submit:
+    with patch("trimemo.daemon.submit_job", return_value={"id": "sync-job"}) as mock_submit:
         cmd_sync(args)
 
     mock_submit.assert_called_once()
@@ -1846,11 +1846,11 @@ def test_cmd_sync_daemon_background_submits_job(mock_config_cls, capsys):
     assert "sync-job" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_daemon_jobs_reads_durable_queue_when_stopped(
     mock_config_cls, tmp_path, monkeypatch, capsys
 ):
-    from mempalace.daemon import QueueStore, queue_path
+    from trimemo.daemon import QueueStore, queue_path
 
     palace_dir = tmp_path / "palace"
     state_root = tmp_path / "state"
@@ -1866,7 +1866,7 @@ def test_cmd_daemon_jobs_reads_durable_queue_when_stopped(
         daemon_action="jobs",
         limit=20,
     )
-    with patch("mempalace.daemon.get_client_if_running", return_value=None):
+    with patch("trimemo.daemon.get_client_if_running", return_value=None):
         cmd_daemon(args)
 
     out = capsys.readouterr().out
@@ -1875,11 +1875,11 @@ def test_cmd_daemon_jobs_reads_durable_queue_when_stopped(
     assert "mine" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_daemon_wait_reads_finished_job_when_stopped(
     mock_config_cls, tmp_path, monkeypatch, capsys
 ):
-    from mempalace.daemon import QueueStore, queue_path
+    from trimemo.daemon import QueueStore, queue_path
 
     palace_dir = tmp_path / "palace"
     state_root = tmp_path / "state"
@@ -1901,13 +1901,13 @@ def test_cmd_daemon_wait_reads_finished_job_when_stopped(
         daemon_action="wait",
         job_id=queued.id,
     )
-    with patch("mempalace.daemon.get_client_if_running", return_value=None):
+    with patch("trimemo.daemon.get_client_if_running", return_value=None):
         cmd_daemon(args)
 
     assert "done" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_compress_no_palace(mock_config_cls, tmp_path, capsys):
     """cmd_compress exits non-zero with a 'No palace found' message on a missing dir.
 
@@ -1921,7 +1921,7 @@ def test_cmd_compress_no_palace(mock_config_cls, tmp_path, capsys):
     assert "No palace found" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_compress_no_drawers(mock_config_cls, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(palace=None, wing="mywing", dry_run=False, config=None)
@@ -1929,8 +1929,8 @@ def test_cmd_compress_no_drawers(mock_config_cls, capsys):
     mock_col.get.return_value = {"documents": [], "metadatas": [], "ids": []}
     mock_backend = _mock_backend_for(col=mock_col)
     with (
-        patch("mempalace.palace._open_collection_or_explain", return_value=mock_col),
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch("trimemo.palace._open_collection_or_explain", return_value=mock_col),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
     ):
         cmd_compress(args)
     out = capsys.readouterr().out
@@ -1946,7 +1946,7 @@ def _make_mock_dialect_module(dialect_instance):
     return mock_mod
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_compress_dry_run(mock_config_cls, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     args = argparse.Namespace(palace=None, wing=None, dry_run=True, config=None)
@@ -1974,9 +1974,9 @@ def test_cmd_compress_dry_run(mock_config_cls, capsys):
     mock_dialect_mod = _make_mock_dialect_module(mock_dialect)
 
     with (
-        patch("mempalace.palace._open_collection_or_explain", return_value=mock_col),
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
-        patch.dict("sys.modules", {"mempalace.dialect": mock_dialect_mod}),
+        patch("trimemo.palace._open_collection_or_explain", return_value=mock_col),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch.dict("sys.modules", {"trimemo.dialect": mock_dialect_mod}),
     ):
         cmd_compress(args)
     out = capsys.readouterr().out
@@ -1985,7 +1985,7 @@ def test_cmd_compress_dry_run(mock_config_cls, capsys):
     assert "Total:" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_compress_with_config(mock_config_cls, tmp_path, capsys):
     mock_config_cls.return_value.palace_path = "/fake/palace"
     config_file = tmp_path / "entities.json"
@@ -1999,16 +1999,16 @@ def test_cmd_compress_with_config(mock_config_cls, tmp_path, capsys):
     mock_dialect_mod = _make_mock_dialect_module(mock_dialect)
 
     with (
-        patch("mempalace.palace._open_collection_or_explain", return_value=mock_col),
-        patch("mempalace.backends.chroma.ChromaBackend", return_value=mock_backend),
-        patch.dict("sys.modules", {"mempalace.dialect": mock_dialect_mod}),
+        patch("trimemo.palace._open_collection_or_explain", return_value=mock_col),
+        patch("trimemo.backends.chroma.ChromaBackend", return_value=mock_backend),
+        patch.dict("sys.modules", {"trimemo.dialect": mock_dialect_mod}),
     ):
         cmd_compress(args)
     out = capsys.readouterr().out
     assert "Loaded entity config" in out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_compress_stores_results(mock_config_cls, capsys):
     """Non-dry-run compress stores to mempalace_closets collection (#1244)."""
     mock_config_cls.return_value.palace_path = "/fake/palace"
@@ -2040,9 +2040,9 @@ def test_cmd_compress_stores_results(mock_config_cls, capsys):
     mock_dialect_mod = _make_mock_dialect_module(mock_dialect)
 
     with (
-        patch("mempalace.palace._open_collection_or_explain", return_value=mock_col),
-        patch("mempalace.palace.get_closets_collection", return_value=mock_comp_col),
-        patch.dict("sys.modules", {"mempalace.dialect": mock_dialect_mod}),
+        patch("trimemo.palace._open_collection_or_explain", return_value=mock_col),
+        patch("trimemo.palace.get_closets_collection", return_value=mock_comp_col),
+        patch.dict("sys.modules", {"trimemo.dialect": mock_dialect_mod}),
     ):
         cmd_compress(args)
     out = capsys.readouterr().out
@@ -2055,8 +2055,8 @@ def test_cmd_compress_stores_results(mock_config_cls, capsys):
 def test_cmd_compress_output_readable_via_get_closets_collection(tmp_path, capsys):
     """End-to-end: cmd_compress output must be readable via the same code
     path palace.py uses (`get_closets_collection`). Regression for #1244."""
-    from mempalace.backends.chroma import ChromaBackend
-    from mempalace.palace import get_closets_collection, get_collection
+    from trimemo.backends.chroma import ChromaBackend
+    from trimemo.palace import get_closets_collection, get_collection
 
     palace_path = str(tmp_path / "palace")
 
@@ -2069,11 +2069,11 @@ def test_cmd_compress_output_readable_via_get_closets_collection(tmp_path, capsy
     )
 
     args = argparse.Namespace(palace=palace_path, wing=None, dry_run=False, config=None)
-    with patch("mempalace.cli.MempalaceConfig") as mock_config_cls:
+    with patch("trimemo.cli.MempalaceConfig") as mock_config_cls:
         mock_config_cls.return_value.palace_path = palace_path
         # Use a real ChromaBackend so the write actually lands on disk and
         # the read-side helper can find it.
-        with patch("mempalace.backends.chroma.ChromaBackend", side_effect=ChromaBackend):
+        with patch("trimemo.backends.chroma.ChromaBackend", side_effect=ChromaBackend):
             cmd_compress(args)
 
     out = capsys.readouterr().out
@@ -2097,7 +2097,7 @@ def test_cmd_repair_trailing_slash_does_not_recurse():
     import os
 
     args = argparse.Namespace(palace="/tmp/fake_palace/")
-    with patch("mempalace.cli.os.path.isdir", return_value=False):
+    with patch("trimemo.cli.os.path.isdir", return_value=False):
         cmd_repair(args)
     # Verify the rstrip logic: palace_path should not end with separator
     palace_path = os.path.expanduser(args.palace).rstrip(os.sep)
@@ -2117,14 +2117,14 @@ class _ReconfigurableStringIO:
 
 
 def test_reconfigures_stdio_to_utf8_on_windows():
-    """Windows `mempalace` CLI must decode/encode stdio as UTF-8.
+    """Windows `trimemo` CLI must decode/encode stdio as UTF-8.
 
-    Without this, piped non-ASCII input (`mempalace search ... < q.txt`)
-    or piped non-ASCII output (`mempalace search "..." > out.txt`) is
+    Without this, piped non-ASCII input (`trimemo search ... < q.txt`)
+    or piped non-ASCII output (`trimemo search "..." > out.txt`) is
     mojibaked through the system ANSI codepage on non-Latin Windows
     locales (cp1252/cp1251/cp950).
     """
-    from mempalace.cli import _reconfigure_stdio_utf8_on_windows
+    from trimemo.cli import _reconfigure_stdio_utf8_on_windows
 
     stdin = _ReconfigurableStringIO()
     stdout = _ReconfigurableStringIO()
@@ -2148,7 +2148,7 @@ def test_reconfigures_stdio_to_utf8_on_windows():
 
 def test_reconfigure_stdio_is_noop_off_windows():
     """Linux/macOS already default to UTF-8 stdio -- helper must not touch streams."""
-    from mempalace.cli import _reconfigure_stdio_utf8_on_windows
+    from trimemo.cli import _reconfigure_stdio_utf8_on_windows
 
     stdin = _ReconfigurableStringIO()
     with (
@@ -2163,7 +2163,7 @@ def test_reconfigure_stdio_is_noop_off_windows():
 # ── cmd_repair: from-sqlite mode exit codes ──────────────────────────
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_from_sqlite_validation_refusal_exits_nonzero(mock_config_cls, tmp_path, capsys):
     """When ``rebuild_from_sqlite`` returns ``{}`` for a validation
     refusal (missing source DB, in-place without --archive-existing,
@@ -2186,13 +2186,13 @@ def test_cmd_repair_from_sqlite_validation_refusal_exits_nonzero(mock_config_cls
         archive_existing=False,
         yes=True,
     )
-    with patch("mempalace.repair.rebuild_from_sqlite", return_value={}):
+    with patch("trimemo.repair.rebuild_from_sqlite", return_value={}):
         with pytest.raises(SystemExit) as excinfo:
             cmd_repair(args)
     assert excinfo.value.code == 1
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_from_sqlite_success_does_not_exit(mock_config_cls, tmp_path):
     """A successful from-sqlite rebuild — even one that finds zero rows
     in a legitimately empty source palace — must NOT call ``sys.exit``.
@@ -2216,12 +2216,12 @@ def test_cmd_repair_from_sqlite_success_does_not_exit(mock_config_cls, tmp_path)
     )
     # Zero rows but per-collection keys present → success, no exit.
     fake_counts = {"mempalace_drawers": 0, "mempalace_closets": 0}
-    with patch("mempalace.repair.rebuild_from_sqlite", return_value=fake_counts):
+    with patch("trimemo.repair.rebuild_from_sqlite", return_value=fake_counts):
         # Should return cleanly; no SystemExit raised.
         cmd_repair(args)
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_from_sqlite_dry_run_passes_through_and_skips_confirm(mock_config_cls, tmp_path):
     """``repair --mode from-sqlite --dry-run`` must forward dry_run and skip
     the destructive confirmation prompt (#2095, #2133)."""
@@ -2239,10 +2239,10 @@ def test_cmd_repair_from_sqlite_dry_run_passes_through_and_skips_confirm(mock_co
     )
     with (
         patch(
-            "mempalace.repair.rebuild_from_sqlite",
+            "trimemo.repair.rebuild_from_sqlite",
             return_value={"mempalace_drawers": 0, "mempalace_closets": 0},
         ) as mock_rebuild,
-        patch("mempalace.migrate.confirm_destructive_action") as mock_confirm,
+        patch("trimemo.migrate.confirm_destructive_action") as mock_confirm,
     ):
         cmd_repair(args)
 
@@ -2250,9 +2250,9 @@ def test_cmd_repair_from_sqlite_dry_run_passes_through_and_skips_confirm(mock_co
     assert mock_rebuild.call_args.kwargs["dry_run"] is True
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_from_sqlite_cleanup_failure_exits_nonzero(mock_config_cls, tmp_path, capsys):
-    from mempalace.repair import RebuildCleanupError
+    from trimemo.repair import RebuildCleanupError
 
     palace_dir = tmp_path / "palace"
     source_dir = tmp_path / "source"
@@ -2270,7 +2270,7 @@ def test_cmd_repair_from_sqlite_cleanup_failure_exits_nonzero(mock_config_cls, t
         dest_palace=str(palace_dir),
         archive_path=None,
     )
-    with patch("mempalace.repair.rebuild_from_sqlite", side_effect=failure):
+    with patch("trimemo.repair.rebuild_from_sqlite", side_effect=failure):
         with pytest.raises(SystemExit) as excinfo:
             cmd_repair(args)
 
@@ -2278,7 +2278,7 @@ def test_cmd_repair_from_sqlite_cleanup_failure_exits_nonzero(mock_config_cls, t
     assert "Rebuild cleanup failed" in capsys.readouterr().out
 
 
-@patch("mempalace.cli.MempalaceConfig")
+@patch("trimemo.cli.MempalaceConfig")
 def test_cmd_repair_rebuild_index_alias_uses_sqlite_archive(mock_config_cls, tmp_path):
     """``repair rebuild-index`` must bypass Chroma reads and rebuild from SQLite."""
     palace_dir = tmp_path / "palace"
@@ -2295,7 +2295,7 @@ def test_cmd_repair_rebuild_index_alias_uses_sqlite_archive(mock_config_cls, tmp
         dry_run=False,
     )
     fake_counts = {"mempalace_drawers": 1, "mempalace_closets": 0}
-    with patch("mempalace.repair.rebuild_from_sqlite", return_value=fake_counts) as rebuild:
+    with patch("trimemo.repair.rebuild_from_sqlite", return_value=fake_counts) as rebuild:
         cmd_repair(args)
 
     rebuild.assert_called_once_with(

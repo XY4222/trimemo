@@ -67,7 +67,7 @@ Edit `mempal_save_hook.sh` to change:
 
 - **`SAVE_INTERVAL=15`** — How many messages between saves. Lower = more frequent, higher = less interruption.
 - **`STATE_DIR`** — Where hook state is stored (defaults to `~/.mempalace/hook_state/`)
-- **`MEMPAL_DIR`** — Optional. Set to a conversations directory to auto-run `mempalace mine` on each save trigger.
+- **`MEMPAL_DIR`** — Optional. Set to a conversations directory to auto-run `trimemo mine` on each save trigger.
 
 ## How It Works
 

@@ -25,25 +25,25 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from mempalace.miner import MAX_FILE_SIZE, READABLE_EXTENSIONS, scan_project
+from trimemo.miner import MAX_FILE_SIZE, READABLE_EXTENSIONS, scan_project
 
 
 class TestJsonlNotSilentlySkipped:
     def test_jsonl_in_readable_extensions(self):
         """`.jsonl` must be in the readable-extensions whitelist.
 
-        `.json` is already there (see mempalace/miner.py:30). `.jsonl`
+        `.json` is already there (see trimemo/miner.py:30). `.jsonl`
         is conceptually the same thing — line-delimited JSON — and all
         of Claude Code's transcripts, ChatGPT exports, and similar
         tooling writes `.jsonl`. Excluding it silently drops user data.
         """
         assert ".jsonl" in READABLE_EXTENSIONS, (
-            "mempalace/miner.py:READABLE_EXTENSIONS contains `.json` "
+            "trimemo/miner.py:READABLE_EXTENSIONS contains `.json` "
             "but NOT `.jsonl`. Every jsonl file in a mined project is "
             "silently skipped at miner.py:722 "
             "(`if filepath.suffix.lower() not in READABLE_EXTENSIONS: "
             "continue`). This causes the 'convos not being saved' bug "
-            "reported by users — the hook fires `mempalace mine`, the "
+            "reported by users — the hook fires `trimemo mine`, the "
             "miner walks the directory, skips every .jsonl file, exits "
             "cleanly. No warning, no log line, user sees nothing wrong. "
             "Add `.jsonl` to READABLE_EXTENSIONS."
@@ -58,7 +58,7 @@ class TestJsonlNotSilentlySkipped:
                 '{"role": "user", "content": "hello"}\n'
                 '{"role": "assistant", "content": "hi there"}\n'
                 '{"role": "user", "content": "how do I install this"}\n'
-                '{"role": "assistant", "content": "pip install mempalace"}\n'
+                '{"role": "assistant", "content": "pip install trimemo"}\n'
             )
 
             found = scan_project(str(tmpdir))

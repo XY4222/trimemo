@@ -1,6 +1,6 @@
-# MemPalace small-model evaluation harness
+# TriMemo small-model evaluation harness
 
-Evaluates ≤4B-parameter Ollama models (plus optional cloud reference models) on MemPalace's classification and extraction tasks. Outputs accuracy, latency (TTFT, TPS, e2e p50/p95), and VRAM per `(model, task, mode)` triple. Replaces vibe-based model selection with data.
+Evaluates ≤4B-parameter Ollama models (plus optional cloud reference models) on TriMemo's classification and extraction tasks. Outputs accuracy, latency (TTFT, TPS, e2e p50/p95), and VRAM per `(model, task, mode)` triple. Replaces vibe-based model selection with data.
 
 If you want to validate the findings on your own hardware, this README walks you end-to-end. The whole local matrix takes ~60 min on an RTX 3090.
 
@@ -20,7 +20,7 @@ If you want to validate the findings on your own hardware, this README walks you
 
 ```bash
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync
 ```
 

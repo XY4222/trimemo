@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repair legacy Windows mojibake in a MemPalace collection."""
+"""Repair legacy Windows mojibake in a TriMemo collection."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from mempalace.config import MempalaceConfig
-from mempalace.encoding_repair import (
+from trimemo.config import MempalaceConfig
+from trimemo.encoding_repair import (
     repair_collection,
     restore_collection,
 )
-from mempalace.palace import (
+from trimemo.palace import (
     get_collection,
     mine_palace_lock,
 )
@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Conservatively repair high-confidence UTF-8 mojibake "
-            "in legacy MemPalace drawers. Dry-run is the default."
+            "in legacy TriMemo drawers. Dry-run is the default."
         )
     )
     parser.add_argument(
@@ -149,7 +149,7 @@ def _reconfigure_stdio_utf8_on_windows() -> None:
     ``strict`` raises on the mojibake lead bytes themselves and aborts the run
     before a single drawer is repaired.
     """
-    from mempalace._stdio import reconfigure_stdio_utf8_on_windows
+    from trimemo._stdio import reconfigure_stdio_utf8_on_windows
 
     reconfigure_stdio_utf8_on_windows(stdout_errors="replace", stderr_errors="replace")
 

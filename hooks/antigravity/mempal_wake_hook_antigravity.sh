@@ -27,11 +27,11 @@
 #   {"injectSteps":[{"ephemeralMessage":"..."}]}        — verbatim memory pointer
 #
 # Verbatim guarantee: the ephemeralMessage carries the exact text
-# emitted by `mempalace wake-up`, never paraphrased or summarized.
+# emitted by `trimemo wake-up`, never paraphrased or summarized.
 #
 # Performance budget: the integration brief sets a 100ms ceiling for
 # startup injection. We enforce a 500ms hard timeout on the
-# `mempalace wake-up` subprocess (more generous than 100ms because
+# `trimemo wake-up` subprocess (more generous than 100ms because
 # cold ChromaDB connections can dominate, and missing the budget is
 # strictly better than blocking the user) — if it doesn't return in
 # time we emit `{}` and let the conversation start without injection.
@@ -115,14 +115,14 @@ import json, subprocess, sys
 wing = sys.argv[1]
 timeout_s = 0.5  # 500 ms
 
-# Invoke as ``[sys.executable, '-m', 'mempalace', ...]`` rather than
-# the bare ``mempalace`` console script. sys.executable is the same
+# Invoke as ``[sys.executable, '-m', 'trimemo', ...]`` rather than
+# the bare ``trimemo`` console script. sys.executable is the same
 # Python that resolved MEMPAL_PYTHON in lib/common.sh, so this binds
 # the wake-up call to the correct interpreter (and its installed
-# mempalace package) even when the venv's bin/ isn't on PATH.
+# trimemo package) even when the venv's bin/ isn't on PATH.
 try:
     completed = subprocess.run(
-        [sys.executable, '-m', 'mempalace', 'wake-up', '--wing', wing],
+        [sys.executable, '-m', 'trimemo', 'wake-up', '--wing', wing],
         capture_output=True,
         text=True,
         timeout=timeout_s,

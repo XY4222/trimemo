@@ -7,7 +7,7 @@ timeline, stats, and edge cases (duplicate triples, ID collisions).
 
 import pytest
 import sqlite3
-from mempalace.knowledge_graph import KnowledgeGraph
+from trimemo.knowledge_graph import KnowledgeGraph
 
 
 class TestEntityOperations:

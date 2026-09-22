@@ -1,6 +1,6 @@
 # Memory Stack
 
-MemPalace uses a 4-layer memory stack. Each layer loads progressively more data only when needed.
+TriMemo uses a 4-layer memory stack. Each layer loads progressively more data only when needed.
 
 ## The Layers
 
@@ -83,10 +83,10 @@ The point of the stack is bounded startup context, not a fixed universal token c
 
 ```bash
 # Wake-up context (L0 + L1)
-mempalace wake-up
+trimemo wake-up
 
 # Project-specific wake-up
-mempalace wake-up --wing driftwood
+trimemo wake-up --wing driftwood
 ```
 
 ### Python API

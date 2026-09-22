@@ -15,8 +15,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from mempalace.cli import cmd_artifact, cmd_logstream, cmd_task, main
-from mempalace.logstream import Logstream
+from trimemo.cli import cmd_artifact, cmd_logstream, cmd_task, main
+from trimemo.logstream import Logstream
 
 
 def _append_args(palace, **overrides):
@@ -24,7 +24,7 @@ def _append_args(palace, **overrides):
         palace=palace,
         logstream_action="append",
         type="task.request",
-        stream="project/mempalace",
+        stream="project/trimemo",
         room="delegation",
         topic=None,
         from_agent="mac-fable",
@@ -93,7 +93,7 @@ def _task_create_args(palace, **overrides):
     fields = dict(
         palace=palace,
         task_action="create",
-        project="mempalace",
+        project="trimemo",
         from_agent="mac-claude",
         to_agent="windows-codex",
         goal="Fix search starvation without changing ranking semantics.",
@@ -142,7 +142,7 @@ class TestLogstreamCli:
         out = capsys.readouterr().out
         assert "Appended:" in out
         assert "task.request" in out
-        assert "project/mempalace/delegation" in out
+        assert "project/trimemo/delegation" in out
         assert "mac-fable->windows-codex" in out
 
     def test_append_invalid_status_exits_1(self, palace_path, capsys):
@@ -206,12 +206,12 @@ class TestTaskCli:
         assert "Task created: task_fix_search_starvation_" in out
         assert "Ready to paste:" in out
         assert (
-            "Open MemPalace task task_fix_search_starvation_" in out and "as windows-codex." in out
+            "Open TriMemo task task_fix_search_starvation_" in out and "as windows-codex." in out
         )
 
         cmd_logstream(_list_args(palace_path, type="task.request"))
         event = json.loads(capsys.readouterr().out)["events"][0]
-        assert event["stream"] == "project/mempalace"
+        assert event["stream"] == "project/trimemo"
         assert event["room"] == "delegation"
         assert event["from_agent"] == "mac-claude"
         assert event["to_agent"] == "windows-codex"
@@ -225,7 +225,7 @@ class TestTaskCli:
             "Definition of done:\n"
             "Focused tests pass and a patch is submitted.\n\n"
             "Delivery:\n"
-            "Close the loop through MemPalace: claim the request, then submit a patch "
+            "Close the loop through TriMemo: claim the request, then submit a patch "
             "with mempalace_patch_submit or reply with blocked/failed evidence."
         )
 
@@ -290,7 +290,7 @@ class TestTaskCli:
     def test_launch_refuses_a_workspace_at_the_wrong_base_commit(
         self, palace_path, tmp_path, capsys, monkeypatch
     ):
-        from mempalace import cli
+        from trimemo import cli
 
         _task_workspace(tmp_path)
         cmd_task(_task_create_args(palace_path, base_commit="deadbeef", json=True))
@@ -520,13 +520,13 @@ class TestMainDispatch:
             sys,
             "argv",
             [
-                "mempalace",
+                "trimemo",
                 "--palace",
                 palace_path,
                 "task",
                 "create",
                 "--project",
-                "mempalace",
+                "trimemo",
                 "--from-agent",
                 "mac-claude",
                 "--to-agent",
@@ -547,13 +547,13 @@ class TestMainDispatch:
 
         payload = json.loads(capsys.readouterr().out)
         assert payload["task"]["type"] == "task.request"
-        assert payload["handoff"].startswith("Open MemPalace task task_fix_task_dispatch_")
+        assert payload["handoff"].startswith("Open TriMemo task task_fix_task_dispatch_")
 
     def test_main_dispatches_logstream_list(self, palace_path, capsys, monkeypatch):
         monkeypatch.setattr(
             sys,
             "argv",
-            ["mempalace", "--palace", palace_path, "logstream", "list", "--json"],
+            ["trimemo", "--palace", palace_path, "logstream", "list", "--json"],
         )
         main()
         result = json.loads(capsys.readouterr().out)
@@ -564,7 +564,7 @@ class TestMainDispatch:
             sys,
             "argv",
             [
-                "mempalace",
+                "trimemo",
                 "--palace",
                 palace_path,
                 "artifact",
@@ -936,7 +936,7 @@ class TestLogstreamWatch:
         supervisor that SIGINTs a watcher would otherwise be told it has
         mail that never arrived.
         """
-        import mempalace.logstream as logstream_module
+        import trimemo.logstream as logstream_module
 
         def interrupt(*_a, **_k):
             raise KeyboardInterrupt
@@ -1048,7 +1048,7 @@ class TestLogstreamWatch:
         self, palace_path, tmp_path, monkeypatch, capsys
     ):
         """Continuing after a failed first checkpoint guarantees a later skip."""
-        import mempalace.logstream as logstream_module
+        import trimemo.logstream as logstream_module
 
         def denied(*_a, **kw):
             if kw.get("required"):
@@ -1084,7 +1084,7 @@ class TestLogstreamWatch:
         the loop's own checkpoint instead, since the test poll timeout is
         milliseconds rather than the five-minute default.
         """
-        import mempalace.logstream as logstream_module
+        import trimemo.logstream as logstream_module
 
         cmd_logstream(_append_args(palace_path, to_agent="mac-claude", from_agent="windows-grok"))
         first_id = json.loads(capsys.readouterr().out)["id"]
@@ -1203,7 +1203,7 @@ class TestLogstreamWatch:
                 palace_path,
                 to_agent="mac-claude",
                 from_agent="windows-grok",
-                stream="project/mempalace",
+                stream="project/trimemo",
             )
         )
         capsys.readouterr()
@@ -1211,7 +1211,7 @@ class TestLogstreamWatch:
             _watch_args(
                 palace_path,
                 agent="mac-claude",
-                stream=["  project/mempalace  ", "project/other"],
+                stream=["  project/trimemo  ", "project/other"],
             )
         )
         assert _watch_payload(capsys)["count"] == 1
@@ -1226,43 +1226,43 @@ class TestLogstreamWatch:
     def test_omitted_state_file_defaults_from_agent_with_colons_sanitized(
         self, palace_path, tmp_path, capsys, monkeypatch
     ):
-        """`--agent windows:grok:mempalace` without `--state-file` must persist.
+        """`--agent windows:grok:trimemo` without `--state-file` must persist.
 
         Colons are illegal in Windows filenames; the default path uses
         underscores so the same identity works on every OS.
         """
-        from mempalace.logstream import default_watch_state_file
+        from trimemo.logstream import default_watch_state_file
 
-        monkeypatch.setattr("mempalace.logstream.Path.home", lambda: tmp_path)
-        expected = default_watch_state_file("windows:grok:mempalace", home=str(tmp_path))
-        assert expected.endswith("windows_grok_mempalace.json")
+        monkeypatch.setattr("trimemo.logstream.Path.home", lambda: tmp_path)
+        expected = default_watch_state_file("windows:grok:trimemo", home=str(tmp_path))
+        assert expected.endswith("windows_grok_trimemo.json")
 
         cmd_logstream(
-            _append_args(palace_path, to_agent="windows:grok:mempalace", from_agent="mac:claude:x")
+            _append_args(palace_path, to_agent="windows:grok:trimemo", from_agent="mac:claude:x")
         )
         capsys.readouterr()
 
         cmd_logstream(
             _watch_args(
-                palace_path, agent="windows:grok:mempalace", state_file=None, from_start=True
+                palace_path, agent="windows:grok:trimemo", state_file=None, from_start=True
             )
         )
         payload = _watch_payload(capsys)
         assert payload["count"] == 1
         stored = json.loads(Path(expected).read_text(encoding="utf-8"))
         assert stored["cursor"] == payload["cursor"]
-        assert stored["agent"] == "windows:grok:mempalace"
+        assert stored["agent"] == "windows:grok:trimemo"
 
 
 class TestWatchStateFileDefault:
     def test_sanitize_replaces_colons_and_slashes(self):
-        from mempalace.logstream import sanitize_watch_state_basename
+        from trimemo.logstream import sanitize_watch_state_basename
 
-        assert sanitize_watch_state_basename("windows:grok:mempalace") == "windows_grok_mempalace"
+        assert sanitize_watch_state_basename("windows:grok:trimemo") == "windows_grok_trimemo"
         assert sanitize_watch_state_basename("a/b\\c") == "a_b_c"
 
     def test_sanitize_keeps_underscore_and_colon_identities_distinct(self):
-        from mempalace.logstream import sanitize_watch_state_basename
+        from trimemo.logstream import sanitize_watch_state_basename
 
         left = sanitize_watch_state_basename("a:b_c:proj")
         right = sanitize_watch_state_basename("a_b:c:proj")
@@ -1271,7 +1271,7 @@ class TestWatchStateFileDefault:
         assert left != right
 
     def test_resolve_none_with_agent_defaults_empty_string_disables(self):
-        from mempalace.logstream import default_watch_state_file, resolve_watch_state_file
+        from trimemo.logstream import default_watch_state_file, resolve_watch_state_file
 
         assert resolve_watch_state_file("", "windows:grok:x") is None
         assert resolve_watch_state_file("/tmp/w.json", "windows:grok:x") == "/tmp/w.json"

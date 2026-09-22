@@ -1,4 +1,4 @@
-"""Tests for the turnkey `mempalace serve` command (#1877).
+"""Tests for the turnkey `trimemo serve` command (#1877).
 
 These exercise the wrapper's security-relevant behavior — token autogeneration
 and 0600 persistence, the secure-by-default non-loopback gate, and that the
@@ -13,7 +13,7 @@ import stat
 
 import pytest
 
-from mempalace import cli
+from trimemo import cli
 
 
 class _ExecCalled(Exception):

@@ -4,7 +4,7 @@
 
 Memory is identity. When an AI forgets everything between conversations, it cannot build real understanding — of you, your work, your people, your life.
 
-MemPalace exists to solve this. It is a memory system — not a search engine, not a RAG pipeline, not a vector database wrapper. It treats every word you have shared as sacred, stores it verbatim, and makes it instantly available. Your data never leaves your machine. We never summarize. We never paraphrase. We return your exact words.
+TriMemo exists to solve this. It is a memory system — not a search engine, not a RAG pipeline, not a vector database wrapper. It treats every word you have shared as sacred, stores it verbatim, and makes it instantly available. Your data never leaves your machine. We never summarize. We never paraphrase. We return your exact words.
 
 100% recall is the design requirement — the target every search path is measured against. Anything less means forgetting, and forgetting means starting over.
 
@@ -46,7 +46,7 @@ uv sync --extra dev   # recommended; or: pip install -e ".[dev]"
 uv run pytest tests/ -v --ignore=tests/benchmarks
 
 # Run tests with coverage
-uv run pytest tests/ -v --ignore=tests/benchmarks --cov=mempalace --cov-report=term-missing
+uv run pytest tests/ -v --ignore=tests/benchmarks --cov=trimemo --cov-report=term-missing
 
 # Lint
 uv run ruff check .
@@ -61,7 +61,7 @@ uv run ruff format --check .
 ## Project Structure
 
 ```
-mempalace/
+trimemo/
 ├── mcp_server/          # MCP server package — tools, schemas, protocol, transports
 ├── cli/                 # CLI package — commands, parser; public import is still mempalace.cli
 ├── config.py            # Configuration + input validation
@@ -125,10 +125,10 @@ Knowledge Graph:
 
 ## Key Files for Common Tasks
 
-- **Adding an MCP tool**: handler in `mempalace/mcp_server/tools_*.py` + `TOOLS` entry in `mempalace/mcp_server/schemas.py` (public import path is still `mempalace.mcp_server`)
-- **Adding a CLI command**: handler in `mempalace/cli/cmd_*.py` + argparse in `mempalace/cli/parser.py` (public import path is still `mempalace.cli`)
-- **Changing search**: `mempalace/searcher/` (ranking, sqlite BM25, pipeline, CLI); public import is still `mempalace.searcher`
-- **Modifying mining**: `mempalace/miner.py` (project files) or `mempalace/convo_miner.py` (transcripts)
-- **Adding a storage backend**: subclass `mempalace/backends/base.py`, register in `backends/__init__.py`
-- **Input validation**: `mempalace/config.py` — `sanitize_name()` / `sanitize_content()`
+- **Adding an MCP tool**: handler in `trimemo/mcp_server/tools_*.py` + `TOOLS` entry in `trimemo/mcp_server/schemas.py` (public import path is still `mempalace.mcp_server`)
+- **Adding a CLI command**: handler in `trimemo/cli/cmd_*.py` + argparse in `trimemo/cli/parser.py` (public import path is still `mempalace.cli`)
+- **Changing search**: `trimemo/searcher/` (ranking, sqlite BM25, pipeline, CLI); public import is still `mempalace.searcher`
+- **Modifying mining**: `trimemo/miner.py` (project files) or `trimemo/convo_miner.py` (transcripts)
+- **Adding a storage backend**: subclass `trimemo/backends/base.py`, register in `backends/__init__.py`
+- **Input validation**: `trimemo/config.py` — `sanitize_name()` / `sanitize_content()`
 - **Tests**: mirror source structure in `tests/test_<module>.py`

@@ -43,7 +43,7 @@
 #   transcript_path — path to the JSONL transcript file
 #
 # The hook runs the transcript mine synchronously (the foreground
-# ``mempalace mine`` call below blocks until it returns), then prints
+# ``trimemo mine`` call below blocks until it returns), then prints
 # ``{}`` to stdout so Claude Code proceeds with the compaction. We do
 # not emit a ``decision: block`` to the hook protocol — the
 # "always save before compaction" guarantee is provided by the
@@ -51,7 +51,7 @@
 #
 # === MEMPALACE CLI ===
 # The hook ALWAYS mines the active conversation transcript synchronously
-# before compaction (via `mempalace mine <transcript-dir> --mode convos`).
+# before compaction (via `trimemo mine <transcript-dir> --mode convos`).
 # MEMPAL_DIR is an *additional*, optional target for project files — it
 # does not replace the conversation mine.
 
@@ -182,14 +182,14 @@ echo "[$(date '+%H:%M:%S')] PRE-COMPACT triggered for session $SESSION_ID" >> "$
 #   1. TRANSCRIPT_PATH (from Claude Code) → parent dir, --mode convos
 #   2. MEMPAL_DIR → --mode projects
 if is_valid_transcript_path "$TRANSCRIPT_PATH" && [ -f "$TRANSCRIPT_PATH" ]; then
-    "$MEMPAL_PYTHON_BIN" -m mempalace mine "$(dirname "$TRANSCRIPT_PATH")" --mode convos \
+    "$MEMPAL_PYTHON_BIN" -m trimemo mine "$(dirname "$TRANSCRIPT_PATH")" --mode convos \
         >> "$STATE_DIR/hook.log" 2>&1
 elif [ -n "$TRANSCRIPT_PATH" ]; then
     echo "[$(date '+%H:%M:%S')] Skipping missing or invalid transcript path after normalization: $TRANSCRIPT_PATH" \
         >> "$STATE_DIR/hook.log"
 fi
 if [ -n "$MEMPAL_DIR" ] && [ -d "$MEMPAL_DIR" ]; then
-    "$MEMPAL_PYTHON_BIN" -m mempalace mine "$MEMPAL_DIR" --mode projects \
+    "$MEMPAL_PYTHON_BIN" -m trimemo mine "$MEMPAL_DIR" --mode projects \
         >> "$STATE_DIR/hook.log" 2>&1
 fi
 

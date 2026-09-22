@@ -1,7 +1,7 @@
 """Tests for writing and pruning palace backups (mempalace.backups).
 
-``prune_backups`` guards the fix for unbounded backup growth: ``mempalace
-migrate`` and ``mempalace repair max-seq-id`` each drop a fresh full-size,
+``prune_backups`` guards the fix for unbounded backup growth: ``trimemo
+migrate`` and ``trimemo repair max-seq-id`` each drop a fresh full-size,
 timestamped copy every run, and used to never delete the old ones. A palace
 was found with hundreds of GB of stale backups beside a few hundred MB of
 live data.
@@ -20,7 +20,7 @@ import stat
 
 import pytest
 
-from mempalace.backups import (
+from trimemo.backups import (
     _file_type_label,
     _uncopyable_reason,
     copy_palace_dir,
@@ -292,7 +292,7 @@ def test_copy_palace_dir_skips_a_socket_and_still_copies_the_database(tmp_path, 
 @needs_fifo
 def test_copy_palace_dir_skips_a_named_pipe(tmp_path):
     palace = _make_palace(tmp_path)
-    fifo = palace / "mempalace.fifo"
+    fifo = palace / "trimemo.fifo"
     os.mkfifo(fifo)
     dest = tmp_path / "palace.backup"
 
@@ -582,7 +582,7 @@ def test_copy_palace_dir_report_never_replaces_the_copys_own_failure(tmp_path):
     """A failing ``log`` must not become the error the caller diagnoses.
 
     Both callers pass ``print``, so the report can fail on its own: a closed
-    pipe (``mempalace repair | head``) or an stdout that cannot encode a
+    pipe (``trimemo repair | head``) or an stdout that cannot encode a
     skipped entry's name. Letting that out of the failure path would hand the
     caller that error instead of the reason the backup did not come out whole.
     """
@@ -772,7 +772,7 @@ def test_copy_palace_dir_reports_skips_when_the_copy_is_interrupted(tmp_path, mo
     def interrupt(*_args, **_kwargs):
         raise KeyboardInterrupt
 
-    monkeypatch.setattr("mempalace.backups.shutil.copystat", interrupt)
+    monkeypatch.setattr("trimemo.backups.shutil.copystat", interrupt)
 
     with pytest.raises(KeyboardInterrupt):
         copy_palace_dir(str(palace), str(tmp_path / "palace.backup"), log=logs.append)
@@ -798,7 +798,7 @@ def test_copy_palace_dir_names_an_entry_it_cannot_make_relative(tmp_path, monkey
     def no_relpath(*_args, **_kwargs):
         raise ValueError("path is on mount 'C:', start on mount 'D:'")
 
-    monkeypatch.setattr("mempalace.backups.os.path.relpath", no_relpath)
+    monkeypatch.setattr("trimemo.backups.os.path.relpath", no_relpath)
 
     copy_palace_dir(str(palace), str(tmp_path / "palace.backup"), log=logs.append)
 

@@ -19,7 +19,7 @@
 
     <div class="catalog-card">
       <div>
-        <p class="catalog-title">MemPalace <em>&mdash;</em> a memory palace for AI.</p>
+        <p class="catalog-title">TriMemo <em>&mdash;</em> a memory palace for AI.</p>
         <p class="catalog-desc">Verbatim storage, local-first, zero telemetry. Built for people who believe their words are theirs.</p>
       </div>
       <div>
@@ -34,10 +34,10 @@
       <div>
         <h4>The project</h4>
         <ul>
-          <li><a href="https://github.com/MemPalace/mempalace">GitHub</a></li>
-          <li><a href="https://github.com/MemPalace/mempalace/blob/main/README.md">Readme</a></li>
-          <li><a href="https://github.com/MemPalace/mempalace/blob/main/ROADMAP.md">Roadmap</a></li>
-          <li><a href="https://github.com/MemPalace/mempalace/blob/main/CHANGELOG.md">Changelog</a></li>
+          <li><a href="https://github.com/MemPalace/trimemo">GitHub</a></li>
+          <li><a href="https://github.com/MemPalace/trimemo/blob/main/README.md">Readme</a></li>
+          <li><a href="https://github.com/MemPalace/trimemo/blob/main/ROADMAP.md">Roadmap</a></li>
+          <li><a href="https://github.com/MemPalace/trimemo/blob/main/CHANGELOG.md">Changelog</a></li>
         </ul>
       </div>
     </div>

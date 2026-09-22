@@ -1,4 +1,4 @@
-# MemPalace — Antigravity examples
+# TriMemo — Antigravity examples
 
 Two standalone configs for users who don't want to use the
 `hooks/antigravity/install.sh` installer.
@@ -8,11 +8,11 @@ Two standalone configs for users who don't want to use the
 | File              | Purpose                                                                           |
 |-------------------|-----------------------------------------------------------------------------------|
 | `hooks.json`      | Standalone `hooks.json` registering the Stop and PreInvocation hooks.             |
-| `mcp_config.json` | Standalone MCP entry registering the `mempalace-mcp` stdio server.                |
+| `mcp_config.json` | Standalone MCP entry registering the `trimemo-mcp` stdio server.                |
 
 ## Wire up `hooks.json`
 
-The example uses placeholder absolute paths (`/ABSOLUTE/PATH/TO/mempalace/...`).
+The example uses placeholder absolute paths (`/ABSOLUTE/PATH/TO/trimemo/...`).
 You must rewrite both `command` fields to the actual absolute paths to
 the hook scripts in your cloned repo, or to whichever location holds
 them. Antigravity will not resolve relative paths reliably.
@@ -32,11 +32,11 @@ bash hooks/antigravity/install.sh
 ```
 
 That writes a fully rendered `hooks.json` to
-`~/.gemini/config/plugins/mempalace/hooks.json`.
+`~/.gemini/config/plugins/trimemo/hooks.json`.
 
 ## Wire up `mcp_config.json`
 
-The example registers the `mempalace-mcp` stdio server. Two options:
+The example registers the `trimemo-mcp` stdio server. Two options:
 
 ### Option A — merge into the user-level Antigravity MCP config
 
@@ -61,11 +61,11 @@ on launch.
 After wiring up either or both:
 
 ```bash
-mempalace-mcp --version          # confirm binary is on PATH
-ls ~/.mempalace/                 # confirm palace exists (run `mempalace init` if not)
+trimemo-mcp --version          # confirm binary is on PATH
+ls ~/.mempalace/                 # confirm palace exists (run `trimemo init` if not)
 ```
 
-Restart Antigravity. The `mempalace` MCP server should appear in the
+Restart Antigravity. The `trimemo` MCP server should appear in the
 MCP store; the Stop and PreInvocation hooks fire automatically.
 
 See [`hooks/antigravity/STDIN_SHAPE.md`](../../hooks/antigravity/STDIN_SHAPE.md)

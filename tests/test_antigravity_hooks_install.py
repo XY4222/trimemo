@@ -7,8 +7,8 @@ Covers:
 * `hooks.json` is rendered with absolute paths (no `__PLUGIN_DIR__` leak).
 * Re-running the installer is byte-identical (cmp gate works).
 * `--uninstall` removes the dir cleanly.
-* `--uninstall` refuses to wipe a directory whose basename isn't `mempalace`.
-* `--uninstall` refuses if the dir is missing a `mempalace` plugin.json.
+* `--uninstall` refuses to wipe a directory whose basename isn't `trimemo`.
+* `--uninstall` refuses if the dir is missing a `trimemo` plugin.json.
 * Relative `--install-dir` is absolutized into the rendered hooks.json.
 """
 
@@ -36,7 +36,7 @@ EXPECTED_FILES = (
     "mcp_config.json",
     "README.md",
     "hooks.json",
-    "skills/mempalace/SKILL.md",
+    "skills/trimemo/SKILL.md",
     "hooks/lib/common.sh",
     "hooks/mempal_save_hook_antigravity.sh",
     "hooks/mempal_wake_hook_antigravity.sh",
@@ -78,7 +78,7 @@ def _assert_install_layout(install_dir: Path) -> None:
 
 def test_dry_run_is_side_effect_free(tmp_path: Path) -> None:
     """--dry-run must not create the install dir or any of its files."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = _run_install(install_dir, "--dry-run")
     assert result.returncode == 0, result.stderr
     assert not install_dir.exists(), (
@@ -92,7 +92,7 @@ def test_dry_run_is_side_effect_free(tmp_path: Path) -> None:
 
 
 def test_real_install_creates_full_layout(tmp_path: Path) -> None:
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = _run_install(install_dir)
     assert result.returncode == 0, f"install failed:\n{result.stdout}\n{result.stderr}"
     _assert_install_layout(install_dir)
@@ -100,7 +100,7 @@ def test_real_install_creates_full_layout(tmp_path: Path) -> None:
 
 def test_install_renders_absolute_paths_in_hooks_json(tmp_path: Path) -> None:
     """`__PLUGIN_DIR__` must be substituted into hooks.json command paths."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = _run_install(install_dir)
     assert result.returncode == 0
     hooks = json.loads((install_dir / "hooks.json").read_text())
@@ -125,7 +125,7 @@ def test_install_renders_absolute_paths_in_hooks_json(tmp_path: Path) -> None:
 
 def test_install_executable_bits_preserved(tmp_path: Path) -> None:
     """Both hook scripts must end up executable on the install side."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = _run_install(install_dir)
     assert result.returncode == 0
     for rel in (
@@ -145,7 +145,7 @@ def test_install_is_byte_identical_on_re_run(tmp_path: Path) -> None:
     The `cmp`-gated copy and template render is what makes the
     installer safe to run from CI and from `babysit`-style cron loops.
     """
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     first = _run_install(install_dir)
     assert first.returncode == 0, first.stderr
     # Snapshot every file's content + mtime + mode.
@@ -175,7 +175,7 @@ def test_install_is_byte_identical_on_re_run(tmp_path: Path) -> None:
 
 def test_install_logs_no_writes_on_idempotent_re_run(tmp_path: Path) -> None:
     """The second run must not log "wrote: ..." for any file."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     first = _run_install(install_dir)
     assert first.returncode == 0
     # First run writes everything.
@@ -191,7 +191,7 @@ def test_install_logs_no_writes_on_idempotent_re_run(tmp_path: Path) -> None:
 
 
 def test_uninstall_removes_mempalace_install(tmp_path: Path) -> None:
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     install = _run_install(install_dir)
     assert install.returncode == 0
     uninstall = _run_install(install_dir, "--uninstall")
@@ -200,17 +200,17 @@ def test_uninstall_removes_mempalace_install(tmp_path: Path) -> None:
 
 
 def test_uninstall_refuses_basename_mismatch(tmp_path: Path) -> None:
-    """Refuses to remove a directory whose basename isn't 'mempalace'.
+    """Refuses to remove a directory whose basename isn't 'trimemo'.
 
     Honours the basename-match safety guard caught in the cursor PR
     review — prevents an accidental wipe of a sibling like
-    'mempalace-foo' or, in the worst case, the user's home directory.
+    'trimemo-foo' or, in the worst case, the user's home directory.
     """
-    bad_dir = tmp_path / "totally-not-mempalace"
+    bad_dir = tmp_path / "totally-not-trimemo"
     bad_dir.mkdir()
-    # Even though the dir has a plugin.json with name=mempalace, the
+    # Even though the dir has a plugin.json with name=trimemo, the
     # basename mismatch must still refuse.
-    (bad_dir / "plugin.json").write_text(json.dumps({"name": "mempalace"}), encoding="utf-8")
+    (bad_dir / "plugin.json").write_text(json.dumps({"name": "trimemo"}), encoding="utf-8")
     sentinel = bad_dir / "do-not-delete.txt"
     sentinel.write_text("preserve me", encoding="utf-8")
 
@@ -224,7 +224,7 @@ def test_uninstall_refuses_basename_mismatch(tmp_path: Path) -> None:
 
 def test_uninstall_refuses_when_plugin_json_missing(tmp_path: Path) -> None:
     """Refuses when the dir is missing plugin.json (not actually our plugin)."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     install_dir.mkdir()
     sentinel = install_dir / "stranger.txt"
     sentinel.write_text("preserve me", encoding="utf-8")
@@ -236,7 +236,7 @@ def test_uninstall_refuses_when_plugin_json_missing(tmp_path: Path) -> None:
 
 def test_uninstall_refuses_when_plugin_json_wrong_name(tmp_path: Path) -> None:
     """Refuses when plugin.json names a different plugin."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     install_dir.mkdir()
     (install_dir / "plugin.json").write_text(
         json.dumps({"name": "some-other-plugin"}), encoding="utf-8"
@@ -251,7 +251,7 @@ def test_uninstall_refuses_when_plugin_json_wrong_name(tmp_path: Path) -> None:
 
 def test_uninstall_no_op_when_target_missing(tmp_path: Path) -> None:
     """Uninstalling a non-existent dir is a graceful no-op."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = _run_install(install_dir, "--uninstall")
     assert result.returncode == 0, result.stderr
 
@@ -268,7 +268,7 @@ def test_relative_install_dir_is_absolutized(tmp_path: Path) -> None:
     work = tmp_path / "work"
     work.mkdir()
     # Relative path resolved against $PWD at invocation time.
-    rel = "build/agy-out/mempalace"
+    rel = "build/agy-out/trimemo"
     result = _run_install(Path(rel), cwd=work)
     assert result.returncode == 0, result.stderr
     abs_install = work / rel
@@ -283,7 +283,7 @@ def test_relative_install_dir_is_absolutized(tmp_path: Path) -> None:
                 cmds.append(entry["command"])
     for cmd in cmds:
         assert cmd.startswith("/"), f"relative install dir leaked into rendered hooks.json: {cmd!r}"
-        assert "build/agy-out/mempalace" in cmd, (
+        assert "build/agy-out/trimemo" in cmd, (
             f"command path lost the relative-segment context: {cmd!r}"
         )
 
@@ -293,7 +293,7 @@ def test_relative_install_dir_is_absolutized(tmp_path: Path) -> None:
 
 def test_install_help_does_not_write(tmp_path: Path) -> None:
     """`--help` should print usage and exit 0 without touching the dir."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = subprocess.run(
         ["bash", str(INSTALL_SH), "--help"],
         capture_output=True,
@@ -307,7 +307,7 @@ def test_install_help_does_not_write(tmp_path: Path) -> None:
 
 def test_install_unknown_arg_exits_non_zero(tmp_path: Path) -> None:
     """Unknown args must fail loudly rather than silently ignoring."""
-    install_dir = tmp_path / "mempalace"
+    install_dir = tmp_path / "trimemo"
     result = subprocess.run(
         [
             "bash",

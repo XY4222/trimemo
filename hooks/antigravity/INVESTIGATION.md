@@ -2,7 +2,7 @@
 
 **Investigated**: 2026-05-27
 **Author**: undeadindustries
-**Scope**: What MemPalace can integrate with in Google's Antigravity IDE,
+**Scope**: What TriMemo can integrate with in Google's Antigravity IDE,
 what we shipped, and what we deliberately did not ship.
 
 This document is the source of truth for design decisions in the
@@ -51,7 +51,7 @@ Antigravity merges plugin entries with the user's
 
 **Cross-checked locally**: the user's existing
 `~/.gemini/antigravity/mcp_config.json` already contains a working
-`"mempalace": {"command": "/Users/robs/.local/bin/mempalace-mcp"}`
+`"trimemo": {"command": "/Users/robs/.local/bin/trimemo-mcp"}`
 entry, proving the shape matches and the binary is on PATH.
 
 ### 1.2. Plugins — `https://antigravity.google/docs/plugins`
@@ -183,7 +183,7 @@ Common stdin fields (every event):
 | `reason`   | string | Optional. If `decision == "continue"`, injected as a system message.                                  |
 
 **CRITICAL**: emitting `{"decision": "continue"}` from a save hook would
-turn it into an infinite agent-loop trigger. The MemPalace save hook
+turn it into an infinite agent-loop trigger. The TriMemo save hook
 MUST emit `{}` on every code path. There is an explicit refusal in
 `mempal_save_hook_antigravity.sh` to ever print the literal word
 `"continue"` from a decision field.
@@ -223,7 +223,7 @@ and does not appear in any real Google-shipped plugin (`firebase`,
 `modern-web-guidance-plugin`) inspected at
 `~/.gemini/config/plugins/`.
 
-We ship a minimal `plugin.json` of `{"name": "mempalace"}`.
+We ship a minimal `plugin.json` of `{"name": "trimemo"}`.
 
 ---
 
@@ -232,8 +232,8 @@ We ship a minimal `plugin.json` of `{"name": "mempalace"}`.
 | Surface                   | What we ship                                                              |
 |---------------------------|---------------------------------------------------------------------------|
 | Plugin manifest           | `.antigravity-plugin/plugin.json` — minimal, verified shape               |
-| MCP auto-registration     | `.antigravity-plugin/mcp_config.json` — registers `mempalace-mcp` stdio    |
-| Skill                     | `.antigravity-plugin/skills/mempalace/SKILL.md` — real file, frontmatter   |
+| MCP auto-registration     | `.antigravity-plugin/mcp_config.json` — registers `trimemo-mcp` stdio    |
+| Skill                     | `.antigravity-plugin/skills/trimemo/SKILL.md` — real file, frontmatter   |
 | `Stop` hook               | `hooks/antigravity/mempal_save_hook_antigravity.sh` — counter + auto-mine |
 | `PreInvocation` hook      | `hooks/antigravity/mempal_wake_hook_antigravity.sh` — wake injection       |
 | Installer                 | `hooks/antigravity/install.sh` — idempotent, basename-match uninstall      |
@@ -263,8 +263,8 @@ the `Stop` path covers the long-term recall use case.
 
 Antigravity has no `commands/` plugin component. The Cursor and Codex
 integrations both ship five quick-reference commands
-(`mempalace-help`, `-init`, `-mine`, `-search`, `-status`) that point
-at `mempalace instructions <cmd>`. Those have been folded into the
+(`trimemo-help`, `-init`, `-mine`, `-search`, `-status`) that point
+at `trimemo instructions <cmd>`. Those have been folded into the
 `SKILL.md` `## Common operations` section so the agent gets the same
 quick-reference content via Antigravity's progressive-disclosure skill
 loading. No new files, no rule-noise, same discoverability.
@@ -272,19 +272,19 @@ loading. No new files, no rule-noise, same discoverability.
 ### 3.3. `rules/` — NOT SHIPPED
 
 `rules/<name>.md` files are evaluated as constraints on the agent's
-behavior. Shipping rules from MemPalace risks colliding with the
+behavior. Shipping rules from TriMemo risks colliding with the
 user's existing project rules (e.g. `.agents/rules/*.md` files the
-user has already authored). Users who want strict MemPalace-related
+user has already authored). Users who want strict TriMemo-related
 rules can drop them into their own `<workspace>/.agents/rules/`
 directory; we do not impose them.
 
-### 3.4. Workspace-level `.agents/plugins/mempalace/` install — NOT SHIPPED BY DEFAULT
+### 3.4. Workspace-level `.agents/plugins/trimemo/` install — NOT SHIPPED BY DEFAULT
 
 The installer writes to the global location at
-`~/.gemini/config/plugins/mempalace/`. Workspace-scoped installs are
+`~/.gemini/config/plugins/trimemo/`. Workspace-scoped installs are
 documented in `hooks/antigravity/README.md` for users who want to
-limit MemPalace to one workspace; they can `cp -r .antigravity-plugin
-<workspace>/.agents/plugins/mempalace`. We do not install there
+limit TriMemo to one workspace; they can `cp -r .antigravity-plugin
+<workspace>/.agents/plugins/trimemo`. We do not install there
 automatically because the canonical UX is global.
 
 ### 3.5. `permissions` field in `plugin.json` — NOT SHIPPED
@@ -297,7 +297,7 @@ Google-shipped plugin uses it.
 
 ### 3.6. `PreToolUse` / `PostToolUse` hooks — NOT SHIPPED
 
-These would let MemPalace observe every tool call (e.g.
+These would let TriMemo observe every tool call (e.g.
 auto-extract entities after each `write_to_file`). Out of scope
 for v1; the hook surface is real and could be added in a future
 PR if there is demand. Documenting the omission here so a future
@@ -317,7 +317,7 @@ artifacts on this machine corroborate the published docs:
 | `~/.gemini/config/plugins/firebase/plugin.json`                        | Real `plugin.json` shape (no `permissions` field)              |
 | `~/.gemini/config/plugins/chrome-devtools-plugin/skills/.../SKILL.md`  | In-plugin skill discovery `<plugin>/skills/<name>/SKILL.md`    |
 | `~/.gemini/config/plugins/google-antigravity-sdk/examples/.../hooks.md` | SDK-side compaction hook is in-process Python only            |
-| Existing `mempalace` entry in `mcp_config.json`                        | `mempalace-mcp` already running and discoverable               |
+| Existing `trimemo` entry in `mcp_config.json`                        | `trimemo-mcp` already running and discoverable               |
 
 ---
 

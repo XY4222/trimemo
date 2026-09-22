@@ -1,4 +1,4 @@
-from mempalace.miner import READABLE_EXTENSIONS, scan_project
+from trimemo.miner import READABLE_EXTENSIONS, scan_project
 
 
 CPP_EXTENSIONS = {".c", ".h", ".cpp", ".hpp", ".cc", ".cxx", ".inl"}

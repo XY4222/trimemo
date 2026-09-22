@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from mempalace.dynamics import (
+from trimemo.dynamics import (
     DEFAULT_STABILITY,
     DEFAULT_STRENGTH,
     MAX_STRENGTH,

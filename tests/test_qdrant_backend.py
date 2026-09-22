@@ -7,7 +7,7 @@ import pytest
 from _backend_conformance import assert_partition_isolation
 from _chroma_palace_helper import make_minimal_chroma_sqlite
 
-from mempalace.backends import (
+from trimemo.backends import (
     BackendError,
     BackendMismatchError,
     CollectionNotInitializedError,
@@ -16,7 +16,7 @@ from mempalace.backends import (
     UnsupportedCapabilityError,
     available_backends,
 )
-from mempalace.backends.qdrant import QdrantBackend
+from trimemo.backends.qdrant import QdrantBackend
 
 
 def _get_payload_value(payload, key):
@@ -209,7 +209,7 @@ class _FakeQdrantClient:
 
 @pytest.fixture
 def fake_qdrant(monkeypatch):
-    import mempalace.backends.qdrant as qdrant
+    import trimemo.backends.qdrant as qdrant
 
     _FakeQdrantClient.instances.clear()
     monkeypatch.setattr(qdrant, "_QdrantRESTClient", _FakeQdrantClient)
@@ -387,7 +387,7 @@ def test_qdrant_add_rejects_duplicate_ids_in_same_batch(tmp_path, fake_qdrant):
 
 
 def test_qdrant_marker_participates_in_backend_mismatch(tmp_path, monkeypatch, fake_qdrant):
-    from mempalace.palace import resolve_backend_name
+    from trimemo.palace import resolve_backend_name
 
     backend, col = _collection(tmp_path)
     col.upsert(ids=["a"], documents=["one"], metadatas=[{}], embeddings=[[1, 0]])
@@ -439,7 +439,7 @@ def test_qdrant_missing_remote_after_marker_is_unhealthy(tmp_path, fake_qdrant):
 
 
 def test_search_reports_backend_error_distinct_from_missing_palace(tmp_path, monkeypatch):
-    from mempalace import searcher
+    from trimemo import searcher
 
     def fail_open(*_args, **_kwargs):
         raise BackendError("qdrant unavailable")
@@ -453,8 +453,8 @@ def test_search_reports_backend_error_distinct_from_missing_palace(tmp_path, mon
 
 
 def test_palace_wrapper_embeds_for_qdrant(tmp_path, monkeypatch, fake_qdrant):
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace import palace
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo import palace
 
     monkeypatch.setattr(
         embedding_wrapper, "_embed_texts", lambda texts: [[1.0, 0.0] for _ in texts]

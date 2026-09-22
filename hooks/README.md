@@ -1,6 +1,6 @@
-# MemPalace Hooks — Auto-Save for Terminal AI Tools
+# TriMemo Hooks — Auto-Save for Terminal AI Tools
 
-These hook scripts make MemPalace save automatically. No manual "save" commands needed.
+These hook scripts make TriMemo save automatically. No manual "save" commands needed.
 
 This file covers the **Claude Code** and **Codex CLI** hooks that live
 flat under `hooks/`. For the **Cursor IDE** hooks, see
@@ -78,8 +78,8 @@ installer:
 bash hooks/antigravity/install.sh
 ```
 
-This installs to `~/.gemini/config/plugins/mempalace/`, registers the
-MCP server, ships the `mempalace` skill, and wires the Stop +
+This installs to `~/.gemini/config/plugins/trimemo/`, registers the
+MCP server, ships the `trimemo` skill, and wires the Stop +
 PreInvocation hooks. See [`hooks/antigravity/README.md`](antigravity/README.md)
 for the full guide and [`hooks/antigravity/INVESTIGATION.md`](antigravity/INVESTIGATION.md)
 for the source-of-truth audit of which Antigravity surfaces the
@@ -105,10 +105,10 @@ Add to `.codex/hooks.json`:
 ```
 
 **Other harnesses:** the clean-exit save runs through the harness-agnostic
-`mempalace hook run --hook session-end` entry point. This release wires it
+`trimemo hook run --hook session-end` entry point. This release wires it
 for Claude Code. Antigravity exposes no dedicated session-end event (its
 lifecycle hooks are PreToolUse/PostToolUse/PreInvocation/PostInvocation/Stop,
-and MemPalace already saves there via `Stop`); Cursor and Codex can adopt the
+and TriMemo already saves there via `Stop`); Cursor and Codex can adopt the
 same entry point as a follow-up wherever their own session-end event is available.
 
 ## Configuration
@@ -118,7 +118,7 @@ Edit `mempal_save_hook.sh` to change:
 - **`SAVE_INTERVAL=15`** — How many human messages between saves. Lower = more frequent saves, higher = less interruption.
 - **`STATE_DIR`** — Where hook state is stored (defaults to `~/.mempalace/hook_state/`)
 - **`MEMPAL_DIR`** — Optional **project directory** (code, notes, docs) to also mine on each save trigger, with `--mode projects`. The hook ALWAYS mines the active conversation transcript automatically with `--mode convos` — `MEMPAL_DIR` is purely additive, never an override. Leave blank if you don't want to ingest project files.
-- **`MEMPALACE_PYTHON`** — Optional env var. Python interpreter with mempalace + chromadb installed. Auto-detects: `MEMPALACE_PYTHON` env var → repo `venv/bin/python3` → system `python3`. Set this if your venv is in a non-standard location.
+- **`MEMPALACE_PYTHON`** — Optional env var. Python interpreter with trimemo + chromadb installed. Auto-detects: `MEMPALACE_PYTHON` env var → repo `venv/bin/python3` → system `python3`. Set this if your venv is in a non-standard location.
 
 ### Disabling Auto-Save (Silent Mode)
 
@@ -138,15 +138,15 @@ To keep hooks installed but disable auto-save blocking entirely, set `hooks.auto
 export MEMPALACE_HOOKS_AUTO_SAVE=false
 ```
 
-When disabled, both the stop hook and precompact hook pass through without blocking. You can still save manually with `mempalace mine <dir> --mode convos`.
+When disabled, both the stop hook and precompact hook pass through without blocking. You can still save manually with `trimemo mine <dir> --mode convos`.
 
-### mempalace CLI
+### trimemo CLI
 
 The relevant commands are:
 
 ```bash
-mempalace mine <dir>               # Mine all files in a directory
-mempalace mine <dir> --mode convos # Mine conversation transcripts only
+trimemo mine <dir>               # Mine all files in a directory
+trimemo mine <dir> --mode convos # Mine conversation transcripts only
 ```
 
 The hooks resolve the repo root automatically from their own path, so they work regardless of where you install the repo.
@@ -214,7 +214,7 @@ Example output:
 
 ## Known Limitations
 
-**Hooks require session restart after install.** Claude Code loads hooks from `settings.json` at session start only. If you run `mempalace init` or manually edit hook config mid-session, the hooks won't fire until you restart Claude Code. This is a Claude Code limitation.
+**Hooks require session restart after install.** Claude Code loads hooks from `settings.json` at session start only. If you run `trimemo init` or manually edit hook config mid-session, the hooks won't fire until you restart Claude Code. This is a Claude Code limitation.
 
 **`MEMPAL_PYTHON` override for the hook's internal Python calls.** The save hook parses its JSON input and counts transcript messages with `python3`. When the harness is launched from a GUI on macOS — `open -a`, Spotlight, the dock — its `PATH` is the minimal `/usr/bin:/bin:/usr/sbin:/sbin` inherited from `launchd`, not your shell PATH. If `python3` isn't on that PATH, those internal calls fail and the hook can't count exchanges.
 
@@ -222,26 +222,26 @@ Point the hook at any Python 3 interpreter to fix it:
 
 ```bash
 export MEMPAL_PYTHON="/usr/bin/python3"                   # system Python is fine
-export MEMPAL_PYTHON="$HOME/.venvs/mempalace/bin/python"  # or your venv
+export MEMPAL_PYTHON="$HOME/.venvs/trimemo/bin/python"  # or your venv
 ```
 
-Resolution priority: `$MEMPAL_PYTHON` (if set and executable) → `$(command -v python3)` → bare `python3`. The interpreter only needs `json` and `sys` from the standard library — `mempalace` itself does not need to be installed in it.
+Resolution priority: `$MEMPAL_PYTHON` (if set and executable) → `$(command -v python3)` → bare `python3`. The interpreter only needs `json` and `sys` from the standard library — `trimemo` itself does not need to be installed in it.
 
-Note: the `mempalace mine` auto-ingest runs via the `mempalace` CLI, so that command also needs to be on the hook's `PATH`. Installing with `pipx install mempalace` or `uv tool install mempalace` puts it on a stable global location; otherwise extend the hook environment's `PATH` to include your venv's `bin/`.
+Note: the `trimemo mine` auto-ingest runs via the `trimemo` CLI, so that command also needs to be on the hook's `PATH`. Installing with `pipx install trimemo` or `uv tool install trimemo` puts it on a stable global location; otherwise extend the hook environment's `PATH` to include your venv's `bin/`.
 
 ## Backfill Past Conversations
 
 The hooks only capture conversations going forward. To mine **past** Claude Code sessions into your palace, run a one-time backfill:
 
 ```bash
-mempalace mine ~/.claude/projects/ --mode convos
+trimemo mine ~/.claude/projects/ --mode convos
 ```
 
 This scans all JSONL transcripts from previous sessions and files them into the `conversations` wing. On a typical developer machine with months of history, this can yield 50K–200K drawers.
 
 For Codex CLI sessions:
 ```bash
-mempalace mine ~/.codex/sessions/ --mode convos
+trimemo mine ~/.codex/sessions/ --mode convos
 ```
 
 This only needs to be done once — after that, the hooks auto-mine each session as you go.

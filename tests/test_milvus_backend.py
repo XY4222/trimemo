@@ -7,7 +7,7 @@ import pytest
 
 from _backend_conformance import assert_partition_isolation
 
-from mempalace.backends import (
+from trimemo.backends import (
     BackendError,
     BackendMismatchError,
     DimensionMismatchError,
@@ -15,7 +15,7 @@ from mempalace.backends import (
     UnsupportedFilterError,
     available_backends,
 )
-from mempalace.backends.milvus import (
+from trimemo.backends.milvus import (
     DOCUMENT_MAX_LENGTH,
     MilvusBackend,
     translate_where,
@@ -255,9 +255,9 @@ def test_milvus_marker_rejects_remote_target_change(tmp_path, monkeypatch):
 
 def test_palace_wrapper_embeds_for_milvus(tmp_path, monkeypatch):
     _require_milvus_lite()
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace import palace
-    from mempalace.backends import reset_backends
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo import palace
+    from trimemo.backends import reset_backends
 
     monkeypatch.setattr(
         embedding_wrapper,

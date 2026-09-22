@@ -10,11 +10,11 @@ import pytest
 
 from _chroma_palace_helper import make_minimal_chroma_sqlite
 
-from mempalace import daemon
-from mempalace import service
+from trimemo import daemon
+from trimemo import service
 
 _LOCK_CONTENDER = """
-from mempalace.palace import MineAlreadyRunning, mine_palace_lock
+from trimemo.palace import MineAlreadyRunning, mine_palace_lock
 import sys
 try:
     with mine_palace_lock(sys.argv[1]):
@@ -444,7 +444,7 @@ def test_lease_refusal_defers_job_and_runs_it_on_the_next_claim(tmp_path, monkey
         if calls["n"] == 1:
             return {
                 "success": False,
-                "error": "palace /p is held by PID 999 (mempalace-mcp)",
+                "error": "palace /p is held by PID 999 (trimemo-mcp)",
                 "error_class": daemon.LOCK_REFUSAL_ERROR_CLASS,
                 "exit_code": 1,
             }
@@ -501,7 +501,7 @@ def test_wait_returns_a_lock_deferred_job_instead_of_waiting_out_the_holder(tmp_
     def fake_execute(kind, payload):
         return {
             "success": False,
-            "error": "palace /p is held by PID 999 (mempalace-mcp)",
+            "error": "palace /p is held by PID 999 (trimemo-mcp)",
             "error_class": daemon.LOCK_REFUSAL_ERROR_CLASS,
             "exit_code": 1,
         }
@@ -867,7 +867,7 @@ def test_a_job_queued_behind_a_deferred_one_gets_its_own_refusal_marker(tmp_path
     def fake_execute(kind, payload):
         return {
             "success": False,
-            "error": "palace /p is held by PID 999 (mempalace-mcp)",
+            "error": "palace /p is held by PID 999 (trimemo-mcp)",
             "error_class": daemon.LOCK_REFUSAL_ERROR_CLASS,
             "exit_code": 1,
         }
@@ -1129,13 +1129,13 @@ def test_start_daemon_kills_orphan_on_readiness_timeout(tmp_path, monkeypatch):
 # These close the draft PR's follow-up ("Add focused happy-path tests for
 # service.run_mine / run_diary_write / run_mcp_tool") and, now that the daemon
 # tests complete reliably, keep service.py's coverage above the CI gate. The
-# capsys-using tests come first; the two that import mempalace.mcp_server (which
+# capsys-using tests come first; the two that import trimemo.mcp_server (which
 # rebinds sys.stdout) come last and do not use capsys, so the rebind can't break
 # capture in this file or later files (capsys activates after the rebind).
 
 
 def test_print_job_result_replays_stdout_stderr_and_returns_exit_code(capsys):
-    from mempalace import service
+    from trimemo import service
 
     code = service.print_job_result(
         {"success": False, "error": "boom", "stdout": "out\n", "stderr": "err\n", "exit_code": 3}
@@ -1147,16 +1147,16 @@ def test_print_job_result_replays_stdout_stderr_and_returns_exit_code(capsys):
 
 
 def test_print_job_result_prints_error_to_stderr_when_no_stderr(capsys):
-    from mempalace import service
+    from trimemo import service
 
     code = service.print_job_result({"success": False, "error": "boom", "exit_code": 1})
     assert code == 1
     captured = capsys.readouterr()
-    assert "mempalace: boom" in captured.err
+    assert "trimemo: boom" in captured.err
 
 
 def test_run_sync_returns_success_when_palace_dir_missing(tmp_path):
-    from mempalace import service
+    from trimemo import service
 
     result = service.run_sync({"palace_path": str(tmp_path / "nope"), "dry_run": True})
     assert result["success"] is True
@@ -1164,7 +1164,7 @@ def test_run_sync_returns_success_when_palace_dir_missing(tmp_path):
 
 
 def test_run_sync_returns_success_when_palace_has_no_backend_artifact(tmp_path):
-    from mempalace import service
+    from trimemo import service
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -1174,7 +1174,7 @@ def test_run_sync_returns_success_when_palace_has_no_backend_artifact(tmp_path):
 
 
 def test_run_mine_invalid_mode_returns_structured_error(tmp_path):
-    from mempalace import service
+    from trimemo import service
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -1186,7 +1186,7 @@ def test_run_mine_invalid_mode_returns_structured_error(tmp_path):
 
 def test_run_mine_source_adapter_dispatches_through_adapter_runner(tmp_path, monkeypatch):
     """Daemon mine jobs preserve the CLI's explicit source-adapter dispatch."""
-    from mempalace import cli, service
+    from trimemo import cli, service
 
     received = {}
 
@@ -1221,7 +1221,7 @@ def test_run_mine_source_adapter_dispatches_through_adapter_runner(tmp_path, mon
 
 
 def test_run_mcp_tool_rejects_non_dict_arguments():
-    from mempalace import service
+    from trimemo import service
 
     out = service.run_mcp_tool({"name": "mempalace_add_drawer", "arguments": "nope"})
     assert out["success"] is False
@@ -1230,8 +1230,8 @@ def test_run_mcp_tool_rejects_non_dict_arguments():
 
 
 def test_run_mcp_tool_dispatches_write_tool(monkeypatch):
-    import mempalace.mcp_server as mcp
-    from mempalace import service
+    import trimemo.mcp_server as mcp
+    from trimemo import service
 
     captured = {}
 
@@ -1248,8 +1248,8 @@ def test_run_mcp_tool_dispatches_write_tool(monkeypatch):
 
 
 def test_run_diary_write_forwards_args_and_sets_exit_code(monkeypatch):
-    import mempalace.mcp_server as mcp
-    from mempalace import service
+    import trimemo.mcp_server as mcp
+    from trimemo import service
 
     captured = {}
 
@@ -1269,7 +1269,7 @@ def test_run_diary_write_forwards_args_and_sets_exit_code(monkeypatch):
 def test_run_mine_applies_backend_before_mode_validation(tmp_path):
     """Covers _apply_backend (env set + get_backend_class validation) on the daemon
     path; the invalid mode short-circuits before any mining runs."""
-    from mempalace import service
+    from trimemo import service
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -1281,8 +1281,8 @@ def test_run_mine_applies_backend_before_mode_validation(tmp_path):
 def test_execute_job_dispatches_diary_write_mcp_tool_and_unknown(monkeypatch):
     """Covers execute_job's kind dispatch for diary_write, mcp_tool, and the
     unknown-kind fallback."""
-    import mempalace.mcp_server as mcp
-    from mempalace import service
+    import trimemo.mcp_server as mcp
+    from trimemo import service
 
     monkeypatch.setattr(mcp, "tool_diary_write", lambda **kw: {"success": True})
     monkeypatch.setattr(
@@ -1304,9 +1304,9 @@ def test_run_sync_structured_errors_on_sync_failures(tmp_path, monkeypatch):
     """Covers run_sync's three exception handlers (MineAlreadyRunning, ValueError,
     generic Exception) so a failing sync_palace returns a structured error instead
     of propagating."""
-    import mempalace.sync as sync_module
-    from mempalace import service
-    from mempalace.palace import MineAlreadyRunning
+    import trimemo.sync as sync_module
+    from trimemo import service
+    from trimemo.palace import MineAlreadyRunning
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -1341,9 +1341,9 @@ def test_run_mine_lease_refusal_returns_the_lock_error_class(tmp_path, monkeypat
     it (say, a broad handler reordered above MineAlreadyRunning), the daemon
     silently goes back to dead-lettering refused mines while every worker test
     stays green: they all inject the marker by hand."""
-    import mempalace.miner as miner_module
-    from mempalace import service
-    from mempalace.palace import MineAlreadyRunning
+    import trimemo.miner as miner_module
+    from trimemo import service
+    from trimemo.palace import MineAlreadyRunning
 
     palace = tmp_path / "palace"
     palace.mkdir()
@@ -1444,8 +1444,8 @@ def test_negative_content_length_is_rejected_without_blocking(tmp_path, monkeypa
 def test_run_mcp_tool_marks_bare_error_dict_as_failure(monkeypatch):
     """A write tool that returns {"error": ...} with no success flag must be
     recorded as a failed job, not succeeded (Copilot review)."""
-    import mempalace.mcp_server as mcp
-    from mempalace import service
+    import trimemo.mcp_server as mcp
+    from trimemo import service
 
     monkeypatch.setattr(
         mcp,
@@ -1491,7 +1491,7 @@ def test_get_client_if_running_uses_short_probe_timeout(monkeypatch):
 
 
 def test_detached_kwargs_posix(tmp_path, monkeypatch):
-    monkeypatch.setattr("mempalace.daemon.os.name", "posix")
+    monkeypatch.setattr("trimemo.daemon.os.name", "posix")
     kwargs = daemon._detached_kwargs(tmp_path / "daemon.log")
     fh = kwargs["stdout"]
     try:
@@ -1504,14 +1504,14 @@ def test_detached_kwargs_posix(tmp_path, monkeypatch):
 
 
 def test_detached_kwargs_windows(tmp_path, monkeypatch):
-    monkeypatch.setattr("mempalace.daemon.os.name", "nt")
-    monkeypatch.setattr("mempalace.daemon.subprocess.CREATE_NO_WINDOW", 0x08000000, raising=False)
-    monkeypatch.setattr("mempalace.daemon.subprocess.DETACHED_PROCESS", 0x00000008, raising=False)
+    monkeypatch.setattr("trimemo.daemon.os.name", "nt")
+    monkeypatch.setattr("trimemo.daemon.subprocess.CREATE_NO_WINDOW", 0x08000000, raising=False)
+    monkeypatch.setattr("trimemo.daemon.subprocess.DETACHED_PROCESS", 0x00000008, raising=False)
     monkeypatch.setattr(
-        "mempalace.daemon.subprocess.CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
+        "trimemo.daemon.subprocess.CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
     )
     monkeypatch.setattr(
-        "mempalace.daemon.subprocess.CREATE_BREAKAWAY_FROM_JOB", 0x01000000, raising=False
+        "trimemo.daemon.subprocess.CREATE_BREAKAWAY_FROM_JOB", 0x01000000, raising=False
     )
     kwargs = daemon._detached_kwargs(tmp_path / "daemon.log")
     fh = kwargs["stdout"]

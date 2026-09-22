@@ -46,7 +46,7 @@
 #
 # === MEMPALACE CLI ===
 # The hook ALWAYS mines the active conversation transcript automatically
-# (via `mempalace mine <transcript-dir> --mode convos`). MEMPAL_DIR is an
+# (via `trimemo mine <transcript-dir> --mode convos`). MEMPAL_DIR is an
 # *additional*, optional target for project files — it does not replace
 # the conversation mine.
 #
@@ -66,8 +66,8 @@ MEMPAL_DIR=""
 #
 # Why this is nontrivial: GUI-launched Claude Code on macOS (or any harness
 # that doesn't inherit the user's shell PATH) may find a `python3` on PATH
-# that lacks mempalace — e.g. /usr/bin/python3 while the user installed
-# mempalace into a venv or pyenv. Users in that situation can point the
+# that lacks trimemo — e.g. /usr/bin/python3 while the user installed
+# trimemo into a venv or pyenv. Users in that situation can point the
 # hook at the right interpreter by exporting MEMPAL_PYTHON.
 #
 # Resolution order (first hit wins):
@@ -265,14 +265,14 @@ if [ "$SINCE_LAST" -ge "$SAVE_INTERVAL" ] && [ "$EXCHANGE_COUNT" -gt 0 ]; then
     # MEMPAL_DIR is *additive*, not an override: a user with MEMPAL_DIR
     # pointed at their project still gets the active conversation mined.
     if is_valid_transcript_path "$TRANSCRIPT_PATH" && [ -f "$TRANSCRIPT_PATH" ]; then
-        "$MEMPAL_PYTHON_BIN" -m mempalace mine "$(dirname "$TRANSCRIPT_PATH")" --mode convos \
+        "$MEMPAL_PYTHON_BIN" -m trimemo mine "$(dirname "$TRANSCRIPT_PATH")" --mode convos \
             >> "$STATE_DIR/hook.log" 2>&1 &
     elif [ -n "$TRANSCRIPT_PATH" ]; then
         echo "[$(date '+%H:%M:%S')] Skipping invalid transcript path: $TRANSCRIPT_PATH" \
             >> "$STATE_DIR/hook.log"
     fi
     if [ -n "$MEMPAL_DIR" ] && [ -d "$MEMPAL_DIR" ]; then
-        "$MEMPAL_PYTHON_BIN" -m mempalace mine "$MEMPAL_DIR" --mode projects \
+        "$MEMPAL_PYTHON_BIN" -m trimemo mine "$MEMPAL_DIR" --mode projects \
             >> "$STATE_DIR/hook.log" 2>&1 &
     fi
 
@@ -284,7 +284,7 @@ if [ "$SINCE_LAST" -ge "$SAVE_INTERVAL" ] && [ "$EXCHANGE_COUNT" -gt 0 ]; then
         cat << 'HOOKJSON'
 {
   "decision": "block",
-  "reason": "MemPalace save checkpoint. Write a brief session diary entry covering key topics, decisions, and code changes since the last save. Use verbatim quotes where possible. Continue after saving."
+  "reason": "TriMemo save checkpoint. Write a brief session diary entry covering key topics, decisions, and code changes since the last save. Use verbatim quotes where possible. Continue after saving."
 }
 HOOKJSON
     else

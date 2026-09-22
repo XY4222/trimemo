@@ -345,7 +345,7 @@ class TestSessionEndWrappers:
     @_SESSION_END_HOOKS
     def test_dispatches_session_end_through_cli(self, hook):
         src = _hook_src_no_comments(hook)
-        # The dispatcher runs ``mempalace hook run "$@"`` in run_mempalace_hook,
+        # The dispatcher runs ``trimemo hook run "$@"`` in run_mempalace_hook,
         # and the bottom call supplies the ``--hook session-end --harness`` args
         # — so the two halves are asserted separately, not as one contiguous string.
         assert "hook run" in src

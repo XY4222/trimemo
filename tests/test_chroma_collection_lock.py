@@ -1,7 +1,7 @@
 """Tests for ChromaCollection's palace-write-lock integration.
 
 Closes the gap left by ``mine_palace_lock`` only protecting the
-``mempalace mine`` pipeline: MCP/direct writers that call
+``trimemo mine`` pipeline: MCP/direct writers that call
 ``ChromaCollection.add/upsert/update/delete`` must also serialize against
 mine and against each other to avoid the multi-threaded HNSW corruption
 documented in #974/#965.
@@ -31,8 +31,8 @@ import time
 
 import pytest
 
-from mempalace.backends.chroma import ChromaCollection
-from mempalace.palace import MineAlreadyRunning, mine_palace_lock
+from trimemo.backends.chroma import ChromaCollection
+from trimemo.palace import MineAlreadyRunning, mine_palace_lock
 
 
 def _get_mp_context():
@@ -228,8 +228,8 @@ def _slow_writer_target(palace_path, tmp_path_str, pid, result_q):
     """Subprocess target: try a slow upsert, report ok/busy."""
     os.environ["HOME"] = tmp_path_str
     # Fresh import inside child so HOME monkeypatch routes the lock dir.
-    from mempalace.backends.chroma import ChromaCollection as _CC
-    from mempalace.palace import MineAlreadyRunning as _MAR
+    from trimemo.backends.chroma import ChromaCollection as _CC
+    from trimemo.palace import MineAlreadyRunning as _MAR
 
     fake = _SlowFakeChromaCollection(hold_seconds=0.3)
     col = _CC(fake, palace_path=palace_path)
@@ -306,7 +306,7 @@ def test_read_path_does_not_acquire_lock(tmp_path, monkeypatch):
         # surface here.
         import inspect
 
-        from mempalace.backends.chroma import ChromaCollection as _CC
+        from trimemo.backends.chroma import ChromaCollection as _CC
 
         for write_attr in ("add", "upsert", "update", "delete"):
             src = inspect.getsource(getattr(_CC, write_attr))

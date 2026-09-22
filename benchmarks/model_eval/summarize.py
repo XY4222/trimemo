@@ -211,7 +211,7 @@ def render_open_set_viability(rows: list[dict], min_similarity: float = 0.7) -> 
 
     if not qualified:
         lines.append(f"**No model met the threshold.** Best score: {max(float(r.get('accuracy') or 0) for r in open_runs):.3f}.")
-        lines.append("\nRecommendation: do NOT ship `mempalace mine --mode discover`. Closed-set classification stays required.\n")
+        lines.append("\nRecommendation: do NOT ship `trimemo mine --mode discover`. Closed-set classification stays required.\n")
         return "\n".join(lines)
 
     lines.append(f"**{len(qualified)} model(s) met the threshold.**\n")
@@ -226,7 +226,7 @@ def render_open_set_viability(rows: list[dict], min_similarity: float = 0.7) -> 
             f"{extras.get('high_similarity_count', '—')} | "
             f"{extras.get('low_similarity_count', '—')} |"
         )
-    lines.append(f"\nRecommendation: ship `mempalace mine --mode discover` with the top model as default.\n")
+    lines.append(f"\nRecommendation: ship `trimemo mine --mode discover` with the top model as default.\n")
     return "\n".join(lines)
 
 

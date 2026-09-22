@@ -9,7 +9,7 @@ import pytest
 
 from _backend_conformance import assert_partition_isolation
 
-from mempalace.backends import (
+from trimemo.backends import (
     BackendError,
     BackendMismatchError,
     CollectionNotInitializedError,
@@ -17,10 +17,10 @@ from mempalace.backends import (
     PalaceRef,
     available_backends,
 )
-from mempalace.backends import pgvector as pgvector_module
-from mempalace.backends.base import UnsupportedCapabilityError
-from mempalace.backends.base import recency_sort_key as _recency_sort_key
-from mempalace.backends.pgvector import (
+from trimemo.backends import pgvector as pgvector_module
+from trimemo.backends.base import UnsupportedCapabilityError
+from trimemo.backends.base import recency_sort_key as _recency_sort_key
+from trimemo.backends.pgvector import (
     PgVectorBackend,
     _PgVectorClient,
     _PgVectorConfig,
@@ -192,7 +192,7 @@ class _FakePgVectorClient:
 
 @pytest.fixture
 def fake_pgvector(monkeypatch):
-    import mempalace.backends.pgvector as pgvector
+    import trimemo.backends.pgvector as pgvector
 
     _FakePgVectorClient.instances.clear()
     monkeypatch.setattr(pgvector, "_PgVectorClient", _FakePgVectorClient)
@@ -316,7 +316,7 @@ def test_pgvector_complex_filters_use_local_fallback(tmp_path, fake_pgvector):
 
 
 def test_pgvector_marker_participates_in_backend_mismatch(tmp_path, fake_pgvector):
-    from mempalace.palace import resolve_backend_name
+    from trimemo.palace import resolve_backend_name
 
     _backend, col = _collection(tmp_path)
     col.upsert(ids=["a"], documents=["one"], metadatas=[{}], embeddings=[[1, 0]])
@@ -1170,7 +1170,7 @@ def test_pgvector_marker_unreadable_raises_mismatch(tmp_path, fake_pgvector):
 
 
 def test_pgvector_dsn_resolved_from_env(tmp_path, fake_pgvector, monkeypatch):
-    from mempalace.backends.pgvector import _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorConfig
 
     monkeypatch.setenv("MEMPALACE_PGVECTOR_DSN", "postgresql://example:5432/memdb")
     monkeypatch.setenv("MEMPALACE_PGVECTOR_NAMESPACE", "team-a")
@@ -1180,8 +1180,8 @@ def test_pgvector_dsn_resolved_from_env(tmp_path, fake_pgvector, monkeypatch):
 
 
 def test_palace_wrapper_embeds_for_pgvector(tmp_path, monkeypatch, fake_pgvector):
-    import mempalace.backends.embedding_wrapper as embedding_wrapper
-    from mempalace import palace
+    import trimemo.backends.embedding_wrapper as embedding_wrapper
+    from trimemo import palace
 
     monkeypatch.setattr(
         embedding_wrapper, "_embed_texts", lambda texts: [[1.0, 0.0] for _ in texts]
@@ -1592,7 +1592,7 @@ def test_strip_lone_surrogates_reuses_config_util():
     applied to id/document and the serialized metadata JSON (no pgvector-local
     helper). End-to-end coverage is ``test_pgvector_upsert_replaces_lone_surrogates``;
     the utility's own edge cases live in ``tests/test_clean_lone_surrogates.py``."""
-    from mempalace.config import strip_lone_surrogates
+    from trimemo.config import strip_lone_surrogates
 
     # ensure_ascii=False leaves a metadata surrogate raw in the JSON, so a single
     # pass over the serialized string cleans it (the property the write path relies on).
@@ -1853,7 +1853,7 @@ class _UniqueViolation(Exception):
 def test_execute_retries_once_after_admin_shutdown(monkeypatch):
     """A Postgres restart kills the pooled connection; the next query must not
     surface it. Retry on a fresh connection instead (#57P01)."""
-    from mempalace.backends.pgvector import _PgVectorClient, _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorClient, _PgVectorConfig
 
     dropped = _DropOnceConn(_AdminShutdown, drop=True)
     fresh = _DropOnceConn(_AdminShutdown, drop=False)
@@ -1870,7 +1870,7 @@ def test_execute_retries_once_after_admin_shutdown(monkeypatch):
 def test_execute_retries_when_handle_is_closed_without_sqlstate(monkeypatch):
     """A mid-query TCP drop arrives with no SQLSTATE; the closed handle is the
     only signal, and it must still trigger the retry."""
-    from mempalace.backends.pgvector import _PgVectorClient, _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorClient, _PgVectorConfig
 
     class _BareDropError(Exception):
         pass
@@ -1887,7 +1887,7 @@ def test_execute_retries_when_handle_is_closed_without_sqlstate(monkeypatch):
 def test_execute_does_not_retry_statement_level_errors(monkeypatch):
     """A constraint violation leaves the connection usable. Retrying would run
     the same failing statement twice; it must propagate on the first attempt."""
-    from mempalace.backends.pgvector import _PgVectorClient, _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorClient, _PgVectorConfig
 
     class _AliveConn(_DropOnceConn):
         def cursor(self):
@@ -1921,7 +1921,7 @@ def test_execute_does_not_retry_statement_level_errors(monkeypatch):
 def test_execute_surfaces_a_second_drop_as_backend_error(monkeypatch):
     """Two drops in a row is a real outage, not a stale pooled handle. It must
     reach the caller as the BackendError they already handle."""
-    from mempalace.backends.pgvector import _PgVectorClient, _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorClient, _PgVectorConfig
 
     first = _DropOnceConn(_AdminShutdown, drop=True)
     second = _DropOnceConn(_AdminShutdown, drop=True)
@@ -1936,7 +1936,7 @@ def test_execute_surfaces_a_second_drop_as_backend_error(monkeypatch):
 
 def test_execute_retry_covers_executemany(monkeypatch):
     """``upsert_rows`` goes through ``many=True``; the retry must cover it too."""
-    from mempalace.backends.pgvector import _PgVectorClient, _PgVectorConfig
+    from trimemo.backends.pgvector import _PgVectorClient, _PgVectorConfig
 
     dropped = _DropOnceConn(_AdminShutdown, drop=True)
     fresh = _DropOnceConn(_AdminShutdown, drop=False)

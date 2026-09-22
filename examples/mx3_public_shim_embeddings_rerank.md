@@ -1,6 +1,6 @@
 # MX3 Public Shim Embeddings and Rerank
 
-MemPalace can optionally route Chroma embeddings and post-retrieval rerank through the public
+TriMemo can optionally route Chroma embeddings and post-retrieval rerank through the public
 MX3 shim helpers.
 
 This path is local by default. It sends the live search query and candidate hits to the configured
@@ -19,7 +19,7 @@ endpoint.
 ## Install
 
 ```bash
-pip install "mx3-public-shim[mempalace] @ git+https://github.com/grtninja/mx3-public-shim.git"
+pip install "mx3-public-shim[trimemo] @ git+https://github.com/grtninja/mx3-public-shim.git"
 ```
 
 ## Validate before enabling
@@ -30,7 +30,7 @@ Use this path only with a hardware-backed public-shim deployment.
 python -m mx3_public_shim.doctor
 ```
 
-MemPalace rejects the explicit `cpu_reference` fallback, but you should still validate the
+TriMemo rejects the explicit `cpu_reference` fallback, but you should still validate the
 configured endpoint before enabling it:
 
 - the runtime must expose an embeddings provider
@@ -44,10 +44,10 @@ On Windows, a healthy doctor report normally shows:
 - `openai_compat` available and selected for `embeddings`
 - `openai_compat` available and selected for `chat`
 
-That means MemPalace is using the local public-shim OpenAI-compatible surface while the required
+That means TriMemo is using the local public-shim OpenAI-compatible surface while the required
 hardware lives behind that endpoint.
 
-## Enable embeddings + rerank in MemPalace
+## Enable embeddings + rerank in TriMemo
 
 ```bash
 export MEMPALACE_EMBEDDING_BACKEND=mx3_public_shim
@@ -88,5 +88,5 @@ python examples/mx3_public_shim_embeddings_rerank.py
 Then search normally:
 
 ```bash
-mempalace search "auth decisions"
+trimemo search "auth decisions"
 ```

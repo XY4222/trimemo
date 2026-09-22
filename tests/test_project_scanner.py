@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from mempalace.project_scanner import (
+from trimemo.project_scanner import (
     PersonInfo,
     ProjectInfo,
     _dedupe_people,
@@ -125,7 +125,7 @@ def test_parse_pom_ignores_non_string_child_tags(tmp_path, monkeypatch):
         def getroot(self):
             return [FakeChild(), ArtifactChild()]
 
-    monkeypatch.setattr("mempalace.project_scanner.ET.parse", lambda _path: FakeTree())
+    monkeypatch.setattr("trimemo.project_scanner.ET.parse", lambda _path: FakeTree())
 
     assert _parse_pom(tmp_path / "pom.xml") == "safe-artifact"
 
@@ -543,7 +543,7 @@ def test_merge_primary_wins_case_insensitive():
         "people": [],
         "projects": [
             {
-                "name": "mempalace",
+                "name": "trimemo",
                 "type": "project",
                 "confidence": 0.99,
                 "frequency": 10,
@@ -557,7 +557,7 @@ def test_merge_primary_wins_case_insensitive():
         "projects": [],
         "uncertain": [
             {
-                "name": "MemPalace",
+                "name": "TriMemo",
                 "type": "uncertain",
                 "confidence": 0.4,
                 "frequency": 6,
@@ -566,7 +566,7 @@ def test_merge_primary_wins_case_insensitive():
         ],
     }
     merged = _merge_detected(primary, secondary)
-    # `MemPalace` (uncertain) is deduped against `mempalace` (project) case-insensitively
+    # `TriMemo` (uncertain) is deduped against `trimemo` (project) case-insensitively
     assert len(merged["projects"]) == 1
     assert len(merged["uncertain"]) == 0
 

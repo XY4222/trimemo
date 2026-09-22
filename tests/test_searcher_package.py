@@ -18,7 +18,7 @@ FRAGMENTS = (
 
 
 def test_searcher_is_a_package():
-    import mempalace.searcher as searcher
+    import trimemo.searcher as searcher
 
     assert hasattr(searcher, "__path__")
     assert callable(searcher.search)
@@ -31,11 +31,11 @@ def test_searcher_is_a_package():
 @pytest.mark.parametrize("name", FRAGMENTS)
 def test_fragments_refuse_direct_import(name):
     with pytest.raises(ImportError, match="implementation fragment"):
-        importlib.import_module(f"mempalace.searcher.{name}")
+        importlib.import_module(f"trimemo.searcher.{name}")
 
 
 def test_fragment_files_exist():
-    pkg = REPO_ROOT / "mempalace" / "searcher"
+    pkg = REPO_ROOT / "trimemo" / "searcher"
     missing = [name for name in FRAGMENTS if not (pkg / f"{name}.py").is_file()]
     assert missing == []
-    assert not (REPO_ROOT / "mempalace" / "searcher.py").exists()
+    assert not (REPO_ROOT / "trimemo" / "searcher.py").exists()

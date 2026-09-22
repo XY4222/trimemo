@@ -17,7 +17,7 @@ Palace overview: total drawers, wing and room counts, AAAK spec, and memory prot
 `updates.server` is cached release state for the runtime serving the palace.
 When a local stdio process proxies to a hub, it also adds `updates.client` for
 that proxy's locally installed runtime; a direct HTTP client receives only the
-server scope because it has no local MemPalace process to inspect. Checks are
+server scope because it has no local TriMemo process to inspect. Checks are
 disabled by default and refresh in a background thread, so this tool never
 waits on PyPI. An available release is informational only and must be authorized
 by the user before any upgrade commands run. A remote `updates.server` release
@@ -82,7 +82,7 @@ evidence (`unknown`). An inferred `content_date` is kept separate; its source is
 Missing content dates are `null`. These fields do not change ranking or the
 filing-date semantics of `since`/`before`.
 
-See [date provenance](https://github.com/MemPalace/mempalace/blob/develop/docs/authored-at.md)
+See [date provenance](https://github.com/MemPalace/trimemo/blob/develop/docs/authored-at.md)
 for interpretation and compatibility details.
 
 ---
@@ -159,14 +159,14 @@ Delete a drawer by ID. Irreversible.
 
 ### `mempalace_mine`
 
-Mine a directory into the palace — the MCP equivalent of `mempalace mine`. `mode='convos'` also accepts a single conversation file. Wraps the same in-process miners the CLI uses; runs synchronously and returns the miner's summary as `output`. The palace write lock is automatic — a concurrent mine returns a structured already-running error. Orphan cleanup is separate (see `mempalace_sync`).
+Mine a directory into the palace — the MCP equivalent of `trimemo mine`. `mode='convos'` also accepts a single conversation file. Wraps the same in-process miners the CLI uses; runs synchronously and returns the miner's summary as `output`. The palace write lock is automatic — a concurrent mine returns a structured already-running error. Orphan cleanup is separate (see `mempalace_sync`).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `source` | string | **Yes** | Directory to mine, or one conversation file with `mode='convos'` |
-| `mode` | string | No | `projects` (code/docs, default), `convos` (chat transcripts), or `extract` (office docs; needs the `mempalace[extract]` extra) |
+| `mode` | string | No | `projects` (code/docs, default), `convos` (chat transcripts), or `extract` (office docs; needs the `trimemo[extract]` extra) |
 | `wing` | string | No | Target wing (default: source directory name) |
-| `agent` | string | No | Recorded on every drawer (default: `mempalace`) |
+| `agent` | string | No | Recorded on every drawer (default: `trimemo`) |
 | `limit` | integer | No | Max files to process (0 = all; default 0) |
 | `dry_run` | boolean | No | Report what would be filed without writing (default false) |
 | `extract` | string | No | Convos extraction strategy: `exchange` (default) or `general`; ignored by other modes |
@@ -522,7 +522,7 @@ Append-only coordination events and exact artifacts for multi-agent work — see
 Create a complete canonical `task.request` and return the stored event plus a
 short handoff line. This is the preferred task-creation interface for agents
 connected to a remote shared-brain hub; it keeps correlation-id generation,
-body structure, and routing identical to `mempalace task create`.
+body structure, and routing identical to `trimemo task create`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

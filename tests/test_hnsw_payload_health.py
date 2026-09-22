@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from mempalace.backends.chroma import (
+from trimemo.backends.chroma import (
     _HNSW_LINK_TO_DATA_MAX_RATIO,
     _hnsw_link_to_data_ratio,
     _segment_appears_healthy,
@@ -216,7 +216,7 @@ def _state(*, labels: int, total: int, dimensionality=None) -> dict:
 
 def test_missing_dimensionality_recoverable_when_total_exceeds_labels(tmp_path):
     """Deletions make total_elements_added > label count. Still recoverable."""
-    from mempalace.backends.chroma import _missing_dimensionality_appears_recoverable
+    from trimemo.backends.chroma import _missing_dimensionality_appears_recoverable
 
     seg_dir = tmp_path / "11111111-2222-3333-4444-555555555555"
     state = _state(labels=183_009, total=188_220)
@@ -227,7 +227,7 @@ def test_missing_dimensionality_recoverable_when_total_exceeds_labels(tmp_path):
 
 def test_missing_dimensionality_not_recoverable_when_total_below_labels(tmp_path):
     """total < labels is genuinely impossible - stay unrecoverable."""
-    from mempalace.backends.chroma import _missing_dimensionality_appears_recoverable
+    from trimemo.backends.chroma import _missing_dimensionality_appears_recoverable
 
     seg_dir = tmp_path / "11111111-2222-3333-4444-555555555555"
     state = _state(labels=100, total=40)
@@ -240,7 +240,7 @@ def test_missing_dimensionality_not_recoverable_when_total_below_labels(tmp_path
 
 def test_quarantine_spares_healthy_index_with_cumulative_total(tmp_path):
     """End-to-end: a post-deletion segment must NOT be quarantined."""
-    from mempalace.backends.chroma import quarantine_invalid_hnsw_metadata
+    from trimemo.backends.chroma import quarantine_invalid_hnsw_metadata
 
     seg_dir = tmp_path / "11111111-2222-3333-4444-555555555555"
     _write_pickled_segment(seg_dir, _state(labels=183_009, total=188_220))
@@ -251,7 +251,7 @@ def test_quarantine_spares_healthy_index_with_cumulative_total(tmp_path):
 
 def test_quarantine_still_catches_inconsistent_label_maps(tmp_path):
     """Accepting a cumulative total must not spare a truly broken index."""
-    from mempalace.backends.chroma import quarantine_invalid_hnsw_metadata
+    from trimemo.backends.chroma import quarantine_invalid_hnsw_metadata
 
     seg_dir = tmp_path / "11111111-2222-3333-4444-555555555555"
     state = _state(labels=100, total=120)

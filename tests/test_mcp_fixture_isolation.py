@@ -16,7 +16,7 @@ class _TrackedWriterLock:
 @pytest.fixture(scope="module")
 def _seeded_mcp_writer_state():
     """Seed state before function fixtures and inspect final teardown afterward."""
-    from mempalace import mcp_server
+    from trimemo import mcp_server
 
     # Start from a known state even when this test is selected after another
     # MCP test in a long-lived local pytest process.

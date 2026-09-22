@@ -16,7 +16,7 @@ HOOK_CONFIG = REPO_ROOT / ".claude-plugin" / "hooks" / "hooks.json"
 # work without leaving room for runaway hangs to freeze the session.
 #
 # PreCompact runs _mine_sync synchronously with a per-target subprocess
-# timeout of 60s in mempalace/hooks_cli.py. The hook-level floor of 60
+# timeout of 60s in trimemo/hooks_cli.py. The hook-level floor of 60
 # keeps the inner bound from being truncated, and the ceiling of 90
 # bounds the worst case at ~30s above that.
 # SessionEnd backgrounds all of its work in the shell wrapper — the foreground
@@ -41,7 +41,7 @@ def test_plugin_hook_timeout_within_bounds(hook_config: dict, event: str) -> Non
     """Each declared plugin hook must declare a positive bounded timeout (#1465).
 
     Without ``timeout``, Claude Code falls back to the 600s command default
-    and a hung ``mempalace hook run`` freezes the interactive session for
+    and a hung ``trimemo hook run`` freezes the interactive session for
     up to ten minutes before being canceled.
     """
     floor, ceiling = EVENT_TIMEOUT_BOUNDS[event]

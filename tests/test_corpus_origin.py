@@ -19,9 +19,9 @@ otherwise. False-negative (missing an AI corpus) is catastrophic for
 downstream classification; false-positive is recoverable via per-drawer
 voice-profile detection in later passes.
 
-TDD: these tests fail until mempalace/corpus_origin.py is implemented."""
+TDD: these tests fail until trimemo/corpus_origin.py is implemented."""
 
-from mempalace.corpus_origin import (
+from trimemo.corpus_origin import (
     CorpusOriginResult,
     detect_origin_heuristic,
     detect_origin_llm,
@@ -39,7 +39,7 @@ class TestHeuristic:
             "user: hey Claude, can you help me\nassistant: sure, what do you need\n",
             "I was talking to Claude Opus about the MCP server setup",
             "Sonnet 4.5 handled this better than Haiku 4.5 did",
-            "claude mcp add mempalace -- mempalace-mcp",
+            "claude mcp add trimemo -- trimemo-mcp",
             "human: what's up\nassistant: I'm happy to help",
         ]
         result = detect_origin_heuristic(samples)
@@ -108,7 +108,7 @@ class TestHeuristic:
             "i love claude code, it just works for refactoring tasks",
             "asked chatgpt to write a regex and it nailed it on the first try",
             "switched to gemini-pro for the long-context summary task last week",
-            "added mempalace as an mcp server in my .claude/ settings file",
+            "added trimemo as an mcp server in my .claude/ settings file",
             "anthropic's haiku model is cheap enough to run on every drawer",
         ]
         result = detect_origin_heuristic(samples)
@@ -233,7 +233,7 @@ class TestHeuristic:
 
 
 class _FakeProvider:
-    """Minimal stand-in for mempalace's LLMProvider used for testing."""
+    """Minimal stand-in for trimemo's LLMProvider used for testing."""
 
     def __init__(self, canned_response):
         self._response = canned_response

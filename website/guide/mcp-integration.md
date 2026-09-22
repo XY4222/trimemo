@@ -1,29 +1,29 @@
 # MCP Integration
 
-MemPalace provides 45 tools through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), giving any MCP-compatible AI full read/write access to your palace.
+TriMemo provides 45 tools through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), giving any MCP-compatible AI full read/write access to your palace.
 
 ## Setup
 
 ### Setup Helper
 
-MemPalace includes a setup helper that prints the exact configuration commands for your environment:
+TriMemo includes a setup helper that prints the exact configuration commands for your environment:
 
 ```bash
-mempalace mcp
+trimemo mcp
 ```
 
 ### Manual Connection
 
 ```bash
-claude mcp add mempalace -- python -m mempalace.mcp_server
-codex mcp add mempalace -- python -m mempalace.mcp_server
+claude mcp add trimemo -- python -m mempalace.mcp_server
+codex mcp add trimemo -- python -m mempalace.mcp_server
 ```
 
 ### With Custom Palace Path
 
 ```bash
-claude mcp add mempalace -- python -m mempalace.mcp_server --palace /path/to/palace
-codex mcp add mempalace -- python -m mempalace.mcp_server --palace /path/to/palace
+claude mcp add trimemo -- python -m mempalace.mcp_server --palace /path/to/palace
+codex mcp add trimemo -- python -m mempalace.mcp_server --palace /path/to/palace
 ```
 
 Now your AI has all 45 tools available. Ask it anything:
@@ -34,7 +34,7 @@ Claude calls `mempalace_search` automatically, gets verbatim results, and answer
 
 ## Compatible Tools
 
-MemPalace works with any tool that supports MCP:
+TriMemo works with any tool that supports MCP:
 
 - **Claude Code** — native via plugin or manual MCP
 - **Codex CLI** — native via bundled Codex plugin or manual MCP

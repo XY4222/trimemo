@@ -2,7 +2,7 @@ import pytest
 import timeit
 import re
 
-from mempalace.dialect import Dialect
+from trimemo.dialect import Dialect
 
 def test_detect_entities_benchmark():
     dialect = Dialect()

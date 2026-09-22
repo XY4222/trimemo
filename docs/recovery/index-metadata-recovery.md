@@ -1,13 +1,13 @@
 # Recovery: chromadb segment quarantined with `dimensionality: None`
 
 **Companion to chroma-core/chroma#6949** — that issue documents the chromadb
-crash this state causes on macOS. On Linux + mempalace, the chromadb integrity
+crash this state causes on macOS. On Linux + trimemo, the chromadb integrity
 gate catches the bad state at startup and quarantines the segment before it
 can crash the Rust loader. This doc covers recovering from the quarantine.
 
 ## Symptom
 
-mempalace's HNSW integrity gate logs at daemon/MCP-server startup:
+trimemo's HNSW integrity gate logs at daemon/MCP-server startup:
 
 ```
 Quarantined invalid HNSW metadata in <palace>/<uuid>:
@@ -21,17 +21,17 @@ then creates a fresh empty segment under the same UUID. The previous vectors
 Vector search starts returning the "HNSW capacity divergence" message and
 falling back to BM25-only sqlite results. Operators see:
 
-- `mempalace search --query "<test>"` returns `"fallback": "bm25_only_via_sqlite"`,
+- `trimemo search --query "<test>"` returns `"fallback": "bm25_only_via_sqlite"`,
   `"vector_disabled": true`
 - HNSW element count drops from the expected N to <1000 (just the fresh
   empty segment's accumulating writes)
 
 ## When this happens
 
-We've seen it produced by `mempalace repair --mode rebuild` (the temp-collection
+We've seen it produced by `trimemo repair --mode rebuild` (the temp-collection
 rebuild path). That code path's final persist writes `_persist_data` to disk
 as a raw dict instead of as a `PersistentData` class instance, AND fails to
-populate `dimensionality`. Tracked as MemPalace/mempalace#1492.
+populate `dimensionality`. Tracked as TriMemo/trimemo#1492.
 
 ## Recovery procedure
 
@@ -40,13 +40,13 @@ The data is recoverable — the `data_level0.bin`, `link_lists.bin`,
 the quarantined dir. Only the `dimensionality` field is missing. We can
 supply it externally.
 
-### 1. Stop the mempalace MCP server / palace-daemon
+### 1. Stop the trimemo MCP server / palace-daemon
 
 Two `PersistentClient` instances against the same palace deadlock on the
 sqlite filelock. The recovery script needs exclusive access.
 
 ```bash
-# If running mempalace MCP via Claude Code or similar, kill that process.
+# If running trimemo MCP via Claude Code or similar, kill that process.
 # If running palace-daemon:
 sudo systemctl stop palace-daemon.service
 ```
@@ -84,7 +84,7 @@ First find the right dimensionality:
 ```bash
 sqlite3 "$PALACE/chroma.sqlite3" \
   "SELECT key, str_value FROM collection_metadata WHERE key LIKE 'hnsw%';"
-# For default mempalace (all-MiniLM-L6-v2) this is 384.
+# For default trimemo (all-MiniLM-L6-v2) this is 384.
 ```
 
 Then run the patch script:
@@ -141,7 +141,7 @@ sudo systemctl start palace-daemon.service       # or your equivalent
 sleep 10  # warmup window
 
 # Confirm vector search is back (not BM25-only fallback):
-mempalace search --query "any-test-query" --limit 1
+trimemo search --query "any-test-query" --limit 1
 # Look for: "matched_via": "drawer" with a real similarity score,
 # and absence of "fallback": "bm25_only_via_sqlite".
 
@@ -187,9 +187,9 @@ rm "$PALACE/<UUID>/index_metadata.pickle.broken-backup"
 
 - chroma-core/chroma#6949 — upstream chromadb bug (SIGSEGV on the load path
   when `dimensionality=None`)
-- MemPalace/mempalace#1492 — root cause: `rebuild_index` writes the
+- TriMemo/trimemo#1492 — root cause: `rebuild_index` writes the
   bad state during its temp-collection refile pass
-- MemPalace/mempalace#1493 — proposal to have the integrity gate auto-recover
+- TriMemo/trimemo#1493 — proposal to have the integrity gate auto-recover
   this exact corruption shape rather than just quarantining
 - jphein/palace-daemon `docs/recovery/chromadb-metadata-dict-patch.md` —
   the same procedure written from a palace-daemon operator's perspective

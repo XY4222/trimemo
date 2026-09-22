@@ -13,7 +13,7 @@ import sys
 
 import pytest
 
-import mempalace.mcp_server as mcp
+import trimemo.mcp_server as mcp
 
 
 def _run_loop(monkeypatch, lines):
@@ -72,7 +72,7 @@ class TestEnvelopeShapes:
         )
 
         assert resp["id"] == 100
-        assert resp["result"]["serverInfo"]["name"] == "mempalace"
+        assert resp["result"]["serverInfo"]["name"] == "trimemo"
 
     @pytest.mark.parametrize("params", [[], 0, "", False, ["a"], "oops"])
     def test_params_ignoring_methods_keep_working(self, params):
@@ -94,7 +94,7 @@ class TestEnvelopeShapes:
     def test_missing_params_key_still_works(self):
         resp = mcp.handle_request({"jsonrpc": "2.0", "id": 101, "method": "initialize"})
 
-        assert resp["result"]["serverInfo"]["name"] == "mempalace"
+        assert resp["result"]["serverInfo"]["name"] == "trimemo"
 
     @pytest.mark.parametrize(
         "params",

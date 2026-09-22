@@ -1,8 +1,8 @@
 ---
-name: mempalace
-description: "MemPalace — Local AI memory with 96.6% recall. Semantic search, temporal knowledge graph, palace architecture (wings/rooms/drawers). Free, no cloud, no API keys."
+name: trimemo
+description: "TriMemo — Local AI memory with 96.6% recall. Semantic search, temporal knowledge graph, palace architecture (wings/rooms/drawers). Free, no cloud, no API keys."
 version: 3.10.0
-homepage: https://github.com/MemPalace/mempalace
+homepage: https://github.com/MemPalace/trimemo
 user-invocable: true
 metadata:
   openclaw:
@@ -13,18 +13,18 @@ metadata:
       - win32
     requires:
       anyBins:
-        - mempalace
+        - trimemo
         - python3
     install:
-      - id: mempalace-pip
+      - id: trimemo-pip
         kind: uv
-        label: "Install MemPalace (Python, local ChromaDB)"
-        package: mempalace
+        label: "Install TriMemo (Python, local ChromaDB)"
+        package: trimemo
         bins:
-          - mempalace
+          - trimemo
 ---
 
-# MemPalace — Local AI Memory System
+# TriMemo — Local AI Memory System
 
 You have access to a local memory palace via MCP tools. The palace stores verbatim conversation history and a temporal knowledge graph — all on the user's machine, zero cloud, zero API calls.
 
@@ -133,7 +133,7 @@ tool-specific workflow below says to.
   - `source` (required): directory to mine, or one conversation file with `mode='convos'`
   - `mode`: `projects` (default), `convos`, or `extract`
   - `wing`: target wing (default: source directory name)
-  - `agent`: recorded on every drawer (default `mempalace`)
+  - `agent`: recorded on every drawer (default `trimemo`)
   - `limit`: max files to process (0 = all)
   - `dry_run`: preview without writing
   - `extract`: convos extraction strategy (`exchange` default, or `general`)
@@ -165,12 +165,12 @@ tool-specific workflow below says to.
 
 ## Setup
 
-Install MemPalace and populate the palace (uv recommended):
+Install TriMemo and populate the palace (uv recommended):
 
 ```bash
-uv tool install mempalace   # or: pip install mempalace
-mempalace init ~/my-convos
-mempalace mine ~/my-convos
+uv tool install trimemo   # or: pip install trimemo
+trimemo init ~/my-convos
+trimemo mine ~/my-convos
 ```
 
 ### OpenClaw MCP config
@@ -180,7 +180,7 @@ Add to your OpenClaw MCP configuration:
 ```json
 {
   "mcpServers": {
-    "mempalace": {
+    "trimemo": {
       "command": "python3",
       "args": ["-m", "mempalace.mcp_server"]
     }
@@ -191,14 +191,14 @@ Add to your OpenClaw MCP configuration:
 Or via CLI:
 
 ```bash
-openclaw mcp set mempalace '{"command":"python3","args":["-m","mempalace.mcp_server"]}'
+openclaw mcp set trimemo '{"command":"python3","args":["-m","mempalace.mcp_server"]}'
 ```
 
 ### Other MCP hosts
 
 ```bash
 # Claude Code
-claude mcp add mempalace -- python -m mempalace.mcp_server
+claude mcp add trimemo -- python -m mempalace.mcp_server
 
 # Cursor — add to .cursor/mcp.json
 # Codex — add to .codex/mcp.json
@@ -214,4 +214,4 @@ claude mcp add mempalace -- python -m mempalace.mcp_server
 
 ## License
 
-[MemPalace](https://github.com/MemPalace/mempalace) is MIT licensed. Created by Milla Jovovich, Ben Sigman, Igor Lins e Silva, and contributors.
+[TriMemo](https://github.com/MemPalace/trimemo) is MIT licensed. Created by Milla Jovovich, Ben Sigman, Igor Lins e Silva, and contributors.

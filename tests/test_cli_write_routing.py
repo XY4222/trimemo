@@ -7,13 +7,13 @@ from unittest.mock import patch
 
 import pytest
 
-from mempalace import cli, service
-from mempalace.cli_write_routing import (
+from trimemo import cli, service
+from trimemo.cli_write_routing import (
     CliWriteRouting,
     add_cli_write_routing_flags,
     resolve_cli_write_routing,
 )
-from mempalace.write_routing import (
+from trimemo.write_routing import (
     ResolvedWriteRoutingPolicy,
     WriteRoutingError,
     WriteRoutingPolicy,
@@ -118,7 +118,7 @@ def test_cli_prefer_and_require_select_startable_daemon(
     policy,
 ):
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
         return_value=_RoutingConfig(policy),
     ):
         routing = resolve_cli_write_routing(
@@ -133,7 +133,7 @@ def test_cli_prefer_and_require_select_startable_daemon(
 
 def test_cli_direct_policy_selects_direct():
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
         return_value=_RoutingConfig(WriteRoutingPolicy.DIRECT),
     ):
         routing = resolve_cli_write_routing(
@@ -147,7 +147,7 @@ def test_cli_direct_policy_selects_direct():
 
 def test_explicit_direct_overrides_require_policy():
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
     ) as config:
         routing = resolve_cli_write_routing(
             _args(direct=True),
@@ -162,7 +162,7 @@ def test_explicit_direct_overrides_require_policy():
 
 def test_explicit_daemon_overrides_direct_policy():
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
     ) as config:
         routing = resolve_cli_write_routing(
             _args(daemon=True),
@@ -177,7 +177,7 @@ def test_explicit_daemon_overrides_direct_policy():
 
 def test_background_is_rejected_for_direct_route():
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
         return_value=_RoutingConfig(WriteRoutingPolicy.DIRECT),
     ):
         with pytest.raises(
@@ -192,7 +192,7 @@ def test_background_is_rejected_for_direct_route():
 
 def test_background_is_allowed_for_prefer_route():
     with patch(
-        "mempalace.cli_write_routing.MempalaceConfig",
+        "trimemo.cli_write_routing.MempalaceConfig",
         return_value=_RoutingConfig(WriteRoutingPolicy.PREFER),
     ):
         routing = resolve_cli_write_routing(
@@ -219,7 +219,7 @@ def _mine_args(tmp_path, **overrides):
         "dir": str(tmp_path / "project"),
         "mode": "projects",
         "wing": None,
-        "agent": "mempalace",
+        "agent": "trimemo",
         "limit": 0,
         "dry_run": False,
         "extract": "exchange",
@@ -240,14 +240,14 @@ def test_cmd_mine_prefer_submits_daemon_job(tmp_path):
 
     with (
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.PREFER),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.miner.mine",
+            "trimemo.miner.mine",
         ) as direct_mine,
     ):
         cli.cmd_mine(args)
@@ -271,14 +271,14 @@ def test_cmd_mine_direct_preserves_direct_path(tmp_path):
 
     with (
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.DIRECT),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.miner.mine",
+            "trimemo.miner.mine",
         ) as direct_mine,
     ):
         cli.cmd_mine(args)
@@ -294,15 +294,15 @@ def test_daemon_submission_failure_never_falls_back_direct(
 
     with (
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.REQUIRE),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
             side_effect=SystemExit(1),
         ),
         patch(
-            "mempalace.miner.mine",
+            "trimemo.miner.mine",
         ) as direct_mine,
     ):
         with pytest.raises(SystemExit):
@@ -322,14 +322,14 @@ def test_cmd_sync_prefer_submits_daemon_job(tmp_path):
 
     with (
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.PREFER),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.sync.sync_palace",
+            "trimemo.sync.sync_palace",
         ) as direct_sync,
     ):
         cli.cmd_sync(args)
@@ -354,14 +354,14 @@ def test_cmd_sweep_prefer_submits_daemon_job(tmp_path):
 
     with (
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.PREFER),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.sweeper.sweep",
+            "trimemo.sweeper.sweep",
         ) as direct_sweep,
     ):
         cli.cmd_sweep(args)
@@ -396,18 +396,18 @@ def test_init_auto_mine_daemon_preserves_prescan(
 
     with (
         patch(
-            "mempalace.miner.scan_project",
+            "trimemo.miner.scan_project",
             return_value=[first, second],
         ) as scan,
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.PREFER),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.miner.mine",
+            "trimemo.miner.mine",
         ) as direct_mine,
     ):
         cli._maybe_run_mine_after_init(args, config)
@@ -443,18 +443,18 @@ def test_init_auto_mine_direct_reuses_prescan(
 
     with (
         patch(
-            "mempalace.miner.scan_project",
+            "trimemo.miner.scan_project",
             return_value=[source],
         ),
         patch(
-            "mempalace.cli._resolve_cli_write_routing_or_exit",
+            "trimemo.cli._resolve_cli_write_routing_or_exit",
             return_value=_route(WriteRoutingPolicy.DIRECT),
         ),
         patch(
-            "mempalace.cli._submit_daemon_cli_job",
+            "trimemo.cli._submit_daemon_cli_job",
         ) as submit,
         patch(
-            "mempalace.miner.mine",
+            "trimemo.miner.mine",
         ) as direct_mine,
     ):
         cli._maybe_run_mine_after_init(args, config)
@@ -479,7 +479,7 @@ def test_service_run_sweep_file(tmp_path):
     }
 
     with patch(
-        "mempalace.sweeper.sweep",
+        "trimemo.sweeper.sweep",
         return_value=sweep_result,
     ) as sweep:
         result = service.run_sweep(
@@ -515,7 +515,7 @@ def test_service_run_sweep_directory_partial_failure(
     }
 
     with patch(
-        "mempalace.sweeper.sweep_directory",
+        "trimemo.sweeper.sweep_directory",
         return_value=sweep_result,
     ):
         result = service.run_sweep(
@@ -531,7 +531,7 @@ def test_service_run_sweep_directory_partial_failure(
 
 def test_execute_job_dispatches_sweep():
     with patch(
-        "mempalace.service.run_sweep",
+        "trimemo.service.run_sweep",
         return_value={
             "success": True,
             "exit_code": 0,
@@ -561,7 +561,7 @@ def test_service_run_mine_forwards_valid_prescanned_files(
     first.write_text("a", encoding="utf-8")
     second.write_text("b", encoding="utf-8")
 
-    with patch("mempalace.miner.mine") as mine:
+    with patch("trimemo.miner.mine") as mine:
         result = service.run_mine(
             {
                 "palace_path": str(palace),
@@ -593,7 +593,7 @@ def test_service_run_mine_rejects_prescanned_path_outside_project(
     project.mkdir()
     outside.write_text("outside", encoding="utf-8")
 
-    with patch("mempalace.miner.mine") as mine:
+    with patch("trimemo.miner.mine") as mine:
         result = service.run_mine(
             {
                 "palace_path": str(tmp_path / "palace"),
@@ -616,7 +616,7 @@ def test_service_run_mine_rejects_non_list_files_payload(
     project = tmp_path / "project"
     project.mkdir()
 
-    with patch("mempalace.miner.mine") as mine:
+    with patch("trimemo.miner.mine") as mine:
         result = service.run_mine(
             {
                 "palace_path": str(tmp_path / "palace"),

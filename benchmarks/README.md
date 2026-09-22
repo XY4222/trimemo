@@ -1,4 +1,4 @@
-# MemPalace Benchmarks — Reproduction Guide
+# TriMemo Benchmarks — Reproduction Guide
 
 Run the exact same benchmarks we report. Clone, install, run.
 
@@ -6,7 +6,7 @@ Run the exact same benchmarks we report. Clone, install, run.
 
 ```bash
 git clone https://github.com/MemPalace/mempalace.git
-cd mempalace
+cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 ```
 

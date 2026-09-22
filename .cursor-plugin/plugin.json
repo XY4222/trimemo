@@ -1,11 +1,11 @@
 {
-  "name": "mempalace",
+  "name": "trimemo",
   "description": "Give your AI a memory — mine projects and conversations into a searchable palace. 45 MCP tools, slash commands, and guided skills for Cursor.",
   "author": {
     "name": "milla-jovovich"
   },
-  "homepage": "https://github.com/MemPalace/mempalace",
-  "repository": "https://github.com/MemPalace/mempalace",
+  "homepage": "https://github.com/MemPalace/trimemo",
+  "repository": "https://github.com/MemPalace/trimemo",
   "license": "MIT",
   "keywords": [
     "memory",

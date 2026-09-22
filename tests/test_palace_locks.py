@@ -1,7 +1,7 @@
 """Tests for mine_palace_lock — the per-palace non-blocking mine guard.
 
 Covers the fix for the runaway mine fan-out described alongside issues
-#974 and #965: if N copies of `mempalace mine` are spawned concurrently
+#974 and #965: if N copies of `trimemo mine` are spawned concurrently
 against the same palace, they must collapse to a single runner rather
 than queue as waiters that will drive parallel HNSW inserts. Mines
 against *different* palaces must still be free to run in parallel.
@@ -17,8 +17,8 @@ import sys
 
 import pytest
 
-import mempalace.palace as palace_mod
-from mempalace.palace import (
+import trimemo.palace as palace_mod
+from trimemo.palace import (
     _write_lock_holder,
     MineAlreadyRunning,
     mine_global_lock,
@@ -287,9 +287,9 @@ def _hold_lock_send_pid(palace_path: str, ready_flag: str, release_flag: str, pi
 def test_lock_failure_message_names_holder(tmp_path, monkeypatch):
     """Regression #1264: failed acquire must identify the holder by PID.
 
-    Before this fix, a `mempalace mine` colliding with another writer
+    Before this fix, a `trimemo mine` colliding with another writer
     (mine, MCP server, anything taking mine_palace_lock) saw a generic
-    "another `mempalace mine` is already running" message and exited
+    "another `trimemo mine` is already running" message and exited
     silently. The operator had no signal of which process to wait for
     or stop. The new message includes ``PID N`` so the holder can be
     identified directly.
@@ -333,7 +333,7 @@ def test_write_lock_holder_writes_utf8_bytes_for_non_ascii_argv(tmp_path, monkey
     monkeypatch.setattr(
         sys,
         "argv",
-        ["mempalace", "mine", "café/北"],
+        ["trimemo", "mine", "café/北"],
     )
 
     lock_path = tmp_path / "holder.lock"
@@ -362,7 +362,7 @@ def test_write_lock_holder_is_best_effort_on_unicode_error(monkeypatch):
         def flush(self):
             pass
 
-    monkeypatch.setattr(sys, "argv", ["mempalace", "mine", "北"])
+    monkeypatch.setattr(sys, "argv", ["trimemo", "mine", "北"])
     _write_lock_holder(UnicodeFailingLock())
 
 
@@ -383,7 +383,7 @@ def test_lock_holder_identity_persists_across_release(tmp_path, monkeypatch):
             pass
 
     # Locate the lock file. The key derivation is internal but we can find
-    # it by scanning the mempalace locks dir for mine_palace_*.lock entries.
+    # it by scanning the trimemo locks dir for mine_palace_*.lock entries.
     lock_dir = tmp_path / ".mempalace" / "locks"
     lock_files = list(lock_dir.glob("mine_palace_*.lock"))
     assert lock_files, "expected the palace lock file to exist after acquire/release"
