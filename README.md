@@ -6,6 +6,8 @@
 
 Local-first AI memory. Verbatim storage, pluggable backend, 96.6% R@5 raw on LongMemEval — zero API calls.
 
+**English** | [简体中文](README.zh-CN.md)
+
 [![][version-shield]][release-link]
 [![][python-shield]][python-link]
 [![][license-shield]][license-link]
