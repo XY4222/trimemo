@@ -252,9 +252,14 @@ def migrate(palace_path: str, dry_run: bool = False, confirm: bool = False):
     # place. The already-diverged case degrades to exactly the same
     # SQLite-extraction path the except branch below already falls back to.
     from .backends.chroma import hnsw_capacity_status
+    # Honor MempalaceConfig().collection_name: the hardcoded default rebuilt a
+    # custom-named palace's rows into "mempalace_drawers", so after migrating a
+    # palace with a non-default collection name the config-driven open path
+    # found an empty collection and the user's memories looked gone.
+    from .repair import _drawers_collection_name
 
     try:
-        capacity_info = hnsw_capacity_status(palace_path, "mempalace_drawers")
+        capacity_info = hnsw_capacity_status(palace_path, _drawers_collection_name())
     except Exception:
         capacity_info = {}
 
@@ -266,7 +271,7 @@ def migrate(palace_path: str, dry_run: bool = False, confirm: bool = False):
         print(" Extracting from SQLite directly...")
     else:
         try:
-            col = ChromaBackend().get_collection(palace_path, "mempalace_drawers")
+            col = ChromaBackend().get_collection(palace_path, _drawers_collection_name())
             count = col.count()
 
             if collection_write_roundtrip_works(col):
@@ -337,7 +342,7 @@ def migrate(palace_path: str, dry_run: bool = False, confirm: bool = False):
     try:
         print(f"  Creating fresh palace in {temp_palace}...")
         fresh_backend = ChromaBackend()
-        col = fresh_backend.get_or_create_collection(temp_palace, "mempalace_drawers")
+        col = fresh_backend.get_or_create_collection(temp_palace, _drawers_collection_name())
 
         # Re-import in batches
         batch_size = 500

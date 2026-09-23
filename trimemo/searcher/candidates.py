@@ -358,7 +358,9 @@ def _finalize_candidate_hits(
         metric=_metric_for_collection(drawers_col),
         stop_words=stop_words,
     )
-    hits = _dedupe_rendered_hits(ranked)[:n_results]
+    # max(0, ...): a negative n_results used to slice off trailing hits
+    # ([-1] drops the last one) instead of returning nothing.
+    hits = _dedupe_rendered_hits(ranked)[: max(0, n_results)]
 
     for hit in hits:
         hit.pop("_sort_key", None)
@@ -492,7 +494,7 @@ def _candidate_out_of_scope(dist, meta, max_distance, since_dt, before_dt) -> bo
     loss (pre-existing behavior); the date window applies whenever a bound
     is set, with the shared ``[since, before)`` semantics.
     """
-    if max_distance > 0.0 and dist > max_distance:
+    if dist is not None and max_distance > 0.0 and dist > max_distance:
         return True
     if (since_dt is not None or before_dt is not None) and not filed_at_in_window(
         meta.get("filed_at"), since_dt, before_dt

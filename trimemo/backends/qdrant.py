@@ -819,10 +819,12 @@ class QdrantCollection(BaseCollection):
         rows = self._scroll_all(
             qdrant_filter=q_filter, with_vector=with_vector, max_rows=bounded_rows
         )
+        # Hoist the id set: rebuilding it per row made this O(rows x len(ids)).
+        id_set = set(ids) if ids is not None else None
         rows = [
             row
             for row in rows
-            if (ids is None or row["id"] in set(ids))
+            if (id_set is None or row["id"] in id_set)
             and _matches_where(row["metadata"], where)
             and _matches_where_document(row["document"], where_document)
         ]

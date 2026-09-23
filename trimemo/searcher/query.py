@@ -293,12 +293,15 @@ def search_memories(
 
     scored: list = []
     drawer_docs = _first_or_empty(drawer_results, "documents")
-    stored_drawer_ids = _aligned_query_ids(drawer_results, len(drawer_docs))
+    drawer_doc_count = len(drawer_docs)
+    stored_drawer_ids = _aligned_query_ids(drawer_results, drawer_doc_count)
+    # Align both columns to the documents column: a short/absent column used to
+    # let zip truncate the whole result set, so a backend contract violation
+    # surfaced as a bare "No results found" instead of an error.
+    drawer_metas = _aligned_query_column(drawer_results, "metadatas", drawer_doc_count)
+    drawer_dists = _aligned_query_column(drawer_results, "distances", drawer_doc_count)
     for stored_drawer_id, doc, meta, dist in zip(
-        stored_drawer_ids,
-        drawer_docs,
-        _first_or_empty(drawer_results, "metadatas"),
-        _first_or_empty(drawer_results, "distances"),
+        stored_drawer_ids, drawer_docs, drawer_metas, drawer_dists
     ):
         meta = meta or {}
         doc = doc or ""

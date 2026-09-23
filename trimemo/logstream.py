@@ -431,7 +431,10 @@ def write_watch_cursor(path: str, cursor: str, agent: str = None, required: bool
     payload = {"cursor": cursor or None, "updated_at": _utc_now_iso()}
     if agent:
         payload["agent"] = agent
-    tmp = f"{path}.tmp"
+    # Per-process temp name: two watchers checkpointing the same agent used to
+    # share one ".tmp", so one os.replace could publish the other's half-written
+    # payload and corrupt/rewind the cursor.
+    tmp = f"{path}.{os.getpid()}.tmp"
     try:
         parent = os.path.dirname(os.path.abspath(path))
         if parent:

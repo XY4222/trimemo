@@ -98,7 +98,9 @@ class Layer0:
             return self._text
 
         if os.path.exists(self.path):
-            with open(self.path, "r") as f:
+            # Explicit encoding: on Windows the locale default is cp936/cp1252,
+            # which silently mojibakes (or raises on) a UTF-8 identity file.
+            with open(self.path, "r", encoding="utf-8") as f:
                 self._text = f.read().strip()
         else:
             self._text = (

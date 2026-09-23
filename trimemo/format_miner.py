@@ -536,7 +536,13 @@ def _print_mine_summary(
 
 
 def _register_skip_sentinel_if_appropriate(
-    collection, source_file: str, wing: str, agent: str, status: ExtractionStatus
+    collection,
+    source_file: str,
+    wing: str,
+    agent: str,
+    status: ExtractionStatus,
+    *,
+    source_mtime: Optional[float] = None,
 ) -> None:
     """Write the ``file_already_mined`` sentinel ONLY when the skip is durable.
 
@@ -548,35 +554,55 @@ def _register_skip_sentinel_if_appropriate(
     """
     if status in _TRANSIENT_MISSING_DEP_STATUSES:
         return
-    _register_file(collection, source_file, wing, agent)
+    _register_file(collection, source_file, wing, agent, source_mtime=source_mtime)
 
 
-def _register_file(collection, source_file: str, wing: str, agent: str) -> None:
+def _register_file(
+    collection,
+    source_file: str,
+    wing: str,
+    agent: str,
+    *,
+    source_mtime: Optional[float] = None,
+) -> None:
     """Write a sentinel so file_already_mined() returns True for 0-chunk files.
 
     Without this, files that extract to nothing (or hit a SKIP status) get
     rescanned on every re-mine. The sentinel preserves the no-op outcome.
     Mirrors the helper of the same name in convo_miner.py.
     """
+    if source_mtime is None:
+        # Callers that already stat'd the file should pass it in; the fallback
+        # keeps a bare/manual call working.
+        try:
+            source_mtime = os.path.getmtime(source_file)
+        except OSError:
+            source_mtime = None
+
     sentinel_id = f"sentinel_{wing}_{hashlib.sha256(source_file.encode()).hexdigest()[:24]}"
+    metadata = {
+        "wing": wing,
+        "room": "documents",
+        "source_file": source_file,
+        "chunk_index": -1,
+        "added_by": agent,
+        "filed_at": datetime.now().isoformat(),
+        "ingest_mode": "extract",
+        "extract_mode": "format",
+        "normalize_version": NORMALIZE_VERSION,
+        "is_sentinel": True,
+    }
+    if source_mtime is not None:
+        # Without source_mtime, mined.py skips this row entirely
+        # (``stored_mtime is None`` -> continue), so the "durable skip" never
+        # took effect and encrypted / oversized / unextractable files were
+        # handed to the extractor again on every re-mine.
+        metadata["source_mtime"] = source_mtime
     try:
         collection.upsert(
             documents=["[empty]"],
             ids=[sentinel_id],
-            metadatas=[
-                {
-                    "wing": wing,
-                    "room": "documents",
-                    "source_file": source_file,
-                    "chunk_index": -1,
-                    "added_by": agent,
-                    "filed_at": datetime.now().isoformat(),
-                    "ingest_mode": "extract",
-                    "extract_mode": "format",
-                    "normalize_version": NORMALIZE_VERSION,
-                    "is_sentinel": True,
-                }
-            ],
+            metadatas=[metadata],
         )
     except Exception:
         logger.debug("Sentinel write failed for %s", source_file, exc_info=True)
@@ -855,7 +881,8 @@ def mine_formats(
                 if status != ExtractionStatus.OK or not text:
                     if not dry_run:
                         _register_skip_sentinel_if_appropriate(
-                            collection, source_file, wing, agent, status
+                            collection, source_file, wing, agent, status,
+                            source_mtime=source_mtime,
                         )
                     print(f"  - [{i:4}/{len(files)}] {filepath.name[:50]:50} {status.name}")
                     continue
@@ -872,7 +899,10 @@ def mine_formats(
                 )
                 if not chunks:
                     if not dry_run:
-                        _register_file(collection, source_file, wing, agent)
+                        _register_file(
+                            collection, source_file, wing, agent,
+                            source_mtime=source_mtime,
+                        )
                     print(f"  - [{i:4}/{len(files)}] {filepath.name[:50]:50} EMPTY_AFTER_CHUNK")
                     continue
 

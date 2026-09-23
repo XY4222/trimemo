@@ -928,9 +928,14 @@ def _mcp_idle_timeout_secs() -> float:
     if raw:
         try:
             hours = float(raw)
-            return max(0.0, hours) * 3600
         except ValueError:
             return 0.0
+        # Mirror _writer_wait_seconds: inf would make `idle >= timeout` never
+        # true (watchdog silently disabled, reintroducing the Windows handle
+        # leak this watchdog exists to fix); nan would collapse to 0.0.
+        if not math.isfinite(hours) or hours <= 0:
+            return 0.0
+        return hours * 3600
     return _MCP_IDLE_HOURS_DEFAULT * 3600
 
 

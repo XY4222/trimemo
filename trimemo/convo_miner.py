@@ -974,9 +974,15 @@ def _normalize_convo_conversations(
     except UnparsedCodexTranscriptError as exc:
         logger.warning("Skipping %s: %s; source remains eligible for retry", filepath, exc)
         return None
-    except (OSError, ValueError):
-        if not dry_run:
-            _register_file(collection, source_file, wing, agent, extract_mode)
+    except (OSError, ValueError) as exc:
+        # Do NOT register here. Registering records the current mtime, which
+        # makes file_already_mined() return True forever — so a transient read
+        # failure (permissions, a network/sync mount hiccup, EIO) or a
+        # transcript that was still being written at read time would never be
+        # retried and its content would silently never reach the palace.
+        # Mirrors the UnparsedCodexTranscriptError branch above and
+        # miner.process_file, which both leave the source eligible.
+        logger.warning("Skipping %s: %s; source remains eligible for retry", filepath, exc)
         return None
 
     total_len = sum(len(c.strip()) for c in conversations)

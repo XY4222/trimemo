@@ -326,7 +326,11 @@ class EntityRegistry:
         # the target. A crash mid-write leaves the previous registry intact
         # instead of a half-written file or an empty file from the truncate.
         payload = json.dumps(self._data, indent=2)
-        tmp_path = self._path.with_name(self._path.name + ".tmp")
+        # Per-process temp name: a fixed ".tmp" suffix let two concurrent
+        # savers truncate and interleave into the same file, publishing a
+        # spliced/corrupt JSON that the next load() silently turns into an
+        # empty registry (which then gets saved over the real one).
+        tmp_path = self._path.with_name(f"{self._path.name}.{os.getpid()}.tmp")
         try:
             with open(tmp_path, "w", encoding="utf-8") as f:
                 f.write(payload)

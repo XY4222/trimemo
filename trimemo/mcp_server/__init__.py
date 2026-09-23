@@ -66,6 +66,7 @@ import argparse  # noqa: E402  (deferred until after stdio protection above)
 import contextlib  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
+import math  # noqa: E402
 import re  # noqa: E402
 import hashlib  # noqa: E402
 import hmac  # noqa: E402

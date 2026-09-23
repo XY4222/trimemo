@@ -2431,7 +2431,12 @@ class ChromaCollection(BaseCollection):
         if documents is not None:
             kwargs["documents"] = self._sanitize_documents_for_chromadb(documents)
         if metadatas is not None:
-            kwargs["metadatas"] = metadatas
+            # Route through the same sanitizer as add/upsert: chromadb 1.5.x
+            # rejects None and empty-dict entries, so an array-typed caller
+            # that works via upsert used to fail via update.
+            sanitized = self._sanitize_metadatas_for_chromadb(metadatas)
+            if sanitized is not None:
+                kwargs["metadatas"] = sanitized
         if embeddings is not None:
             kwargs["embeddings"] = embeddings
         with self._write_lock():

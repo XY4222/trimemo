@@ -462,13 +462,12 @@ def cmd_logstream(args):
                 print(json.dumps(results, indent=2, ensure_ascii=False))
             else:
                 for stats in results:
+                    peer_label = stats.get("peer_name") or stats.get("peer_url") or "?"
                     if stats.get("error"):
-                        print(
-                            f"  {stats.get('peer_name', stats['peer_url'])}: ERROR {stats['error']}"
-                        )
+                        print(f"  {peer_label}: ERROR {stats['error']}")
                     else:
                         print(
-                            f"  {stats.get('peer_name', stats['peer_url'])} "
+                            f"  {peer_label} "
                             f"({stats['peer_replica']}): +{stats['pulled_events']} events, "
                             f"+{stats['pulled_artifacts']} artifacts"
                         )

@@ -33,6 +33,19 @@ from .palace import get_collection
 
 
 COLLECTION_NAME = "mempalace_drawers"
+
+
+def _resolved_collection_name() -> str:
+    """Resolve the drawers collection from user config.
+
+    The module constant is only a fallback: a palace whose
+    ``MempalaceConfig().collection_name`` is non-default used to fail here with
+    ``CollectionNameMismatchError``, making ``trimemo dedup`` entirely unusable
+    (and probing a collection that does not exist for HNSW capacity).
+    """
+    from .repair import _drawers_collection_name
+
+    return _drawers_collection_name()
 # Cosine DISTANCE threshold (not similarity). Lower = stricter.
 # 0.15 = ~85% cosine similarity — catches near-identical chunks.
 # For looser dedup of paraphrased content, try 0.3–0.4.
@@ -67,7 +80,7 @@ def get_source_groups(
     if palace_path is not None:
         from .backends.chroma import hnsw_capacity_status
 
-        capacity_info = hnsw_capacity_status(palace_path, COLLECTION_NAME)
+        capacity_info = hnsw_capacity_status(palace_path, _resolved_collection_name())
         if capacity_info.get("diverged"):
             print(f"\n  HNSW index is diverged: {capacity_info.get('message', '')}")
             print("  Run `trimemo repair --mode from-sqlite --archive-existing` first.")
@@ -149,7 +162,7 @@ def dedup_source_group(col, drawer_ids, threshold=DEFAULT_THRESHOLD, dry_run=Tru
 def show_stats(palace_path=None):
     """Show duplication statistics without making changes."""
     palace_path = palace_path or _get_palace_path()
-    col = get_collection(palace_path, COLLECTION_NAME)
+    col = get_collection(palace_path, _resolved_collection_name())
 
     groups = get_source_groups(col, palace_path=palace_path)
 
@@ -181,7 +194,7 @@ def dedup_palace(
     print("  TriMemo Deduplicator")
     print(f"{'=' * 55}")
 
-    col = get_collection(palace_path, COLLECTION_NAME)
+    col = get_collection(palace_path, _resolved_collection_name())
 
     # Preflight HNSW divergence before this function's own count() print --
     # get_source_groups's palace_path guard (added alongside this one) only
@@ -190,7 +203,7 @@ def dedup_palace(
     # cannot catch that, so it must never be reached at all when diverged.
     from .backends.chroma import hnsw_capacity_status
 
-    capacity_info = hnsw_capacity_status(palace_path, COLLECTION_NAME)
+    capacity_info = hnsw_capacity_status(palace_path, _resolved_collection_name())
     if capacity_info.get("diverged"):
         print(f"\n  HNSW index is diverged: {capacity_info.get('message', '')}")
         print("  Run `trimemo repair --mode from-sqlite --archive-existing` first.")

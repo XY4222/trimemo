@@ -31,6 +31,20 @@ def _aligned_query_ids(results, document_count: int) -> list:
     return ids[:document_count]
 
 
+def _aligned_query_column(results, key: str, document_count: int) -> list:
+    """Return ``results[key][0]`` padded/truncated to ``document_count``.
+
+    Mirrors :func:`_aligned_query_ids` for the metadata/distance columns. A
+    backend that returns a short (or absent) column used to make the caller's
+    ``zip`` silently truncate the whole result set — turning a backend contract
+    violation into a bare "No results found" with no error surfaced.
+    """
+    column = list(_first_or_empty(results, key))
+    if len(column) < document_count:
+        column.extend([None] * (document_count - len(column)))
+    return column[:document_count]
+
+
 def _result_drawer_id(meta, stored_drawer_id):
     """Return the ID that round-trips through ``mempalace_get_drawer``.
 

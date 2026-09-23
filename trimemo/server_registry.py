@@ -314,6 +314,9 @@ def urlopen_with_server_tokens(
         try:
             return urllib.request.urlopen(request, timeout=timeout)
         except urllib.error.HTTPError as exc:
+            # Always close: a non-401 error still holds an unread response
+            # body, and leaking one per attempt accumulates connections on the
+            # hot hub-forward path. Callers only inspect .code/.reason.
+            exc.close()
             if exc.code != 401 or index + 1 >= len(candidates):
                 raise
-            exc.close()

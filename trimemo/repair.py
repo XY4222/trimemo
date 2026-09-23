@@ -228,7 +228,8 @@ def _paginate_ids(col, where=None):
                     f"does not depend on offset paging (e.g. --mode "
                     f"from-sqlite). Underlying error: {fallback_exc}"
                 ) from fallback_exc
-            new_ids = [i for i in r["ids"] if i not in set(ids)]
+            known = set(ids)
+            new_ids = [i for i in r["ids"] if i not in known]
             if not new_ids:
                 # Offset is broken and the no-offset fallback always
                 # re-fetches the same first `page` results, so it can never

@@ -1684,7 +1684,10 @@ def run_hook(hook_name: str, harness: str):
     """Main entry point: read stdin JSON, dispatch to hook handler."""
     try:
         data = json.load(sys.stdin)
-    except (json.JSONDecodeError, EOFError):
+    except (json.JSONDecodeError, EOFError, UnicodeDecodeError):
+        # UnicodeDecodeError is a ValueError but NOT a JSONDecodeError; on a
+        # cp936/cp1252 locale stdin holds UTF-8 bytes, so the decode can fail
+        # before json ever sees it — and that used to raise out of the hook.
         _log("WARNING: Failed to parse stdin JSON, proceeding with empty data")
         data = {}
 

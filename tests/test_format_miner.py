@@ -1366,7 +1366,7 @@ def test_mine_formats_does_not_write_sentinel_for_skip_no_markitdown(monkeypatch
 
     register_calls: list = []
 
-    def fake_register(collection, source_file, wing, agent):
+    def fake_register(collection, source_file, wing, agent, **kwargs):
         register_calls.append(source_file)
 
     monkeypatch.setattr(format_miner, "_register_file", fake_register)
@@ -1412,7 +1412,7 @@ def test_mine_formats_does_not_write_sentinel_for_skip_missing_format_deps(
 
     register_calls: list = []
 
-    def fake_register(collection, source_file, wing, agent):
+    def fake_register(collection, source_file, wing, agent, **kwargs):
         register_calls.append(source_file)
 
     monkeypatch.setattr(format_miner, "_register_file", fake_register)

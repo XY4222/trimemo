@@ -330,6 +330,16 @@ TOOLS = {
                     "type": "number",
                     "description": "Max cosine distance threshold (0=identical, 2=opposite). Results further than this are dropped. Lower = stricter. Default 1.5. Set to 0 to disable.",
                 },
+                "min_similarity": {
+                    "type": "number",
+                    "description": (
+                        "Legacy similarity-scale threshold (1=identical, 0=opposite). "
+                        "Converted internally to a distance cutoff as "
+                        "'distance = 1 - min_similarity'; when set it takes "
+                        "precedence over 'max_distance'. Kept for backwards "
+                        "compatibility with older clients."
+                    ),
+                },
                 "candidate_strategy": {
                     "type": "string",
                     "enum": ["vector", "union"],
