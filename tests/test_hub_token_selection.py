@@ -85,7 +85,9 @@ def test_urlopen_retries_the_second_token_only_after_401(isolated_home, monkeypa
             )
         return _Response(b"ok")
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    # Patch the hub transport seam, not urllib itself: it bypasses proxies and
+    # is the single symbol the forward path calls.
+    monkeypatch.setattr(server_registry, "_urlopen_hub", fake_urlopen)
 
     with server_registry.urlopen_with_server_tokens(
         palace,
@@ -125,7 +127,7 @@ def test_urlopen_does_not_retry_non_401_or_transport_failures(isolated_home, mon
         attempted.append(request.get_header("Authorization"))
         raise error
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(server_registry, "_urlopen_hub", fake_urlopen)
 
     with pytest.raises(type(error)):
         server_registry.urlopen_with_server_tokens(
@@ -136,3 +138,55 @@ def test_urlopen_does_not_retry_non_401_or_transport_failures(isolated_home, mon
         )
 
     assert attempted == ["Bearer first-token"]
+
+
+def test_hub_request_bypasses_configured_http_proxy(isolated_home, monkeypatch):
+    """The hub is always loopback, so a configured proxy must not sit in the middle.
+
+    With ``http_proxy`` pointed at a dead port, a proxied request could never
+    reach the real hub — so a successful round trip proves the proxy was
+    bypassed. Left proxied, urllib would get a 502 from the proxy for a hub that
+    is merely down, and the caller would read that HTTPError as "the hub was
+    reached and rejected", skipping its local fallback and breaking reads.
+    """
+    import socket
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    palace = str(isolated_home / "palace")
+
+    class _Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length") or 0)
+            self.rfile.read(length)
+            body = b'{"ok": true}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):  # keep the test output clean
+            pass
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    probe = socket.socket()
+    probe.bind(("127.0.0.1", 0))
+    dead_proxy = probe.getsockname()[1]
+    probe.close()
+    try:
+        monkeypatch.setenv("http_proxy", f"http://127.0.0.1:{dead_proxy}")
+        monkeypatch.setenv("HTTP_PROXY", f"http://127.0.0.1:{dead_proxy}")
+        monkeypatch.delenv("no_proxy", raising=False)
+        monkeypatch.delenv("NO_PROXY", raising=False)
+
+        port = httpd.server_address[1]
+        with server_registry.urlopen_with_server_tokens(
+            palace, f"http://127.0.0.1:{port}/mcp", data=b"{}", timeout=5
+        ) as response:
+            assert response.read() == b'{"ok": true}'
+    finally:
+        httpd.shutdown()
+        httpd.server_close()

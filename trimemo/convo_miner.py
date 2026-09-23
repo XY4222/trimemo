@@ -66,6 +66,41 @@ def _detect_hall_cached(content: str) -> str:
     return max(scores, key=scores.get) if scores else "general"
 
 
+def _find_exchange_drawer(
+    collection, wing: str, room: str, source_file: str, text: str
+) -> Optional[str]:
+    """Return the id of an identical exchange already filed for this source.
+
+    ``make_exchange_drawer_id`` deliberately folds ``filed_at`` into the hash so
+    that *genuinely repeated* exchanges stay distinct drawers (repetition is
+    signal, not noise). That makes a re-run of a backfill duplicate every
+    drawer, so callers that must be re-runnable ask for this check with
+    ``dedupe=True``; the default path keeps the repetition semantics intact.
+    """
+    offset = 0
+    while True:
+        batch = collection.get(
+            where={"source_file": source_file},
+            limit=1000,
+            offset=offset,
+            include=["documents", "metadatas"],
+        )
+        ids = batch.get("ids") or []
+        documents = batch.get("documents") or []
+        metadatas = batch.get("metadatas") or []
+        for drawer_id, document, meta in zip(ids, documents, metadatas):
+            meta = meta or {}
+            if (
+                document == text
+                and meta.get("wing") == wing
+                and meta.get("room") == room
+            ):
+                return drawer_id
+        if not ids:
+            return None
+        offset += len(ids)
+
+
 def file_conversation_exchange(
     collection,
     *,
@@ -76,6 +111,7 @@ def file_conversation_exchange(
     agent: str,
     authored_at: Optional[str] = None,
     extra_metadata: Optional[dict] = None,
+    dedupe: bool = False,
 ) -> Optional[str]:
     """File one verbatim conversation exchange as a single drawer.
 
@@ -98,6 +134,12 @@ def file_conversation_exchange(
     canonical fields are ignored, so it cannot be used to overwrite or
     drop them. Returns the drawer id, or None when ``text`` is empty
     after stripping.
+
+    ``dedupe=True`` makes the call re-runnable: if an identical exchange
+    (same ``source_file``, verbatim ``text``, same wing/room) is already
+    filed, its id is returned and nothing is written. Backfills want this;
+    the live path leaves it off, because a repeated exchange is signal and
+    must stay a distinct drawer.
     """
     from .config import sanitize_name
 
@@ -118,6 +160,10 @@ def file_conversation_exchange(
             "file_conversation_exchange: invalid room %r — filing under conversations", room
         )
         room = "conversations"
+    if dedupe:
+        existing = _find_exchange_drawer(collection, wing, room, source_file, text)
+        if existing is not None:
+            return existing
     filed_at = datetime.now().isoformat()
     drawer_id = make_exchange_drawer_id(wing, room, source_file, filed_at, text)
     metadata = {
@@ -742,16 +788,20 @@ def _file_chunks_locked(
                         meta["content_hash"] = content_hash
                     batch_metas.append(meta)
                 assert_no_collisions(list(zip(batch_ids, batch_metas)), collection)
-                try:
-                    collection.upsert(
-                        documents=batch_docs,
-                        ids=batch_ids,
-                        metadatas=batch_metas,
-                    )
-                    drawers_added += len(batch_docs)
-                except Exception as e:
-                    if "already exists" not in str(e).lower():
-                        raise
+                # No "already exists" leniency here. ``upsert`` must not raise
+                # for ids that already exist, so any error means this batch
+                # really did not land — swallowing an error whose message
+                # happened to contain that phrase (a concurrent-write conflict
+                # on qdrant/pgvector/milvus) left those rows permanently absent
+                # while ``chunk_total`` still claimed the full count. Raising
+                # runs the partial-drawer cleanup below and aborts the file so
+                # the next mine retries it.
+                collection.upsert(
+                    documents=batch_docs,
+                    ids=batch_ids,
+                    metadatas=batch_metas,
+                )
+                drawers_added += len(batch_docs)
         except Exception:
             # A successful earlier batch has the source's current mtime and
             # chunk_total. Leaving those drawers behind would make the next

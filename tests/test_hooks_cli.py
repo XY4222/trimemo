@@ -793,7 +793,7 @@ def test_wing_from_transcript_path_lowercases():
 def test_wing_from_transcript_path_non_projects_layout():
     # Linux user with code under ~/dev/. The encoded form ``dev-TriMemo-trimemo``
     # is ambiguous between ``~/dev/TriMemo/trimemo/`` (project = trimemo) and
-    # ``~/dev/MemPalace-trimemo/`` (hyphenated single-name project). With no JSONL
+    # ``~/dev/TriMemo-trimemo/`` (hyphenated single-name project). With no JSONL
     # cwd to disambiguate, we preserve all post-``dev-`` segments rather than silently
     # truncating to the last token (which would drop ``TriMemo`` here and collide
     # with any other ``-trimemo`` leaf elsewhere on the system).
@@ -884,7 +884,7 @@ def test_wing_from_transcript_path_uses_cwd_from_jsonl(tmp_path):
     transcript = project_dir / "session.jsonl"
     transcript.write_text(
         '{"type":"queue-operation","operation":"enqueue","timestamp":"2026-05-09T00:00:00Z"}\n'
-        '{"type":"user","cwd":"/home/igor/dev/MemPalace/trimemo","content":"hi"}\n',
+        '{"type":"user","cwd":"/home/igor/dev/TriMemo/trimemo","content":"hi"}\n',
         encoding="utf-8",
     )
     assert _wing_from_transcript_path(str(transcript)) == "wing_trimemo"

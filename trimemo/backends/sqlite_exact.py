@@ -41,6 +41,7 @@ from .base import (
     UnsupportedCapabilityError,
     UnsupportedFilterError,
     _IncludeSpec,
+    require_delete_scope,
 )
 
 logger = logging.getLogger(__name__)
@@ -1241,6 +1242,7 @@ class SQLiteExactCollection(BaseCollection):
         )
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         with self._cursor(write=True) as cur:
             collection_id = self._collection_id(cur)
             if ids is None:

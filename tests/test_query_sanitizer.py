@@ -97,7 +97,7 @@ class TestTailSentence:
 
     def test_keyword_style_query(self):
         system_prompt = "System configuration loaded. " * 60
-        query = system_prompt + "\nMemPalace ChromaDB integration setup"
+        query = system_prompt + "\nTriMemo ChromaDB integration setup"
         result = sanitize_query(query)
         assert result["was_sanitized"] is True
         assert "TriMemo" in result["clean_query"] or "ChromaDB" in result["clean_query"]

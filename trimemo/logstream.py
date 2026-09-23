@@ -1217,13 +1217,20 @@ class Logstream:
     def apply_remote_event(self, event: dict) -> bool:
         """Fold one remote op into the local log, idempotently.
 
-        Verbatim rule: the event is stored exactly as authored (id,
-        created_at, hlc, origin stamps untouched); only the local rowid —
+        Verbatim rule: the event's *content* is stored exactly as authored
+        (id, created_at, hlc, origin stamps untouched); only the local rowid —
         the arrival cursor — is ours. Referenced artifacts must already be
         applied (sync pulls artifacts first) so readers never see a dangling
         id, same invariant as append_event. Returns True if inserted, False
         if we already had it. Raises ValueError on malformed input or a
         missing artifact.
+
+        A peer is untrusted input, so every field is validated with the same
+        sanitizers :meth:`append_event` applies locally: a remote op must not
+        be able to store a value a local caller would have been refused — an
+        unbounded body, control characters smuggled into a routing field, an
+        off-schema ``type``/``status``, or a ``created_at``/``hlc`` that
+        breaks downstream ordering.
         """
         for key in (
             "id",
@@ -1238,18 +1245,47 @@ class Logstream:
         ):
             if not event.get(key):
                 raise ValueError(f"remote event is missing required field {key!r}")
-        if event["origin_replica"] == self.replica_id:
-            return False  # our own op echoed back — by definition already present
-        artifact_ids = list(dict.fromkeys(event.get("artifact_ids") or []))
-        metadata_json = _sanitize_metadata(event.get("metadata"))
+
+        event_id = _sanitize_routing(event["id"], "id")
+        event_type = _sanitize_event_type(event["type"])
+        stream = _sanitize_routing(event["stream"], "stream")
+        room = _sanitize_routing(event["room"], "room")
         topic = _sanitize_routing(event.get("topic"), "topic", required=False)
+        from_agent = _sanitize_routing(event["from_agent"], "from_agent")
+        to_agent = _sanitize_routing(event.get("to_agent"), "to_agent", required=False)
+        correlation_id = _sanitize_routing(
+            event.get("correlation_id"), "correlation_id", required=False
+        )
+        branch = _sanitize_routing(event.get("branch"), "branch", required=False)
+        base_commit = _sanitize_routing(event.get("base_commit"), "base_commit", required=False)
+        status = _sanitize_status(event.get("status"))
+        body = _sanitize_body(event.get("body"), self.max_body_bytes)
+        metadata_json = _sanitize_metadata(event.get("metadata"))
+        created_at = sanitize_iso_temporal(event["created_at"], "created_at")
+        origin_replica = _sanitize_routing(event["origin_replica"], "origin_replica")
+        origin_seq = event["origin_seq"]
+        if not isinstance(origin_seq, int) or isinstance(origin_seq, bool) or origin_seq < 1:
+            raise ValueError(f"origin_seq must be a positive integer, got {origin_seq!r}")
+        from .hlc import parse as _hlc_parse
+
+        _hlc_parse(event["hlc"])  # raises on a stamp that would break HLC ordering
+        hlc = event["hlc"]
+
+        if origin_replica == self.replica_id:
+            return False  # our own op echoed back — by definition already present
+        raw_artifact_ids = event.get("artifact_ids") or []
+        if not isinstance(raw_artifact_ids, list) or not all(
+            isinstance(a, str) and a for a in raw_artifact_ids
+        ):
+            raise ValueError("artifact_ids must be a list of artifact id strings")
+        artifact_ids = list(dict.fromkeys(raw_artifact_ids))
 
         with self._lock:
             conn = self._conn()
             with conn:
                 dup = conn.execute(
                     "SELECT 1 FROM events WHERE id = ? OR (origin_replica = ? AND origin_seq = ?)",
-                    (event["id"], event["origin_replica"], event["origin_seq"]),
+                    (event_id, origin_replica, origin_seq),
                 ).fetchone()
                 if dup:
                     return False
@@ -1259,7 +1295,7 @@ class Logstream:
                     ).fetchone()
                     if not found:
                         raise ValueError(
-                            f"remote event {event['id']!r} references artifact "
+                            f"remote event {event_id!r} references artifact "
                             f"{artifact_id!r} not yet applied locally"
                         )
                 conn.execute(
@@ -1268,33 +1304,33 @@ class Logstream:
                     " metadata_json, origin_replica, origin_seq, hlc)"
                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
-                        event["id"],
-                        event["type"],
-                        event["stream"],
-                        event["room"],
+                        event_id,
+                        event_type,
+                        stream,
+                        room,
                         topic,
-                        event["from_agent"],
-                        event.get("to_agent"),
-                        event.get("correlation_id"),
-                        event.get("branch"),
-                        event.get("base_commit"),
-                        event.get("status"),
-                        event.get("body") or "",
-                        event["created_at"],
+                        from_agent,
+                        to_agent,
+                        correlation_id,
+                        branch,
+                        base_commit,
+                        status,
+                        body,
+                        created_at,
                         metadata_json,
-                        event["origin_replica"],
-                        event["origin_seq"],
-                        event["hlc"],
+                        origin_replica,
+                        origin_seq,
+                        hlc,
                     ),
                 )
                 for artifact_id in artifact_ids:
                     conn.execute(
                         "INSERT OR IGNORE INTO event_artifacts (event_id, artifact_id)"
                         " VALUES (?, ?)",
-                        (event["id"], artifact_id),
+                        (event_id, artifact_id),
                     )
         # Absorb the remote instant so our next local op sorts after it.
-        self._clock.observe(event["hlc"])
+        self._clock.observe(hlc)
         return True
 
     def has_artifact(self, artifact_id: str) -> bool:

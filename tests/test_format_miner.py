@@ -11,6 +11,7 @@ Run with:
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from unittest.mock import patch
 
@@ -1555,4 +1556,174 @@ def test_mine_formats_threads_chunk_size_from_user_config(monkeypatch, tmp_path:
     assert call.get("min_chunk_size") == 78, (
         f"chunk_text called without user's min_chunk_size "
         f"(got {call.get('min_chunk_size')}, expected 78). kwargs={call}"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# _file_chunks_locked — silent-content-loss guards (#12 / #13)
+#
+# Both guards mirror miner.process_file's #23 fix: a failed purge or a failed
+# batch must abort the file instead of leaving a half-written drawer set whose
+# drawers carry the current source_mtime (so `file_already_mined(check_mtime=True)`
+# reads it as complete and the missing chunks never come back).
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class _FormatFakeCol:
+    """Minimal Chroma-shaped collection for ``_file_chunks_locked`` tests.
+
+    Implements only the surface the seam touches: ``get(ids=...)`` for the
+    collision scan, ``delete(where=...)`` for the stale-drawer purge,
+    ``delete(ids=...)`` for the partial-drawer cleanup, and ``upsert``.
+    ``fail_delete`` / ``fail_upsert_at`` let a test target a specific step.
+    """
+
+    def __init__(self, *, fail_delete=False, fail_upsert_at=None, error_text="simulated failure"):
+        self.records = []  # [{"id", "document", "metadata"}]
+        self.upsert_calls = 0
+        self.delete_calls = []  # [{"ids", "where"}]
+        self.fail_delete = fail_delete
+        self.fail_upsert_at = fail_upsert_at
+        self.error_text = error_text
+
+    def get(self, ids=None, where=None, limit=None, offset=0, include=None, **kwargs):
+        if ids is not None:
+            wanted = set(ids)
+            rows = [r for r in self.records if r["id"] in wanted]
+        else:
+            rows = list(self.records)
+            if where and "source_file" in where:
+                rows = [
+                    r
+                    for r in rows
+                    if r["metadata"].get("source_file") == where["source_file"]
+                ]
+        page = rows[offset : offset + (limit if limit is not None else len(rows))]
+        return {
+            "ids": [r["id"] for r in page],
+            "documents": [r.get("document") for r in page],
+            "metadatas": [r["metadata"] for r in page],
+        }
+
+    def delete(self, ids=None, where=None, **kwargs):
+        self.delete_calls.append({"ids": ids, "where": where})
+        if self.fail_delete:
+            raise RuntimeError("simulated delete failure")
+        if ids:
+            wanted = set(ids)
+            self.records = [r for r in self.records if r["id"] not in wanted]
+            return
+        if where and "source_file" in where:
+            src = where["source_file"]
+            self.records = [
+                r for r in self.records if r["metadata"].get("source_file") != src
+            ]
+
+    def upsert(self, documents, ids, metadatas):
+        self.upsert_calls += 1
+        if self.fail_upsert_at is not None and self.upsert_calls == self.fail_upsert_at:
+            raise RuntimeError(self.error_text)
+        for drawer_id, document, metadata in zip(ids, documents, metadatas):
+            self.records.append({"id": drawer_id, "document": document, "metadata": metadata})
+
+
+def _format_chunks(count: int) -> list:
+    return [{"content": f"chunk {i} " * 20, "chunk_index": i} for i in range(count)]
+
+
+def _patch_format_seams(monkeypatch):
+    from trimemo import format_miner
+
+    monkeypatch.setattr(
+        format_miner, "file_already_mined", lambda collection, source_file, **kwargs: False
+    )
+    monkeypatch.setattr(format_miner, "mine_lock", lambda source_file: contextlib.nullcontext())
+
+
+def test_format_purge_failure_aborts_before_any_upsert(monkeypatch, tmp_path, capsys):
+    """#12: a failed stale-drawer purge must abort the file.
+
+    Falling through to upsert would either leave stale tail drawers as
+    permanent orphans (old chunk count > new) or silently overwrite only the
+    overlapping chunk_index positions — not a real re-mine. The old code
+    swallowed the failure into a ``logger.debug``.
+    """
+    from trimemo.format_miner import _file_chunks_locked
+
+    source = tmp_path / "notes.md"
+    source.write_text("body\n", encoding="utf-8")
+
+    col = _FormatFakeCol(fail_delete=True)
+    _patch_format_seams(monkeypatch)
+
+    added, skipped = _file_chunks_locked(
+        col, str(source), _format_chunks(3), "wing", "documents", "agent"
+    )
+
+    assert (added, skipped) == (0, True), "a failed purge did not abort the file"
+    assert col.upsert_calls == 0, "upserted on top of a failed purge (stale drawers survive)"
+    err = capsys.readouterr().err
+    assert "purge failed" in err, "the failure was not surfaced to the operator"
+    assert "will retry" in err, "no signal that the next mine retries the file"
+
+
+def test_format_batch_failure_discards_partial_drawers(monkeypatch, tmp_path):
+    """#13: a failed later batch must not leave earlier batches behind.
+
+    Those drawers carry this file's source_mtime, so the next run reads the
+    partial set as complete and never fetches the missing chunks. The cleanup
+    must cover earlier batches' ids as well as the failed batch's.
+    """
+    from trimemo import format_miner
+    from trimemo.format_miner import _file_chunks_locked
+
+    source = tmp_path / "notes.md"
+    source.write_text("body\n", encoding="utf-8")
+
+    col = _FormatFakeCol(fail_upsert_at=2)
+    _patch_format_seams(monkeypatch)
+    monkeypatch.setattr(format_miner, "DRAWER_UPSERT_BATCH_SIZE", 2)
+
+    with pytest.raises(RuntimeError, match="simulated failure"):
+        _file_chunks_locked(
+            col, str(source), _format_chunks(5), "wing", "documents", "agent"
+        )
+
+    assert col.records == [], (
+        "partial format drawers survived a mid-file upsert failure — the next "
+        "mine would treat the incomplete set as fully filed (#2183/#2122)"
+    )
+    discarded = [call["ids"] for call in col.delete_calls if call["ids"]]
+    assert discarded, "cleanup did not delete the partial drawer ids"
+    # Batch 1 (2 chunks) plus the failed batch 2 (2 chunks).
+    assert len(discarded[0]) == 4, (
+        f"cleanup covered {len(discarded[0])} ids; earlier batches' drawers were "
+        f"left behind (expected 4 = batch 1 + failed batch 2)"
+    )
+
+
+def test_format_already_exists_error_is_not_swallowed(monkeypatch, tmp_path):
+    """#13: ``upsert`` must not raise for ids that already exist, so an error
+    whose message happens to contain "already exists" is a real failure (a
+    concurrent-write conflict on qdrant/pgvector/milvus). The old leniency
+    swallowed it and left that batch permanently absent while ``chunk_total``
+    claimed the full count."""
+    from trimemo import format_miner
+    from trimemo.format_miner import _file_chunks_locked
+
+    source = tmp_path / "notes.md"
+    source.write_text("body\n", encoding="utf-8")
+
+    col = _FormatFakeCol(fail_upsert_at=2, error_text="records already exists")
+    _patch_format_seams(monkeypatch)
+    monkeypatch.setattr(format_miner, "DRAWER_UPSERT_BATCH_SIZE", 2)
+
+    with pytest.raises(RuntimeError, match="already exists"):
+        _file_chunks_locked(
+            col, str(source), _format_chunks(4), "wing", "documents", "agent"
+        )
+
+    assert col.records == [], "an 'already exists'-shaped upsert error was swallowed"
+    assert [c["ids"] for c in col.delete_calls if c["ids"]], (
+        "cleanup did not run after the un-swallowed upsert error"
     )

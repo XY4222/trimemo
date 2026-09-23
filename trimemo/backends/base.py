@@ -417,6 +417,27 @@ def initialize_last_modified_metadata(metadatas):
     return result
 
 
+def require_delete_scope(*, ids: Optional[list[str]], where: Optional[dict]) -> None:
+    """Reject a scope-less ``delete()`` before it can wipe a whole collection.
+
+    Every backend routes its destructive ``delete`` through this check. A delete
+    must name its target: a non-empty ``ids`` list, or a non-empty ``where``
+    clause. An absent or empty scope would drop every drawer in the collection,
+    so it is refused outright — call ``delete_collection()`` to intentionally
+    drop the whole collection.
+
+    An explicit ``ids=[]`` is allowed: it is a genuine no-op, not a mass delete.
+    """
+    if ids is not None:
+        return
+    if where:
+        return
+    raise ValueError(
+        "delete requires a non-empty ids= or where=; refusing to remove the "
+        "entire collection — use delete_collection() to drop it intentionally"
+    )
+
+
 class BaseCollection(ABC):
     """Per-collection read/write surface every backend must implement."""
 

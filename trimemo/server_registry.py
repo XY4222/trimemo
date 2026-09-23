@@ -18,8 +18,10 @@ bearer token (``~/.mempalace/server/<key>/``), and callers use
 
 The registry is local-machine only by design: it lives under the user's
 home, is keyed by the canonical palace path, and a record is trusted only
-while the recorded pid is still alive — a crashed hub leaves a stale file
-that every reader ignores and the next hub overwrites.
+while the recorded pid is still alive *and still the same process* — a
+crashed hub leaves a stale file that every reader ignores and the next hub
+overwrites, and a pid the OS has since recycled cannot resurrect it (see
+:func:`trimemo.procident.started_after`).
 """
 
 from __future__ import annotations
@@ -30,6 +32,9 @@ import logging
 import os
 import time
 from pathlib import Path
+
+from .procident import pid_alive as _pid_alive
+from .procident import started_after
 
 logger = logging.getLogger(__name__)
 
@@ -171,19 +176,25 @@ def read_mesh_state(palace_path: str) -> dict:
     worth showing but must not be read as live.
     """
     empty = {"peers": {}, "profiles": {}, "written_at": None, "writer_alive": False}
+    mesh_path = mesh_state_path(palace_path)
     try:
-        state = json.loads(mesh_state_path(palace_path).read_text(encoding="utf-8"))
+        state = json.loads(mesh_path.read_text(encoding="utf-8"))
+        written_at = mesh_path.stat().st_mtime
     except (OSError, ValueError):
         return empty
     if not isinstance(state, dict):
         return empty
     peers = state.get("peers")
     profiles = state.get("profiles")
+    writer_pid = state.get("pid")
+    # Same identity rule as the serverinfo record: a recycled pid is not the
+    # hub that published, so its estate must not read as live.
+    writer_alive = _pid_alive(writer_pid) and not started_after(writer_pid, written_at)
     return {
         "peers": peers if isinstance(peers, dict) else {},
         "profiles": profiles if isinstance(profiles, dict) else {},
         "written_at": state.get("written_at"),
-        "writer_alive": _pid_alive(state.get("pid")),
+        "writer_alive": writer_alive,
     }
 
 
@@ -206,43 +217,29 @@ def clear_serverinfo(palace_path: str) -> None:
         logger.debug("serverinfo cleanup failed for %s", path, exc_info=True)
 
 
-def _pid_alive(pid) -> bool:
-    if not isinstance(pid, int) or pid <= 0:
-        return False
-    if os.name == "nt":  # pragma: no cover - exercised on Windows CI only
-        import ctypes
-
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
-        if not handle:
-            return False
-        ctypes.windll.kernel32.CloseHandle(handle)
-        return True
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
-
-
 def read_live_serverinfo(palace_path: str):
     """Return the hub record for this palace, or None.
 
-    None when no record exists, the record is unreadable, or the recorded
-    pid is no longer alive (crashed hub — stale file, ignore it).
+    None when no record exists, the record is unreadable, the recorded pid is
+    no longer alive, or that pid has since been handed to a *different*
+    process. The last case matters: a crashed hub leaves a stale record, and if
+    the OS recycles its pid a bare liveness probe would read it as live and
+    send the palace bearer token to whatever now holds the port. A process that
+    started after the record was written cannot be its author, so it is refused
+    here (#2.5).
     """
     path = serverinfo_path(palace_path)
     try:
         info = json.loads(path.read_text(encoding="utf-8"))
+        written_at = path.stat().st_mtime
     except (OSError, ValueError):
         return None
     if not isinstance(info, dict):
         return None
-    if not _pid_alive(info.get("pid")):
+    recorded_pid = info.get("pid")
+    if not _pid_alive(recorded_pid):
+        return None
+    if started_after(recorded_pid, written_at):
         return None
     if not isinstance(info.get("port"), int) or not info.get("host"):
         return None
@@ -285,6 +282,30 @@ def load_server_token(palace_path: str) -> str:
     return candidates[0] if candidates else ""
 
 
+# The hub is local-machine only: ``client_base_url`` maps a wildcard bind to
+# loopback and the record is never read off-box. An ``http_proxy`` in the
+# environment must therefore NOT be consulted. Left alone, urllib sends the
+# loopback request to the proxy, which answers 502 for a hub that is merely
+# down — and an HTTPError reads as "the hub was reached and rejected", so the
+# caller skips its local fallback and reads fail outright.
+_HUB_OPENER = None
+
+
+def _hub_opener():
+    """A urlopen opener that never routes the local hub through a proxy."""
+    global _HUB_OPENER
+    if _HUB_OPENER is None:
+        import urllib.request
+
+        _HUB_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    return _HUB_OPENER
+
+
+def _urlopen_hub(request, timeout):
+    """Transport seam for hub requests — one symbol to patch in tests."""
+    return _hub_opener().open(request, timeout=timeout)
+
+
 def urlopen_with_server_tokens(
     palace_path: str,
     url: str,
@@ -299,6 +320,11 @@ def urlopen_with_server_tokens(
     authentication gate rejected the request before dispatch, so trying the
     second credential is safe even for mutating JSON-RPC calls.  Every other
     HTTP or transport failure is surfaced immediately and is never replayed.
+
+    Requests go through :func:`_urlopen_hub`, which bypasses any configured
+    HTTP proxy: the hub is always a loopback address, and a proxy in the middle
+    would answer 502 for a hub that is merely down — an HTTPError the caller
+    would misread as "the hub was reached", suppressing its local fallback.
     """
     import urllib.error
     import urllib.request
@@ -312,7 +338,7 @@ def urlopen_with_server_tokens(
             attempt_headers.pop("Authorization", None)
         request = urllib.request.Request(url, data=data, headers=attempt_headers)
         try:
-            return urllib.request.urlopen(request, timeout=timeout)
+            return _urlopen_hub(request, timeout)
         except urllib.error.HTTPError as exc:
             # Always close: a non-401 error still holds an unread response
             # body, and leaking one per attempt accumulates connections on the

@@ -17,7 +17,7 @@ def test_extracts_code_symbols_paths_urls():
     assert "module.func" in ents
     assert "pkg.Class.method" in ents
     assert "do_thing_now" in ents
-    assert any(e.startswith("https://github.com/MemPalace") for e in ents)
+    assert any(e.startswith("https://github.com/XY4222/trimemo") for e in ents)
 
 
 def test_excludes_prose_noise():

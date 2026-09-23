@@ -2391,3 +2391,37 @@ def test_palace_get_collection_uses_configured_collection_name(monkeypatch):
         "collection_name": "custom_drawers",
         "create": False,
     }
+
+
+# ---------------------------------------------------------------------------
+# Scope-less delete guard (#2.1) — a delete must name its target
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "ids, where",
+    [
+        (None, None),
+        (None, {}),
+    ],
+)
+def test_require_delete_scope_rejects_scope_less_calls(ids, where):
+    """An absent/empty scope would wipe the whole collection: refuse it."""
+    from trimemo.backends.base import require_delete_scope
+
+    with pytest.raises(ValueError, match="delete requires"):
+        require_delete_scope(ids=ids, where=where)
+
+
+@pytest.mark.parametrize(
+    "ids, where",
+    [
+        (["a"], None),
+        ([], None),  # explicit empty id list is a genuine no-op
+        (None, {"source_file": "x"}),
+    ],
+)
+def test_require_delete_scope_allows_scoped_calls(ids, where):
+    from trimemo.backends.base import require_delete_scope
+
+    require_delete_scope(ids=ids, where=where)  # must not raise

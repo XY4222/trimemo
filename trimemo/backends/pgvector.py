@@ -68,6 +68,7 @@ from .base import (
     UnsupportedCapabilityError,
     UnsupportedFilterError,
     _IncludeSpec,
+    require_delete_scope,
 )
 
 logger = logging.getLogger(__name__)
@@ -1576,6 +1577,7 @@ class PgVectorCollection(BaseCollection):
         )
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         _validate_where(where)
         if not self._table_exists():
             if self._marker_exists():
@@ -1747,7 +1749,13 @@ class PgVectorBackend(BaseBackend):
         return sha256(palace.id.encode("utf-8", errors="surrogatepass")).hexdigest()[:16]
 
     def _table_prefix(self, *, palace: PalaceRef, config: _PgVectorConfig) -> str:
-        """Table-name prefix for one palace: ``trimemo[_<namespace>]_<key>``.
+        """Table-name prefix for one palace: ``mempalace[_<namespace>]_<key>``.
+
+        The ``mempalace`` stem is a persisted Postgres table name, not branding:
+        renaming it would strand every existing palace's rows in tables the new
+        code no longer resolves. It is pinned by
+        ``test_pgvector_table_name_unchanged_without_shared_namespace`` so the
+        no-migration promise cannot regress silently.
 
         ``<key>`` is normally :meth:`_palace_hash` — a hash of the palace's local
         path — which keeps two palaces on one host apart. When
@@ -1765,7 +1773,7 @@ class PgVectorBackend(BaseBackend):
         :func:`_shared_namespace_key` carries a digest of the pair so the
         variable-length join cannot smear the two dimensions into each other.
         """
-        parts = ["trimemo"]
+        parts = ["mempalace"]
         namespace_slug = _slug(config.namespace, "namespace") if config.namespace else ""
         if namespace_slug:
             parts.append(namespace_slug)

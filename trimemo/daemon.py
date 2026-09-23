@@ -13,6 +13,7 @@ import json
 import math
 import os
 import secrets
+import signal
 import sqlite3
 import subprocess
 import sys
@@ -34,6 +35,10 @@ from .palace import (
     backend_requires_single_writer,
     mine_palace_lock,
     resolve_backend_name,
+)
+from .procident import (
+    pid_alive as _pid_alive,
+    process_start_time as _process_start_time,
 )
 
 HOST = "127.0.0.1"
@@ -180,66 +185,6 @@ def _read_endpoint(palace_path: str) -> dict[str, Any]:
             return json.load(fh)
     except (OSError, json.JSONDecodeError) as exc:
         raise DaemonError("daemon endpoint not found") from exc
-
-
-def _pid_alive_windows(pid: int) -> bool:
-    """Liveness probe for Windows that never sends a console control event.
-
-    ``os.kill(pid, 0)`` is NOT a harmless existence check on Windows: signal 0
-    is ``signal.CTRL_C_EVENT``, so Python routes it to
-    ``GenerateConsoleCtrlEvent`` and sends a Ctrl-C to the target's process
-    group instead of probing the pid. On a process with an attached console
-    (e.g. a CI runner) that Ctrl-C is delivered back to *this* interpreter and
-    surfaces as a spurious ``KeyboardInterrupt`` — exactly the hang seen when
-    ``DaemonClient`` polled a same-process endpoint. Probe via the Win32 process
-    handle API instead, which has no signalling side effects.
-    """
-    import ctypes
-    from ctypes import wintypes
-
-    SYNCHRONIZE = 0x00100000
-    WAIT_TIMEOUT = 0x00000102
-    ERROR_ACCESS_DENIED = 5
-
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    kernel32.OpenProcess.restype = wintypes.HANDLE
-    kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
-    kernel32.WaitForSingleObject.restype = wintypes.DWORD
-    kernel32.WaitForSingleObject.argtypes = (wintypes.HANDLE, wintypes.DWORD)
-    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
-
-    handle = kernel32.OpenProcess(SYNCHRONIZE, False, int(pid))
-    if not handle:
-        # No handle: access-denied means the process exists but isn't ours to
-        # open; any other error (invalid parameter / not found) means it's gone.
-        return ctypes.get_last_error() == ERROR_ACCESS_DENIED
-    try:
-        # A live process is not signalled, so the zero-timeout wait returns
-        # WAIT_TIMEOUT; an exited process is signalled and returns WAIT_OBJECT_0.
-        return kernel32.WaitForSingleObject(handle, 0) == WAIT_TIMEOUT
-    finally:
-        kernel32.CloseHandle(handle)
-
-
-def _pid_alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        try:
-            return _pid_alive_windows(pid)
-        except OSError:
-            # If the Win32 probe itself fails, assume alive rather than risk
-            # discarding a healthy endpoint — and never fall back to os.kill.
-            return True
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
 
 
 @dataclass
@@ -869,6 +814,45 @@ def _close_or_defer_writer_lease(
         writer_lease.close()
 
 
+def _install_shutdown_signals(httpd, runtime) -> dict:
+    """Convert SIGTERM/SIGHUP into a graceful stop and return the old handlers.
+
+    Python's default action for SIGTERM is to die on the spot, so the
+    ``finally`` blocks in :func:`run_server` — the drain that lets an in-flight
+    mine finish, the writer-lease close, the env/umask restore and the stale
+    endpoint/pid cleanup — would never run. A ``systemctl stop`` or a container
+    stop would therefore kill a daemon mid-write, violating incremental-only.
+    """
+
+    def _begin_graceful_shutdown(signum, frame):
+        runtime.shutdown_event.set()
+        # shutdown() blocks until serve_forever returns and must not be called
+        # from the thread running it, so hand it to a short-lived thread.
+        threading.Thread(target=httpd.shutdown, daemon=True).start()
+
+    previous: dict = {}
+    for name in ("SIGTERM", "SIGHUP"):
+        sig = getattr(signal, name, None)
+        if sig is None:
+            continue
+        try:
+            previous[sig] = signal.signal(sig, _begin_graceful_shutdown)
+        except (ValueError, OSError, RuntimeError):
+            # Not installable here — a non-main thread on POSIX, or a signal
+            # the platform does not expose (SIGHUP on Windows). Leave defaults.
+            continue
+    return previous
+
+
+def _restore_shutdown_signals(previous: dict) -> None:
+    """Put back whatever handlers :func:`_install_shutdown_signals` replaced."""
+    for sig, handler in (previous or {}).items():
+        try:
+            signal.signal(sig, handler)
+        except (ValueError, OSError, RuntimeError):  # pragma: no cover - defensive
+            pass
+
+
 def run_server(palace_path: str, *, backend: str | None = None, port: int = 0) -> None:
     palace_path = canonical_palace_path(palace_path)
     previous_env = {
@@ -888,6 +872,7 @@ def run_server(palace_path: str, *, backend: str | None = None, port: int = 0) -
     # server starts. Restored in the finally at the end of run_server.
     prev_umask = os.umask(0o077)
     runtime = None
+    previous_signals: dict = {}
     writer_lease = contextlib.ExitStack()
     try:
         resolved_backend = resolve_backend_name(palace_path, explicit=backend)
@@ -1057,11 +1042,16 @@ def run_server(palace_path: str, *, backend: str | None = None, port: int = 0) -
             _write_private(endpoint_path(palace_path), json.dumps(endpoint, indent=2) + "\n")
             _write_private(pid_path(palace_path), f"{os.getpid()}\n")
             runtime.start_worker()
+            # Installed only around the serve loop: a SIGTERM before the
+            # runtime exists has nothing to drain yet. Restored in the outer
+            # finally so a shutdown cannot leak our handler into a caller.
+            previous_signals = _install_shutdown_signals(httpd, runtime)
             try:
                 httpd.serve_forever(poll_interval=0.5)
             finally:
                 _drain_and_cleanup(runtime, palace_path, previous_env)
     finally:
+        _restore_shutdown_signals(previous_signals)
         _close_or_defer_writer_lease(writer_lease, runtime)
         _restore_server_process_state(previous_env, prev_umask)
 
@@ -1269,111 +1259,6 @@ def _detached_kwargs(log_path: Path) -> dict[str, Any]:
     else:
         kwargs["start_new_session"] = True
     return kwargs
-
-
-def _process_start_time_windows(pid: int) -> float | None:
-    """Creation time of ``pid`` as a Unix timestamp via ``GetProcessTimes``."""
-    import ctypes
-    from ctypes import wintypes
-
-    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    kernel32.OpenProcess.restype = wintypes.HANDLE
-    kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
-    filetime_p = ctypes.POINTER(wintypes.FILETIME)
-    kernel32.GetProcessTimes.restype = wintypes.BOOL
-    kernel32.GetProcessTimes.argtypes = (
-        wintypes.HANDLE,
-        filetime_p,
-        filetime_p,
-        filetime_p,
-        filetime_p,
-    )
-    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
-
-    handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, int(pid))
-    if not handle:
-        return None
-    try:
-        creation, exited, kernel, user = (wintypes.FILETIME() for _ in range(4))
-        ok = kernel32.GetProcessTimes(
-            handle,
-            ctypes.byref(creation),
-            ctypes.byref(exited),
-            ctypes.byref(kernel),
-            ctypes.byref(user),
-        )
-        if not ok:
-            return None
-        ticks = (creation.dwHighDateTime << 32) | creation.dwLowDateTime
-        # FILETIME counts 100 ns intervals since 1601-01-01.
-        return ticks / 10_000_000 - 11_644_473_600
-    finally:
-        kernel32.CloseHandle(handle)
-
-
-def _process_start_time_linux(pid: int) -> float | None:
-    """Start time of ``pid`` from ``/proc`` (boot time plus clock ticks)."""
-    try:
-        stat = Path(f"/proc/{int(pid)}/stat").read_text(encoding="utf-8")
-        # The command name can contain spaces and parentheses; fields resume
-        # after the last ")". starttime is field 22, index 19 from "state".
-        fields = stat[stat.rindex(")") + 2 :].split()
-        start_ticks = int(fields[19])
-        boot = next(
-            int(line.split()[1])
-            for line in Path("/proc/stat").read_text(encoding="utf-8").splitlines()
-            if line.startswith("btime ")
-        )
-        return boot + start_ticks / os.sysconf("SC_CLK_TCK")
-    except (OSError, ValueError, IndexError, StopIteration):
-        return None
-
-
-def _process_start_time_ps(pid: int) -> float | None:
-    """Start time of ``pid`` from ``ps -o lstart=`` (macOS and other POSIX)."""
-    try:
-        out = subprocess.run(
-            ["ps", "-o", "lstart=", "-p", str(int(pid))],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            env={**os.environ, "LC_ALL": "C"},
-            check=False,
-        ).stdout.strip()
-        if not out:
-            return None
-        return time.mktime(time.strptime(out, "%a %b %d %H:%M:%S %Y"))
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return None
-
-
-def _process_start_time(pid: int) -> float | None:
-    """When ``pid`` started, as a Unix timestamp, or None when it cannot be read.
-
-    Used to tell a live registered daemon from an unrelated process that has
-    since been given the same pid. ``psutil`` is only a development
-    dependency, so it is used when present and the platform source otherwise.
-    """
-    if pid <= 0:
-        return None
-    try:
-        import psutil  # type: ignore[import-not-found]
-    except ImportError:
-        psutil = None
-    if psutil is not None:
-        try:
-            return float(psutil.Process(int(pid)).create_time())
-        except Exception:
-            return None
-    if os.name == "nt":
-        try:
-            return _process_start_time_windows(pid)
-        except OSError:
-            return None
-    if Path("/proc/self/stat").exists():
-        return _process_start_time_linux(pid)
-    return _process_start_time_ps(pid)
 
 
 # A process that started after the registration was written cannot be the

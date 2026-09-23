@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .base import BaseCollection, GetResult, initialize_last_modified_metadata
+from .base import (
+    BaseCollection,
+    GetResult,
+    initialize_last_modified_metadata,
+    require_delete_scope,
+)
 
 
 def _embed_texts(texts: list[str]) -> list[list[float]]:
@@ -150,6 +155,7 @@ class EmbeddingCollection(BaseCollection):
         )
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         return self._inner.delete(ids=ids, where=where)
 
     def count(self) -> int:

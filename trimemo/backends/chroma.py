@@ -37,6 +37,7 @@ from .base import (
     UnsupportedFilterError,
     _IncludeSpec,
     initialize_last_modified_metadata,
+    require_delete_scope,
 )
 
 logger = logging.getLogger(__name__)
@@ -2581,6 +2582,7 @@ class ChromaCollection(BaseCollection):
         )
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         _validate_where(where)
         kwargs: dict[str, Any] = {}
         if ids is not None:

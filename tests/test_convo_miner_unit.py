@@ -819,6 +819,79 @@ class TestFileChunksLocked:
         )
         assert col.deleted_ids, "cleanup did not delete the partial drawer ids"
 
+    def test_already_exists_upsert_error_is_not_swallowed(self, monkeypatch, tmp_path):
+        """#13: the old ``if "already exists" not in str(e).lower(): raise``
+        leniency treated a concurrent-write conflict (qdrant/pgvector/milvus
+        raise exactly that shape) as benign and skipped the batch — the rows
+        were then permanently absent while ``chunk_total`` still claimed the
+        full count, so the file was skipped forever. ``upsert`` is not
+        supposed to raise for pre-existing ids, so the phrase is never a
+        reason to ignore a failure (#23's convo_miner twin)."""
+        import trimemo.convo_miner as convo_miner
+
+        class AlreadyExistsCol:
+            def __init__(self):
+                self.records = []
+                self.upsert_calls = 0
+                self.deleted_ids = []
+
+            def get(self, where=None, limit=None, offset=0, include=None, ids=None, **kwargs):
+                if ids is not None:
+                    return {"ids": [], "metadatas": []}
+                records = self.records
+                if where and "source_file" in where:
+                    records = [
+                        r
+                        for r in records
+                        if r["metadata"].get("source_file") == where["source_file"]
+                    ]
+                page = records[offset : offset + (limit or len(records))]
+                return {
+                    "ids": [r["id"] for r in page],
+                    "metadatas": [r["metadata"] for r in page],
+                }
+
+            def delete(self, ids=None, where=None, **kwargs):
+                if ids:
+                    self.deleted_ids.extend(ids)
+                    id_set = set(ids)
+                    self.records = [r for r in self.records if r["id"] not in id_set]
+                    return
+                if where and "source_file" in where:
+                    src = where["source_file"]
+                    self.records = [
+                        r for r in self.records if r["metadata"].get("source_file") != src
+                    ]
+
+            def upsert(self, documents, ids, metadatas):
+                self.upsert_calls += 1
+                if self.upsert_calls == 2:
+                    raise RuntimeError("collection already exists in backend")
+                self.records.extend(
+                    {"id": drawer_id, "metadata": metadata}
+                    for drawer_id, metadata in zip(ids, metadatas)
+                )
+
+        source = tmp_path / "chat.txt"
+        source.write_text("content\n", encoding="utf-8")
+        chunks = [{"content": f"chunk {i} " * 20, "chunk_index": i} for i in range(3)]
+        col = AlreadyExistsCol()
+        monkeypatch.setattr(convo_miner, "DRAWER_UPSERT_BATCH_SIZE", 2)
+        monkeypatch.setattr(
+            convo_miner, "file_already_mined", lambda collection, source_file, **kwargs: False
+        )
+        monkeypatch.setattr(convo_miner, "mine_lock", lambda source_file: contextlib.nullcontext())
+        monkeypatch.setattr(convo_miner, "_detect_hall_cached", lambda content: "conversations")
+
+        with pytest.raises(RuntimeError, match="already exists"):
+            _file_chunks_locked(col, str(source), chunks, "wing", "general", "agent", "exchange")
+
+        assert col.records == [], (
+            "an 'already exists'-shaped upsert error was swallowed, leaving the "
+            "batch permanently absent while chunk_total claimed the full count"
+        )
+        assert col.deleted_ids, "cleanup did not delete the partial drawer ids"
+
 
 class TestSourceFileDeleteIds:
     """#104: the sweeper writes drawers with no extract_mode at all

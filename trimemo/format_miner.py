@@ -665,10 +665,28 @@ def _file_chunks_locked(
 
         try:
             collection.delete(where={"source_file": source_file})
-        except Exception:
-            logger.debug("Stale-drawer purge failed for %s", source_file, exc_info=True)
+        except Exception as exc:
+            # Abort this file rather than fall through to upsert: proceeding
+            # would either leave stale tail drawers as permanent orphans (old
+            # chunk count > new) or silently overwrite only the overlapping
+            # chunk_index positions — not a real re-mine. Returning without
+            # writing leaves the old drawers' stored mtime untouched, so the
+            # next mine still sees a mismatch and retries. Mirrors
+            # miner.process_file (#23).
+            print(
+                f"  ! [skip] {Path(source_file).name[:50]:50} stale-drawer purge failed "
+                f"({exc!r}); leaving existing drawers untouched, will retry on the "
+                f"next mine",
+                file=sys.stderr,
+            )
+            logger.warning("Stale-drawer purge failed for %s", source_file, exc_info=True)
+            return 0, True
 
         filed_at = datetime.now().isoformat()
+        # Ids written by *this* run. The purge above already removed every
+        # prior drawer for the file, so anything we wrote here is ours to
+        # discard if a later batch fails.
+        written_ids: list = []
         for batch_start in range(0, len(chunks), DRAWER_UPSERT_BATCH_SIZE):
             batch_docs: list = []
             batch_ids: list = []
@@ -716,11 +734,34 @@ def _file_chunks_locked(
                     ids=batch_ids,
                     metadatas=batch_metas,
                 )
-                drawers_added += len(batch_docs)
-            except Exception as exc:
-                if "already exists" not in str(exc).lower():
-                    raise
+            except Exception:
+                # A failed batch must not leave earlier batches behind: those
+                # drawers carry this file's source_mtime, so the next run would
+                # read the partial set as complete and never fetch the missing
+                # chunks. Swallowing an "already exists"-shaped error here was
+                # worse still — a concurrent-write conflict (qdrant/pgvector/
+                # milvus) left that batch permanently absent while chunk_total
+                # claimed the full count. Mirrors convo_miner.
+                _discard_partial_drawers(collection, [*written_ids, *batch_ids], source_file)
+                raise
+            written_ids.extend(batch_ids)
+            drawers_added += len(batch_docs)
     return drawers_added, False
+
+
+def _discard_partial_drawers(collection, ids: list, source_file: str) -> None:
+    """Best-effort removal of drawers written before a mid-file failure."""
+    ids = list(dict.fromkeys(ids))
+    if not ids:
+        return
+    try:
+        collection.delete(ids=ids)
+    except Exception:
+        logger.warning(
+            "Failed to clean partial format drawers after upsert error for %s",
+            source_file,
+            exc_info=True,
+        )
 
 
 def mine_formats(

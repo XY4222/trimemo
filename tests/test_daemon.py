@@ -1731,3 +1731,49 @@ def test_start_daemon_replaces_a_dead_registration(tmp_path, monkeypatch):
     with pytest.raises(OSError, match="stop here"):
         daemon.start_daemon(str(palace), timeout=0.05)
     assert spawned
+
+
+def test_shutdown_signals_drain_instead_of_killing_the_daemon():
+    """SIGTERM/SIGHUP must trigger a graceful stop, not an immediate death.
+
+    Python's default SIGTERM action terminates the process, which bypasses the
+    ``finally`` blocks in ``run_server`` — the drain that lets an in-flight
+    mine finish, the writer-lease close and the stale endpoint/pid cleanup.
+    """
+    import signal
+
+    class _FakeHTTPD:
+        def __init__(self):
+            self.shutdown_calls = 0
+
+        def shutdown(self):
+            self.shutdown_calls += 1
+
+    class _FakeRuntime:
+        def __init__(self):
+            self.shutdown_event = threading.Event()
+
+    httpd = _FakeHTTPD()
+    runtime = _FakeRuntime()
+    before = signal.getsignal(signal.SIGTERM)
+
+    previous = daemon._install_shutdown_signals(httpd, runtime)
+    try:
+        handler = signal.getsignal(signal.SIGTERM)
+        assert handler is not before, "SIGTERM handler was not installed"
+        assert callable(handler)
+
+        # Invoke it directly instead of raising a real signal: the production
+        # path ends in httpd.shutdown(), which is the assertion that matters.
+        handler(signal.SIGTERM, None)
+
+        deadline = time.time() + 2.0
+        while httpd.shutdown_calls == 0 and time.time() < deadline:
+            time.sleep(0.01)
+
+        assert runtime.shutdown_event.is_set()
+        assert httpd.shutdown_calls == 1
+    finally:
+        daemon._restore_shutdown_signals(previous)
+
+    assert signal.getsignal(signal.SIGTERM) is before

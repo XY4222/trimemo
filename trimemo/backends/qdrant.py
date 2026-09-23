@@ -44,6 +44,7 @@ from .base import (
     UnsupportedCapabilityError,
     UnsupportedFilterError,
     _IncludeSpec,
+    require_delete_scope,
 )
 
 logger = logging.getLogger(__name__)
@@ -1140,6 +1141,7 @@ class QdrantCollection(BaseCollection):
         )
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         _validate_where(where)
         if not self._remote_exists():
             if self._marker_exists():
@@ -1250,7 +1252,10 @@ class QdrantBackend(BaseBackend):
         return sha256(palace.id.encode("utf-8", errors="surrogatepass")).hexdigest()[:16]
 
     def _remote_collection_prefix(self, *, palace: PalaceRef, config: _QdrantConfig) -> str:
-        parts = ["trimemo"]
+        # ``mempalace`` is a persisted remote collection name, not branding:
+        # renaming it strands rows in collections the new code no longer
+        # resolves. Kept for the same no-migration reason as ``mempalace_drawers``.
+        parts = ["mempalace"]
         if config.namespace:
             parts.append(_slug(config.namespace, "namespace"))
         parts.append(self._palace_hash(palace))

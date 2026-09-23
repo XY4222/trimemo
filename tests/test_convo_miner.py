@@ -979,6 +979,92 @@ def test_file_conversation_exchange_invalid_room_falls_back_to_conversations():
     assert meta["room"] == "conversations"
 
 
+class _StoredCollection:
+    """In-memory collection backing the ``get``/``upsert`` pair dedupe needs.
+
+    ``_RecordingCollection`` only captures upserts; the dedupe path first
+    *reads* the source's existing drawers, so it needs a collection that
+    can answer ``get(where={"source_file": ...})`` with rows it wrote.
+    """
+
+    def __init__(self):
+        self.rows = []  # (id, document, metadata)
+        self.upsert_calls = 0
+
+    def get(self, *, where=None, limit=None, offset=0, include=None):
+        source = (where or {}).get("source_file")
+        matched = [r for r in self.rows if r[2].get("source_file") == source]
+        page = matched[offset : offset + limit] if limit is not None else matched[offset:]
+        return {
+            "ids": [r[0] for r in page],
+            "documents": [r[1] for r in page],
+            "metadatas": [r[2] for r in page],
+        }
+
+    def upsert(self, *, ids, documents, metadatas):
+        self.upsert_calls += 1
+        for row in zip(ids, documents, metadatas):
+            self.rows.append(row)
+
+
+def test_file_conversation_exchange_dedupe_is_rerunnable():
+    """``dedupe=True`` makes a backfill re-runnable.
+
+    ``make_exchange_drawer_id`` folds ``filed_at`` into the hash so a
+    *genuinely repeated* exchange stays its own drawer; a re-run of a
+    backfill would therefore duplicate everything. Opting into the
+    existing-drawer check must return the id already on file and write
+    nothing new (#14).
+    """
+    from trimemo.convo_miner import file_conversation_exchange
+
+    col = _StoredCollection()
+    first = file_conversation_exchange(col, **_exchange_kwargs(), dedupe=True)
+    assert first is not None
+    assert col.upsert_calls == 1
+
+    second = file_conversation_exchange(col, **_exchange_kwargs(), dedupe=True)
+
+    assert second == first, "a re-run minted a fresh id instead of reusing the filed one"
+    assert col.upsert_calls == 1, "dedupe=True filed a duplicate drawer"
+    assert len(col.rows) == 1
+
+
+def test_file_conversation_exchange_dedupe_is_scoped_to_wing_and_room():
+    """Identical text filed under a different room is a different memory.
+
+    Dedupe matches on source_file + verbatim text + wing/room; collapsing
+    only on text would silently drop a legitimate re-routing.
+    """
+    from trimemo.convo_miner import file_conversation_exchange
+
+    col = _StoredCollection()
+    file_conversation_exchange(col, **_exchange_kwargs(), dedupe=True)
+    other_room = file_conversation_exchange(col, **_exchange_kwargs(room="notes"), dedupe=True)
+
+    assert other_room is not None
+    assert col.upsert_calls == 2, "dedupe collapsed two different rooms into one drawer"
+    assert len(col.rows) == 2
+
+
+def test_file_conversation_exchange_default_keeps_repeats_distinct():
+    """The live path stays un-deduped — a repeated exchange is signal.
+
+    Dedupe is strictly opt-in so the canonical live filing path (e.g.
+    Hermes) still stores the same exchange twice when it really happened
+    twice.
+    """
+    from trimemo.convo_miner import file_conversation_exchange
+
+    col = _StoredCollection()
+    first = file_conversation_exchange(col, **_exchange_kwargs())
+    second = file_conversation_exchange(col, **_exchange_kwargs())
+
+    assert first is not None and second is not None
+    assert col.upsert_calls == 2, "the default live path silently de-duplicated a real turn"
+    assert len(col.rows) == 2
+
+
 def _write_dry_run_transcript(path: Path) -> None:
     path.write_text(
         "> What is the plan?\n"

@@ -169,6 +169,32 @@ class TestReplicaIdentity:
     def test_logstream_adopts_palace_identity(self, palace_a, ls_a):
         assert ls_a.replica_id == get_replica_id(palace_a)
 
+    def test_concurrent_minters_converge_on_one_identity(self, palace_a, monkeypatch):
+        """Two minters that both miss the file must not fork the identity.
+
+        The pre-write existence check is only a fast path: two processes can
+        both see no file, both mint, and the loser then keeps using an id the
+        file does not hold — two ids for one seat, forking its provenance.
+        Simulate that (both races miss the fast path) and assert the loser
+        adopts the winner's id instead of keeping its own.
+        """
+        from pathlib import Path
+
+        from trimemo import replica
+
+        real_exists = Path.exists
+        monkeypatch.setattr(
+            Path,
+            "exists",
+            lambda self: False if self.name == replica.REPLICA_FILENAME else real_exists(self),
+        )
+
+        first = replica.get_replica_id(palace_a)
+        second = replica.get_replica_id(palace_a)
+
+        assert second == first
+        assert json.load(open(os.path.join(palace_a, "replica.json")))["replica_id"] == first
+
 
 # ── Migration / backfill ──────────────────────────────────────────────────
 
@@ -333,6 +359,39 @@ class TestSyncPrimitives:
         event["topic"] = "security\nforged"
 
         with pytest.raises(ValueError, match="topic"):
+            ls_b.apply_remote_event(event)
+
+    def test_remote_event_rejects_every_unsanitized_field(self, ls_a, ls_b):
+        """A peer must not be able to store what a local caller could not.
+
+        The remote path used to write the peer's text straight into the table,
+        so an oversized body or a control character smuggled into a routing
+        field entered the log unfiltered.
+        """
+        base = _append(ls_a)
+        cases = [
+            ("id", "evt bad\x01id", "id"),
+            ("type", "Not A Type", "type"),
+            ("stream", "bad\x00stream", "stream"),
+            ("room", "r" * 300, "room"),
+            ("from_agent", "agent\ninjected", "from_agent"),
+            ("status", "definitely-not-a-status", "status"),
+            ("created_at", "yesterday", "created_at"),
+            ("hlc", "not-an-hlc", "not a valid HLC"),
+            ("origin_seq", "5", "origin_seq"),
+            ("body", "x" * (ls_a.max_body_bytes + 1), "body"),
+        ]
+        for key, value, match in cases:
+            event = dict(base, **{key: value})
+            with pytest.raises(ValueError, match=match):
+                ls_b.apply_remote_event(event)
+        # Nothing leaked into the store.
+        assert ls_b.list_events(limit=50) == []
+
+    def test_remote_event_rejects_non_list_artifact_ids(self, ls_a, ls_b):
+        event = _append(ls_a)
+        event["artifact_ids"] = "not-a-list"
+        with pytest.raises(ValueError, match="artifact_ids"):
             ls_b.apply_remote_event(event)
 
 

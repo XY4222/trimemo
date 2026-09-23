@@ -45,6 +45,7 @@ from .base import (
     QueryResult,
     UnsupportedFilterError,
     _IncludeSpec,
+    require_delete_scope,
 )
 
 logger = logging.getLogger(__name__)
@@ -793,9 +794,8 @@ class MilvusCollection(BaseCollection):
         return [self._extract_metadata(row) for row in rows]
 
     def delete(self, *, ids=None, where=None):
+        require_delete_scope(ids=ids, where=where)
         filter_expr = translate_where(where)
-        if ids is None and where is None:
-            raise ValueError("delete requires either ids= or where=")
         if not self._remote_exists():
             if self._marker_exists():
                 raise CollectionNotInitializedError(self._collection_name)
@@ -966,7 +966,10 @@ class MilvusBackend(BaseBackend):
         }
 
     def _remote_collection_prefix(self, *, palace: PalaceRef, config: _MilvusConfig) -> str:
-        parts = ["trimemo"]
+        # ``mempalace`` is a persisted remote collection name, not branding:
+        # renaming it strands rows in collections the new code no longer
+        # resolves. Kept for the same no-migration reason as ``mempalace_drawers``.
+        parts = ["mempalace"]
         if config.namespace:
             parts.append(_slug(config.namespace, "namespace"))
         parts.append(self._palace_hash(palace))

@@ -143,6 +143,49 @@ class TestServerRegistry:
         server_registry.clear_serverinfo(palace)
         assert not path.exists()
 
+    def test_recycled_pid_record_is_ignored(self, isolated_home):
+        """A live pid that is not the *author* must not resurrect the record.
+
+        The pid is genuinely alive (it is ours), but the record looks written an
+        hour before we started — the OS handed the crashed hub's pid to a later
+        process. Trusting it would send the palace bearer token to whatever now
+        holds the port (#2.5).
+        """
+        from trimemo import procident
+
+        started = procident.process_start_time(os.getpid())
+        if started is None:
+            pytest.skip("process start time is not readable on this platform")
+
+        palace = str(isolated_home / "palace")
+        path = server_registry.serverinfo_path(palace)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"pid": os.getpid(), "host": "127.0.0.1", "port": 8765, "scheme": "http"})
+        )
+        stale = started - 3600
+        os.utime(path, (stale, stale))
+
+        assert server_registry.read_live_serverinfo(palace) is None
+
+    def test_unreadable_start_time_keeps_a_live_record(self, isolated_home, monkeypatch):
+        """No start time available -> trust liveness.
+
+        Refusing is recoverable; discarding a live hub's record is not (#2442),
+        so an unreadable start time must not be treated as "recycled pid".
+        """
+        from trimemo import procident
+
+        palace = str(isolated_home / "palace")
+        server_registry.write_serverinfo(
+            palace, host="127.0.0.1", port=8765, scheme="http", read_only=False
+        )
+        monkeypatch.setattr(procident, "process_start_time", lambda pid: None)
+
+        info = server_registry.read_live_serverinfo(palace)
+        assert info is not None
+        assert info["port"] == 8765
+
     def test_wildcard_bind_dialed_via_loopback(self):
         info = {"host": "0.0.0.0", "port": 9999, "scheme": "http"}
         assert server_registry.client_base_url(info) == "http://127.0.0.1:9999"
