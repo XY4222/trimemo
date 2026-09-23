@@ -149,7 +149,7 @@ INPUT=$(cat)
 #     ``printf '%s'`` removes the class of bug entirely.
 _mempal_parsed=$(
     umask 077
-    printf '%s' "$INPUT" | "$MEMPAL_PYTHON_BIN" -m mempalace.hook_shell parse-stop \
+    printf '%s' "$INPUT" | "$MEMPAL_PYTHON_BIN" -m trimemo.hook_shell parse-stop \
         2>"$STATE_DIR/last_python_err.log"
 )
 # The 2> redirect creates the file even when stderr is empty (success).
@@ -226,7 +226,7 @@ fi
 # Count human messages in the JSONL transcript
 # SECURITY: Pass transcript path as sys.argv to avoid shell injection via crafted paths
 if [ -f "$TRANSCRIPT_PATH" ]; then
-    EXCHANGE_COUNT=$("$MEMPAL_PYTHON_BIN" -m mempalace.hook_shell count-human-messages "$TRANSCRIPT_PATH" 2>/dev/null)
+    EXCHANGE_COUNT=$("$MEMPAL_PYTHON_BIN" -m trimemo.hook_shell count-human-messages "$TRANSCRIPT_PATH" 2>/dev/null)
 elif [ -n "$TRANSCRIPT_PATH" ]; then
     echo "[$(date '+%H:%M:%S')] WARN: transcript_path not found after normalization: $TRANSCRIPT_PATH" >> "$STATE_DIR/hook.log"
     EXCHANGE_COUNT=0

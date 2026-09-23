@@ -15,7 +15,7 @@ covers recall only.
 
 Before relying on recall, confirm TriMemo is installed and reachable:
 
-- Official release page: <https://github.com/MemPalace/trimemo/releases>
+- Official release page: <https://github.com/XY4222/trimemo/releases>
 - Check installed: `trimemo --version`
 - Do not assume a version — the MCP tool set is the source of truth for
   what this installed build supports.
@@ -67,7 +67,7 @@ and violates TriMemo's "memory should feel instant" budget.
 
 The full canonical protocol — shared verbatim with the Cursor recall
 rule and the other integrations — is published in the
-[TriMemo repository](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md).
+[TriMemo repository](https://github.com/XY4222/trimemo/blob/main/integrations/shared/recall-protocol.md).
 
 ## Tool selection
 
@@ -90,7 +90,7 @@ agent on the shared hub — or waiting for its reply or patch — use the
 logstream tools (`mempalace_event_append`, `mempalace_event_wait`,
 `mempalace_patch_submit`, `mempalace_artifact_get`), not drawers or
 search. The canonical protocol is published in the
-[TriMemo repository](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/coordination-protocol.md).
+[TriMemo repository](https://github.com/XY4222/trimemo/blob/main/integrations/shared/coordination-protocol.md).
 
 ## Unhappy paths
 
@@ -132,7 +132,7 @@ search. The canonical protocol is published in the
 
 ## Official References
 
-- TriMemo: <https://github.com/MemPalace/trimemo>
-- TriMemo releases: <https://github.com/MemPalace/trimemo/releases>
+- TriMemo: <https://github.com/XY4222/trimemo>
+- TriMemo releases: <https://github.com/XY4222/trimemo/releases>
 - Cursor Skills documentation: <https://cursor.com/docs/skills>
 - Agent Skills specification: <https://agentskills.io/specification>

@@ -1,4 +1,4 @@
-"""Allow ``python -m mempalace.mcp_server``."""
+"""Allow ``python -m trimemo.mcp_server``."""
 
 from . import main
 

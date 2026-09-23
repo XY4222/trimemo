@@ -121,7 +121,7 @@ def _dist_search_path() -> list[str]:
     """``sys.path`` entries this server will trust to answer "what is installed".
 
     The working directory is excluded. Under the documented launch
-    ``python -m mempalace.mcp_server`` (website/guide/mcp-integration.md) the
+    ``python -m trimemo.mcp_server`` (website/guide/mcp-integration.md) the
     interpreter puts the MCP host's own working directory first on sys.path, so
     a plain ``importlib.metadata.version()`` would resolve against whatever
     project the user happens to have open. Any repository carrying a top-level

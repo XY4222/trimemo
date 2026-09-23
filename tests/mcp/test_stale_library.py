@@ -338,7 +338,7 @@ class TestStaleLibraryGate:
         assert mcp_server._mcp_stale_library_refusal(1, "mempalace_add_drawer") is None
 
     def test_working_directory_cannot_dictate_the_verdict(self, tmp_path, monkeypatch):
-        """Regression: under the documented `python -m mempalace.mcp_server`
+        """Regression: under the documented `python -m trimemo.mcp_server`
         launch sys.path[0] is the MCP host's working directory, so a project
         carrying a top-level mempalace.egg-info/ could otherwise decide whether
         this server accepts writes — and win again on every restart."""

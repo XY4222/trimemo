@@ -5,7 +5,7 @@ Run the exact same benchmarks we report. Clone, install, run.
 ## Setup
 
 ```bash
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 ```

@@ -2,7 +2,7 @@
 
 Curated summary of TriMemo's reproducible benchmark results. For the
 complete progression with every experiment, see
-[`benchmarks/BENCHMARKS.md`](https://github.com/MemPalace/trimemo/blob/main/benchmarks/BENCHMARKS.md).
+[`benchmarks/BENCHMARKS.md`](https://github.com/XY4222/trimemo/blob/main/benchmarks/BENCHMARKS.md).
 All headline numbers on this page are reproducible from the committed
 repository — datasets, scripts, and per-question result JSONLs are all
 checked in.
@@ -111,7 +111,7 @@ reference:
 Every benchmark runs deterministically from this repository.
 
 ```bash
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 
@@ -144,4 +144,4 @@ individual answer is auditable — not just the aggregate.
 
 For the complete progression (hybrid v1 → v4, diary mode, palace mode,
 LoCoMo architecture iterations, methodology integrity notes), see
-[`benchmarks/BENCHMARKS.md`](https://github.com/MemPalace/trimemo/blob/main/benchmarks/BENCHMARKS.md).
+[`benchmarks/BENCHMARKS.md`](https://github.com/XY4222/trimemo/blob/main/benchmarks/BENCHMARKS.md).

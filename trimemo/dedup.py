@@ -12,13 +12,13 @@ local backends (Chroma, sqlite_exact) this stays on-machine with no external
 calls; with a remote backend (e.g. Qdrant) it issues queries to that backend.
 
 Usage (standalone):
-    python -m mempalace.dedup                          # dedup all
-    python -m mempalace.dedup --dry-run                # preview only
-    python -m mempalace.dedup --threshold 0.10         # stricter (near-identical only)
-    python -m mempalace.dedup --threshold 0.35         # looser (catches paraphrased content)
-    python -m mempalace.dedup --wing my_project        # scope to one wing
-    python -m mempalace.dedup --stats                  # stats only
-    python -m mempalace.dedup --source "my_project"    # filter by source
+    python -m trimemo.dedup                          # dedup all
+    python -m trimemo.dedup --dry-run                # preview only
+    python -m trimemo.dedup --threshold 0.10         # stricter (near-identical only)
+    python -m trimemo.dedup --threshold 0.35         # looser (catches paraphrased content)
+    python -m trimemo.dedup --wing my_project        # scope to one wing
+    python -m trimemo.dedup --stats                  # stats only
+    python -m trimemo.dedup --source "my_project"    # filter by source
 
 Usage (from CLI):
     trimemo dedup [--dry-run] [--threshold 0.15] [--stats]

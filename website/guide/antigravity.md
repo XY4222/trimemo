@@ -16,12 +16,12 @@ PreInvocation) for background mining and startup memory injection.
 | PreInvocation   | `trimemo-wake` — injects memory on the first model call   |
 
 The full audit of which Antigravity surfaces we use, why, and what we
-deliberately do not ship is in [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md).
+deliberately do not ship is in [`hooks/antigravity/INVESTIGATION.md`](https://github.com/XY4222/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md).
 
 ## Prerequisites
 
 - Python 3.9+
-- [`trimemo`](https://github.com/MemPalace/trimemo) installed and
+- [`trimemo`](https://github.com/XY4222/trimemo) installed and
   on `$PATH` (`trimemo --version` to verify)
 - [Antigravity IDE](https://antigravity.google/) installed (`~/.gemini/`
   exists)
@@ -316,12 +316,12 @@ five seconds.
 
 ## See also
 
-- [`hooks/antigravity/INVESTIGATION.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md)
+- [`hooks/antigravity/INVESTIGATION.md`](https://github.com/XY4222/trimemo/blob/main/hooks/antigravity/INVESTIGATION.md)
   — every Antigravity surface investigated, with verbatim quotes from
   the official docs.
-- [`hooks/antigravity/STDIN_SHAPE.md`](https://github.com/MemPalace/trimemo/blob/main/hooks/antigravity/STDIN_SHAPE.md)
+- [`hooks/antigravity/STDIN_SHAPE.md`](https://github.com/XY4222/trimemo/blob/main/hooks/antigravity/STDIN_SHAPE.md)
   — exact wire format for both events.
-- [`examples/antigravity/`](https://github.com/MemPalace/trimemo/tree/main/examples/antigravity)
+- [`examples/antigravity/`](https://github.com/XY4222/trimemo/tree/main/examples/antigravity)
   — standalone `hooks.json` + `mcp_config.json` for users who don't
   want the full plugin install.
 - [Auto-Save Hooks](./hooks.md) — Claude Code equivalent.

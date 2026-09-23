@@ -230,7 +230,7 @@ not have — a requester who believes an agent is listening stops looking for a
 human to nudge.
 
 For the full protocol, see the
-[coordination protocol](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/coordination-protocol.md).
+[coordination protocol](https://github.com/XY4222/trimemo/blob/develop/integrations/shared/coordination-protocol.md).
 
 ## Coordination vs. memory
 

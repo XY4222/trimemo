@@ -14,7 +14,7 @@ virtual environment for you:
 
 ```bash
 # Clone the repository
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 
 # Create the venv and install TriMemo + dependencies

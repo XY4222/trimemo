@@ -19,7 +19,7 @@ If you want to validate the findings on your own hardware, this README walks you
 ### 1. Set up the environment
 
 ```bash
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 uv sync
 ```

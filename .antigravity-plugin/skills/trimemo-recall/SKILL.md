@@ -15,7 +15,7 @@ covers recall only.
 
 Before relying on recall, confirm TriMemo is installed and reachable:
 
-- Official release page: <https://github.com/MemPalace/trimemo/releases>
+- Official release page: <https://github.com/XY4222/trimemo/releases>
 - Check installed: `trimemo --version`
 - Do not assume a version — the MCP tool set is the source of truth for
   what this installed build supports.
@@ -73,7 +73,7 @@ and violates TriMemo's "memory should feel instant" budget.
 
 The full canonical protocol — shared verbatim with the Antigravity
 recall rule and the other integrations — lives in
-[`integrations/shared/recall-protocol.md`](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md).
+[`integrations/shared/recall-protocol.md`](https://github.com/XY4222/trimemo/blob/main/integrations/shared/recall-protocol.md).
 
 ## Tool selection
 
@@ -118,7 +118,7 @@ question — not a system prompt or pasted conversation) plus optional
 
 ## Official References
 
-- TriMemo: <https://github.com/MemPalace/trimemo>
-- TriMemo releases: <https://github.com/MemPalace/trimemo/releases>
+- TriMemo: <https://github.com/XY4222/trimemo>
+- TriMemo releases: <https://github.com/XY4222/trimemo/releases>
 - Antigravity documentation: <https://antigravity.google/docs>
 - Agent Skills specification: <https://agentskills.io/specification>

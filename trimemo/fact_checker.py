@@ -21,7 +21,7 @@ Usage:
     issues = check_text("Bob is Alice's brother", palace_path)
 
     # CLI
-    python -m mempalace.fact_checker "Bob is Alice's brother" \\
+    python -m trimemo.fact_checker "Bob is Alice's brother" \\
         --palace ~/.mempalace/palace
 """
 

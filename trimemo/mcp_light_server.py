@@ -1054,18 +1054,32 @@ def main():
         line = line.strip()
         if not line:
             continue
+        payload = None
         try:
             req = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        try:
-            resp = dispatch_light_stdio_request(req)
-        except Exception as exc:
-            logger.error("Server error: %s", exc)
-            continue
-        if resp is not None:
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            # Answer -32700 rather than dropping the line: staying silent
+            # leaves the client waiting on a request it already sent. The id is
+            # unknowable, so it is null per JSON-RPC 2.0 section 5. Mirrors
+            # mcp_server/runtime.py.
+            logger.error("Parse error: %s", exc)
+            payload = json.dumps(mcp_server._json_rpc_parse_error(), ensure_ascii=False)
+        else:
             try:
-                sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
+                resp = dispatch_light_stdio_request(req)
+                if resp is not None:
+                    payload = json.dumps(resp, ensure_ascii=False)
+            except Exception:
+                logger.exception("Server error")
+                req_id = req.get("id") if isinstance(req, dict) else None
+                if req_id is None:
+                    continue
+                payload = json.dumps(
+                    mcp_server._json_rpc_internal_error(req_id), ensure_ascii=False
+                )
+        if payload is not None:
+            try:
+                sys.stdout.write(payload + "\n")
                 sys.stdout.flush()
             except (BrokenPipeError, OSError):
                 break

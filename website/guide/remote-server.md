@@ -248,7 +248,7 @@ messages between machines.
 ## One-command deployments
 
 The repo ships ready-to-edit deployment files under
-[`deploy/`](https://github.com/MemPalace/trimemo/tree/main/deploy):
+[`deploy/`](https://github.com/XY4222/trimemo/tree/main/deploy):
 
 **Docker Compose (server + Qdrant):**
 

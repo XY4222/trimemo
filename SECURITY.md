@@ -15,7 +15,7 @@ TriMemo follows semantic versioning. Security fixes land on the current major ve
 
 We take the security of TriMemo seriously. If you believe you have found a security vulnerability, please report it privately using **GitHub Private Vulnerability Reporting**:
 
-1. Open the [Security tab](https://github.com/MemPalace/trimemo/security) of this repository.
+1. Open the [Security tab](https://github.com/XY4222/trimemo/security) of this repository.
 2. Click **Advisories** → **Report a vulnerability**.
 3. Fill in the form with the details below.
 

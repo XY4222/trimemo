@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > This page documents unreleased hook write-routing behavior on `develop`.
 > TriMemo v3.6.0 does not consume `write_routing.hooks`; see the
-> [v3.6.0 write-routing policy](https://github.com/MemPalace/trimemo/blob/v3.6.0/docs/write-routing-policy.md#backward-compatibility)
+> [v3.6.0 write-routing policy](https://github.com/XY4222/trimemo/blob/v3.6.0/docs/write-routing-policy.md#backward-compatibility)
 > for behavior available in that release.
 
 Hook-triggered writes use the shared write-routing policy introduced for the

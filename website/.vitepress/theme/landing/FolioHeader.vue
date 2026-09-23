@@ -10,7 +10,7 @@
       <a href="#mechanics" class="hide-mobile">Mechanics</a>
       <a href="#install" class="hide-mobile">Install</a>
       <a href="/guide/getting-started">Docs</a>
-      <a href="https://github.com/MemPalace/trimemo">GitHub ↗</a>
+      <a href="https://github.com/XY4222/trimemo">GitHub ↗</a>
     </nav>
   </header>
 </template>

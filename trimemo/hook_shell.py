@@ -129,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
         print(
-            "usage: python -m mempalace.hook_shell <parse-stop|parse-precompact|count-human-messages>",
+            "usage: python -m trimemo.hook_shell <parse-stop|parse-precompact|count-human-messages>",
             file=sys.stderr,
         )
         return 2

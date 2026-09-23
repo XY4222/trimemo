@@ -12,7 +12,7 @@ Seeds the entity_registry with confirmed data so TriMemo knows your world
 from minute one — before a single session is indexed.
 
 Usage:
-    python3 -m mempalace.onboarding
+    python3 -m trimemo.onboarding
     or: trimemo init
 """
 

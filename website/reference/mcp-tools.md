@@ -82,7 +82,7 @@ evidence (`unknown`). An inferred `content_date` is kept separate; its source is
 Missing content dates are `null`. These fields do not change ranking or the
 filing-date semantics of `since`/`before`.
 
-See [date provenance](https://github.com/MemPalace/trimemo/blob/develop/docs/authored-at.md)
+See [date provenance](https://github.com/XY4222/trimemo/blob/develop/docs/authored-at.md)
 for interpretation and compatibility details.
 
 ---

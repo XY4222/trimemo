@@ -285,14 +285,34 @@ def _run_proxy_loop(palace_path) -> None:
 
         payload = None
         try:
-            response = _handle(json.loads(line), palace_path, local)
-            if response is not None:
-                payload = json.dumps(response, ensure_ascii=False)
+            request = json.loads(line)
         except KeyboardInterrupt:
             break
-        except Exception as e:
-            logger.error(f"Server error: {e}")
-            continue
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            # Answer -32700 instead of dropping the line: a client that sent a
+            # request would otherwise wait forever on a response it can never
+            # receive. The id is unknowable here, so it is null per JSON-RPC
+            # 2.0 section 5. Mirrors mcp_server/runtime.py.
+            logger.error("Parse error: %s", exc)
+            payload = json.dumps(local.load()._json_rpc_parse_error(), ensure_ascii=False)
+        else:
+            try:
+                response = _handle(request, palace_path, local)
+                if response is not None:
+                    payload = json.dumps(response, ensure_ascii=False)
+            except KeyboardInterrupt:
+                break
+            except Exception:
+                # Log the traceback: the client only gets a generic -32603, so
+                # the stack is the only record of what failed.
+                logger.exception("Server error")
+                req_id = request.get("id") if isinstance(request, dict) else None
+                if req_id is None:
+                    # A notification is owed no response, failure included.
+                    continue
+                payload = json.dumps(
+                    local.load()._json_rpc_internal_error(req_id), ensure_ascii=False
+                )
 
         if payload is None:
             continue

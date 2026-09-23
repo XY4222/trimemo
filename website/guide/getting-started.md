@@ -16,7 +16,7 @@ Follow the [Termux guide](/guide/termux) to run TriMemo in a Debian PRoot
 container instead of attempting a native install.
 
 ::: danger Security Warning
-The domain `mempalace.tech` is a **brand-squatting site** not affiliated with this project. It is known to run ad-redirects and potential malware. The official TriMemo distribution is only available via this [GitHub repository](https://github.com/MemPalace/trimemo) and [PyPI](https://pypi.org/project/trimemo/). Never install binaries or scripts from unofficial domains.
+The domain `mempalace.tech` is a **brand-squatting site** not affiliated with this project. It is known to run ad-redirects and potential malware. The official TriMemo distribution is only available via this [GitHub repository](https://github.com/XY4222/trimemo) and [PyPI](https://pypi.org/project/trimemo/). Never install binaries or scripts from unofficial domains.
 :::
 
 ### Requirements
@@ -30,7 +30,7 @@ No API key required for the core local workflow. After installation, the main st
 ### From Source
 
 ```bash
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 uv sync --extra dev   # or: pip install -e ".[dev]"
 ```

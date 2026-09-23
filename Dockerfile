@@ -1,20 +1,20 @@
 # syntax=docker/dockerfile:1.7
 
-# MemPalace — CPU image.
+# TriMemo — CPU image.
 #
 # Multi-stage build using uv (the project ships a uv.lock, so we install from
 # the frozen lockfile for reproducible images). The default runtime is the MCP
 # server over stdio; the CLI is reachable through the same entrypoint.
 #
 # Build:
-#   docker build -t mempalace .
-#   docker build -t mempalace --build-arg EXTRAS="extract,spellcheck" .
+#   docker build -t trimemo .
+#   docker build -t trimemo --build-arg EXTRAS="extract,spellcheck" .
 #
 # Run (MCP server over stdio, palace persisted on the host):
-#   docker run -i --rm -v mempalace-data:/data mempalace
+#   docker run -i --rm -v trimemo-data:/data trimemo
 #
 # Run (CLI):
-#   docker run --rm -v mempalace-data:/data mempalace search "why GraphQL"
+#   docker run --rm -v trimemo-data:/data trimemo search "why GraphQL"
 #
 # GPU acceleration lives in Dockerfile.gpu (it needs a CUDA base image).
 
@@ -54,7 +54,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     for e in $(echo "${EXTRAS}" | tr ',' ' '); do flags="${flags} --extra ${e}"; done; \
     uv sync --frozen --no-install-project --no-dev ${flags}
 
-# Layer 2: the project itself. --no-editable installs mempalace into the venv's
+# Layer 2: the project itself. --no-editable installs trimemo into the venv's
 # site-packages (instead of an .pth pointing at /app), so the runtime stage can
 # copy only /app/.venv and drop the source tree.
 COPY . /app
@@ -67,13 +67,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # --- runtime ----------------------------------------------------------------
 FROM python:${PYTHON_VERSION}-slim AS runtime
 
-LABEL org.opencontainers.image.title="MemPalace" \
+LABEL org.opencontainers.image.title="TriMemo" \
       org.opencontainers.image.description="Local-first AI memory — verbatim storage, MCP server + CLI." \
-      org.opencontainers.image.source="https://github.com/MemPalace/mempalace" \
+      org.opencontainers.image.source="https://github.com/XY4222/trimemo" \
       org.opencontainers.image.licenses="MIT"
 
 # /data is the single persistence root: HOME points here, so the palace
-# (~/.mempalace/palace), config (~/.mempalace), and the embedding-model cache
+# (~/.trimemo/palace), config (~/.trimemo), and the embedding-model cache
 # all land under one mountable volume. The default `minilm` model caches under
 # ~/.cache/chroma (~80 MB, from ChromaDB's S3); the optional `embeddinggemma`
 # model caches under ~/.cache/huggingface (~300 MB). Both lazy-download on
@@ -84,17 +84,17 @@ ENV HOME=/data \
     PYTHONDONTWRITEBYTECODE=1
 
 # Non-root user owning the data volume.
-RUN groupadd --gid 1000 mempalace \
-    && useradd --uid 1000 --gid 1000 --home-dir /data --create-home mempalace
+RUN groupadd --gid 1000 trimemo \
+    && useradd --uid 1000 --gid 1000 --home-dir /data --create-home trimemo
 
 WORKDIR /app
 
 # The resolved virtualenv from the builder — no build toolchain in this layer.
-COPY --from=builder --chown=mempalace:mempalace /app/.venv /app/.venv
-COPY --chown=mempalace:mempalace docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder --chown=trimemo:trimemo /app/.venv /app/.venv
+COPY --chown=trimemo:trimemo docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER mempalace
+USER trimemo
 VOLUME ["/data"]
 
 # Default to the MCP server; `docker run` it with `-i` for stdio JSON-RPC.

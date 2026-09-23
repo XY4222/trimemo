@@ -12,7 +12,7 @@ directory and the same kill switches.
 The hooks here only handle the auto-save side. To also get TriMemo's
 MCP server, slash commands (`/trimemo-search`, etc.), and the
 guided `trimemo` skill, install the bundled
-[Cursor plugin](https://github.com/MemPalace/trimemo/blob/main/.cursor-plugin/README.md) —
+[Cursor plugin](https://github.com/XY4222/trimemo/blob/main/.cursor-plugin/README.md) —
 it's the `.cursor-plugin/` folder at the repo root, dropped into
 `~/.cursor/plugins/local/trimemo`. The plugin and the hooks are
 orthogonal: install whichever you want, in any order. The plugin
@@ -27,13 +27,13 @@ The `sessionStart` wake hook is one of three orthogonal ways TriMemo
 gets the agent to read the palace before answering. Install any
 combination — they reinforce each other and all reference the same
 canonical protocol in
-[`integrations/shared/recall-protocol.md`](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/recall-protocol.md).
+[`integrations/shared/recall-protocol.md`](https://github.com/XY4222/trimemo/blob/develop/integrations/shared/recall-protocol.md).
 
 | Layer | Fires | Scope | Get it from |
 |-------|-------|-------|-------------|
 | **`sessionStart` hook** | Once per new conversation | Injects wing-scoped recall context up front | The hooks on this page |
-| **`trimemo-recall` skill** | When a request matches its description, or when attached | Full search-before-answer protocol | The [Cursor plugin](https://github.com/MemPalace/trimemo/blob/main/.cursor-plugin/README.md) (`skills/`) |
-| **Recall rule** | When Cursor's matcher judges the turn recall-relevant | A short nudge to search first | The plugin (`rules/trimemo-recall.mdc`, `alwaysApply: false`) or [`examples/cursor/rules/`](https://github.com/MemPalace/trimemo/blob/develop/examples/cursor/rules/README.md) |
+| **`trimemo-recall` skill** | When a request matches its description, or when attached | Full search-before-answer protocol | The [Cursor plugin](https://github.com/XY4222/trimemo/blob/main/.cursor-plugin/README.md) (`skills/`) |
+| **Recall rule** | When Cursor's matcher judges the turn recall-relevant | A short nudge to search first | The plugin (`rules/trimemo-recall.mdc`, `alwaysApply: false`) or [`examples/cursor/rules/`](https://github.com/XY4222/trimemo/blob/develop/examples/cursor/rules/README.md) |
 
 The hook is the only layer that fires *automatically and exactly once*
 per chat. The skill and rule are demand-driven: they kick in when the
@@ -361,7 +361,7 @@ default flips to silent to match Claude.
 
 - [Auto-Save Hooks (Claude Code + Codex)](/guide/hooks) — the analogous
   feature for those tools.
-- [`hooks/cursor/STDIN_SHAPE.md`](https://github.com/MemPalace/trimemo/blob/develop/hooks/cursor/STDIN_SHAPE.md)
+- [`hooks/cursor/STDIN_SHAPE.md`](https://github.com/XY4222/trimemo/blob/develop/hooks/cursor/STDIN_SHAPE.md)
   — per-event JSON schema with citations.
 - [Claude Code Retention](/guide/claude-code-retention) — broader
   setup checklist if you mix Cursor with Claude Code.

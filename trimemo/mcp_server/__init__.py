@@ -11,7 +11,7 @@ split across this package so PRs can target a domain file instead of one
 
 * ``from trimemo.mcp_server import tool_status, TOOLS, handle_request, main``
 * test monkeypatches on ``mempalace.mcp_server._config`` / ``_get_kg`` / ...
-* ``python -m mempalace.mcp_server``
+* ``python -m trimemo.mcp_server``
 * stdio protection running before chromadb import
 
 Tools (read):

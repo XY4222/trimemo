@@ -40,7 +40,7 @@ RECALL_RULE_MD = PLUGIN_DIR / "rules" / "trimemo-recall.md"
 SHARED_PROTOCOL = REPO_ROOT / "integrations" / "shared" / "recall-protocol.md"
 INSTALL_SH = REPO_ROOT / "hooks" / "antigravity" / "install.sh"
 SHARED_PROTOCOL_REF = (
-    "https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md"
+    "https://github.com/XY4222/trimemo/blob/main/integrations/shared/recall-protocol.md"
 )
 
 EXPECTED_HOOKS = {

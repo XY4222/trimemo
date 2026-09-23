@@ -159,5 +159,5 @@ search-before-answer so the agent reads the palace instead of guessing.
 ## Canonical references
 
 - [Shared brain](https://mempalaceofficial.com/guide/shared-brain.html)
-- [Coordination protocol](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/coordination-protocol.md)
-- [Recall protocol](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md)
+- [Coordination protocol](https://github.com/XY4222/trimemo/blob/main/integrations/shared/coordination-protocol.md)
+- [Recall protocol](https://github.com/XY4222/trimemo/blob/main/integrations/shared/recall-protocol.md)

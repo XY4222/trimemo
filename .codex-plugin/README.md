@@ -1,6 +1,6 @@
 # TriMemo - Codex CLI Plugin
 
-Give your AI a persistent memory -- mine projects and conversations into a searchable palace backed by ChromaDB, with 44 MCP tools, auto-save hooks, and guided skills.
+Give your AI a persistent memory -- mine projects and conversations into a searchable palace backed by ChromaDB, with 45 MCP tools, auto-save hooks, and guided skills.
 
 ## Prerequisites
 
@@ -57,5 +57,5 @@ Set the `MEMPAL_DIR` environment variable to a directory path to automatically r
 
 ## Support
 
-- Repository: https://github.com/MemPalace/trimemo
-- Issues: https://github.com/MemPalace/trimemo/issues
+- Repository: https://github.com/XY4222/trimemo
+- Issues: https://github.com/XY4222/trimemo/issues

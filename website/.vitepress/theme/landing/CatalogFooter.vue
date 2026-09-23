@@ -34,10 +34,10 @@
       <div>
         <h4>The project</h4>
         <ul>
-          <li><a href="https://github.com/MemPalace/trimemo">GitHub</a></li>
-          <li><a href="https://github.com/MemPalace/trimemo/blob/main/README.md">Readme</a></li>
-          <li><a href="https://github.com/MemPalace/trimemo/blob/main/ROADMAP.md">Roadmap</a></li>
-          <li><a href="https://github.com/MemPalace/trimemo/blob/main/CHANGELOG.md">Changelog</a></li>
+          <li><a href="https://github.com/XY4222/trimemo">GitHub</a></li>
+          <li><a href="https://github.com/XY4222/trimemo/blob/main/README.md">Readme</a></li>
+          <li><a href="https://github.com/XY4222/trimemo/blob/main/ROADMAP.md">Roadmap</a></li>
+          <li><a href="https://github.com/XY4222/trimemo/blob/main/CHANGELOG.md">Changelog</a></li>
         </ul>
       </div>
     </div>

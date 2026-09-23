@@ -104,7 +104,7 @@ assets/             ← logo + brand
 
 ## Good First Issues
 
-Check the [Issues](https://github.com/MemPalace/trimemo/issues) tab. Great starting points:
+Check the [Issues](https://github.com/XY4222/trimemo/issues) tab. Great starting points:
 
 - **New chat formats**: Add import support for Cursor, Copilot, or other AI tool exports
 - **Room detection**: Improve pattern matching in `room_detector_local.py`

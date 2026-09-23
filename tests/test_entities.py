@@ -7,7 +7,7 @@ def test_extracts_code_symbols_paths_urls():
     text = (
         "We patched `_extract_authored_at` in rag/convo_miner.py so MemoryStack and "
         "ChromaBackend agree. See module.func and pkg.Class.method, plus do_thing_now. "
-        "Ref https://github.com/MemPalace/trimemo/pull/1890 for details."
+        "Ref https://github.com/XY4222/trimemo/pull/1890 for details."
     )
     ents = set(extract_structural_entities(text))
     assert "_extract_authored_at" in ents

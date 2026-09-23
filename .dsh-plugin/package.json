@@ -7,10 +7,10 @@
   "author": {
     "name": "TriMemo"
   },
-  "homepage": "https://github.com/MemPalace/trimemo",
+  "homepage": "https://github.com/XY4222/trimemo",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MemPalace/mempalace.git",
+    "url": "git+https://github.com/XY4222/trimemo.git",
     "directory": ".dsh-plugin"
   },
   "keywords": [

@@ -18,10 +18,10 @@ The rebuild backs up ONLY chroma.sqlite3 (the source of truth), not the
 full palace directory — so it works even when link_lists.bin is bloated.
 
 Usage (standalone):
-    python -m mempalace.repair status
-    python -m mempalace.repair scan [--wing X]
-    python -m mempalace.repair prune --confirm
-    python -m mempalace.repair rebuild
+    python -m trimemo.repair status
+    python -m trimemo.repair scan [--wing X]
+    python -m trimemo.repair prune --confirm
+    python -m trimemo.repair rebuild
 
 Usage (from CLI):
     trimemo repair

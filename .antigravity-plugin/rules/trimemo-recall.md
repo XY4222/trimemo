@@ -14,5 +14,5 @@ we do / decide / discuss last time?" — search the palace first:
 Skip recall for pure greenfield work with no memory relevance (renaming
 a variable, fixing a typo). Recall is question-driven, not reflexive.
 
-Full protocol: <https://github.com/MemPalace/trimemo/blob/main/integrations/shared/recall-protocol.md>. Deeper guidance:
+Full protocol: <https://github.com/XY4222/trimemo/blob/main/integrations/shared/recall-protocol.md>. Deeper guidance:
 the `trimemo-recall` skill.

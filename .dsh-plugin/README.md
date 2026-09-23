@@ -1,6 +1,6 @@
 # TriMemo DeepSeek Harness Plugin
 
-The [TriMemo](https://github.com/MemPalace/trimemo) plugin for the
+The [TriMemo](https://github.com/XY4222/trimemo) plugin for the
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). It is
 a DSH bundle plugin with three rows:
 

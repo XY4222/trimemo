@@ -127,4 +127,4 @@ added through the MCP server and diary entries, which have no source file
   `mempalace_event_wait`), not drawers. Recall answers questions;
   the logstream moves work.
 - TriMemo design principles (verbatim, local-first, never summarize):
-  <https://github.com/MemPalace/trimemo>
+  <https://github.com/XY4222/trimemo>

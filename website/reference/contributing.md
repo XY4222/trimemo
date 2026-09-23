@@ -65,7 +65,7 @@ See [Benchmarks](/reference/benchmarks) for data download instructions.
 
 ## Good First Issues
 
-Check the [Issues](https://github.com/MemPalace/trimemo/issues) tab:
+Check the [Issues](https://github.com/XY4222/trimemo/issues) tab:
 
 - **New chat formats** — add import support for Cursor, Copilot, or other AI tool exports
 - **Room detection** — improve pattern matching in `room_detector_local.py`
@@ -85,8 +85,8 @@ If you're planning a significant change, open an issue first. Key principles:
 ## Community
 
 - [Discord](https://discord.com/invite/ycTQQCu6kn)
-- [GitHub Issues](https://github.com/MemPalace/trimemo/issues) — bug reports and feature requests
-- [GitHub Discussions](https://github.com/MemPalace/trimemo/discussions) — questions and ideas
+- [GitHub Issues](https://github.com/XY4222/trimemo/issues) — bug reports and feature requests
+- [GitHub Discussions](https://github.com/XY4222/trimemo/discussions) — questions and ideas
 
 ## License
 

@@ -560,7 +560,7 @@ def test_sqlite_integrity_status_checks_the_type_next_to_the_open(tmp_path):
 
 @needs_fifo
 def test_sqlite_integrity_errors_reports_a_fifo_named_chroma_sqlite3(tmp_path):
-    """``python -m mempalace.repair rebuild`` reaches the probe through this one."""
+    """``python -m trimemo.repair rebuild`` reaches the probe through this one."""
     palace = tmp_path / "palace"
     palace.mkdir()
     make_fifo(palace, "chroma.sqlite3")

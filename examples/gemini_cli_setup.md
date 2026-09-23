@@ -15,7 +15,7 @@ local virtual environment for you.
 
 ```bash
 # Clone the repository (if you haven't already)
-git clone https://github.com/MemPalace/mempalace.git
+git clone https://github.com/XY4222/trimemo.git
 cd trimemo
 
 # Create the venv and install TriMemo + dependencies in editable mode

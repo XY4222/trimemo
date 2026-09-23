@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# MemPalace — GPU (NVIDIA CUDA) image.
+# TriMemo — GPU (NVIDIA CUDA) image.
 #
 # Multi-stage build using uv (the project ships a uv.lock, so we install from
 # the frozen lockfile for reproducible images). The `gpu` extra pulls
@@ -12,12 +12,12 @@
 # interpreter and the resolved virtualenv do.
 #
 # Build:
-#   docker build -f Dockerfile.gpu -t mempalace:gpu .
+#   docker build -f Dockerfile.gpu -t trimemo:gpu .
 #
 # Run (requires the NVIDIA Container Toolkit on the host):
 #   docker run -i --rm --gpus all \
 #     -e MEMPALACE_EMBEDDING_DEVICE=cuda \
-#     -v mempalace-data:/data mempalace:gpu
+#     -v trimemo-data:/data trimemo:gpu
 #
 # NOTE: onnxruntime-gpu ties itself to a CUDA major version. If embeddings
 # fail to load on the GPU, align CUDA_IMAGE below with the CUDA release that
@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     for e in $(echo "${EXTRAS}" | tr ',' ' '); do flags="${flags} --extra ${e}"; done; \
     uv sync --frozen --no-install-project --no-dev --python ${PYTHON_VERSION} ${flags}
 
-# Layer 2: the project itself. --no-editable installs mempalace into the
+# Layer 2: the project itself. --no-editable installs trimemo into the
 # venv's site-packages (instead of an .pth pointing at /app), so the runtime
 # stage can copy only /app/.venv and drop the source tree.
 COPY . /app
@@ -74,9 +74,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # --- runtime ----------------------------------------------------------------
 FROM ${CUDA_IMAGE} AS runtime
 
-LABEL org.opencontainers.image.title="MemPalace (GPU)" \
+LABEL org.opencontainers.image.title="TriMemo (GPU)" \
       org.opencontainers.image.description="Local-first AI memory with CUDA-accelerated embeddings." \
-      org.opencontainers.image.source="https://github.com/MemPalace/mempalace" \
+      org.opencontainers.image.source="https://github.com/XY4222/trimemo" \
       org.opencontainers.image.licenses="MIT"
 
 # ca-certificates only — needed for the lazy HuggingFace model download on
@@ -92,8 +92,8 @@ ENV HOME=/data \
     MEMPALACE_EMBEDDING_DEVICE=cuda
 
 # Non-root user owning the data volume.
-RUN groupadd --gid 1000 mempalace \
-    && useradd --uid 1000 --gid 1000 --home-dir /data --create-home mempalace
+RUN groupadd --gid 1000 trimemo \
+    && useradd --uid 1000 --gid 1000 --home-dir /data --create-home trimemo
 
 WORKDIR /app
 
@@ -101,11 +101,11 @@ WORKDIR /app
 # boundary. /opt/uv/python must be copied alongside .venv: the venv's
 # shebangs and binary launcher reference it.
 COPY --from=builder /opt/uv/python /opt/uv/python
-COPY --from=builder --chown=mempalace:mempalace /app/.venv /app/.venv
-COPY --chown=mempalace:mempalace docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder --chown=trimemo:trimemo /app/.venv /app/.venv
+COPY --chown=trimemo:trimemo docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER mempalace
+USER trimemo
 VOLUME ["/data"]
 
 ENTRYPOINT ["docker-entrypoint.sh"]

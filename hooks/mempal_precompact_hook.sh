@@ -119,7 +119,7 @@ INPUT=$(cat)
 # backslashes are not mangled by echo flag parsing.
 _mempal_parsed=$(
     umask 077
-    printf '%s' "$INPUT" | "$MEMPAL_PYTHON_BIN" -m mempalace.hook_shell parse-precompact \
+    printf '%s' "$INPUT" | "$MEMPAL_PYTHON_BIN" -m trimemo.hook_shell parse-precompact \
         2>"$STATE_DIR/last_python_err.log"
 )
 # Drop the empty file on success; chmod 600 on failure to mirror

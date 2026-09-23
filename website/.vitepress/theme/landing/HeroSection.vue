@@ -44,7 +44,7 @@
         <div class="hero-secondary">
           <a href="/guide/getting-started">Read the docs</a>
           <span class="sep" aria-hidden="true">·</span>
-          <a href="https://github.com/MemPalace/trimemo">GitHub ↗</a>
+          <a href="https://github.com/XY4222/trimemo">GitHub ↗</a>
         </div>
       </div>
 

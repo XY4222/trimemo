@@ -41,7 +41,7 @@ def test_fragments_refuse_direct_import(name):
 
 
 def test_python_m_mcp_server_still_runs():
-    """``python -m mempalace.mcp_server`` must still be a valid entry."""
+    """``python -m trimemo.mcp_server`` must still be a valid entry."""
     proc = subprocess.run(
         [sys.executable, "-m", "trimemo.mcp_server"],
         input=b"",

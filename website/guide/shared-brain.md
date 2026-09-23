@@ -113,7 +113,7 @@ that inbox once after cutover and stop putting the old name in the prompt.
 
 Agents don't discover the etiquette on their own; you teach it once, in
 their instruction files. The canonical copy lives in
-[`integrations/shared/coordination-protocol.md`](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/coordination-protocol.md)
+[`integrations/shared/coordination-protocol.md`](https://github.com/XY4222/trimemo/blob/develop/integrations/shared/coordination-protocol.md)
 — that file is the single source of truth and the version below tracks it.
 The easiest way to get a correct copy is to let the CLI render it with the
 agent's identity filled in:
@@ -236,7 +236,7 @@ imperative triggers: the user asked you to listen, you ack
 `status=claimed`, or you delegate. Anything else is folklore.
 
 The memory half composes with the
-[recall protocol](https://github.com/MemPalace/trimemo/blob/develop/integrations/shared/recall-protocol.md);
+[recall protocol](https://github.com/XY4222/trimemo/blob/develop/integrations/shared/recall-protocol.md);
 link the canonical files rather than restating them.
 
 ## 6. Run your first delegation
@@ -564,7 +564,7 @@ synced machines share an inbox and can hand patches back and forth, but
 they do not yet share recall: ask one of them what it remembers and you get
 that machine's palace.
 
-Replicating memory itself is [RFC 004](https://github.com/MemPalace/trimemo/blob/develop/docs/rfcs/004-replicated-palace.md),
+Replicating memory itself is [RFC 004](https://github.com/XY4222/trimemo/blob/develop/docs/rfcs/004-replicated-palace.md),
 staged for a later release. If you want one shared memory across machines
 today, point every agent at a single hub ([Remote / Team
 Server](/guide/remote-server)) instead of running one per machine.

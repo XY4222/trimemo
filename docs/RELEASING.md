@@ -10,7 +10,7 @@ The plugin configs reference `trimemo-mcp` as the MCP server command, which
 resolves to a console script declared under `[project.scripts]` in
 `pyproject.toml`. If these disagree, `pip install trimemo` ships a plugin
 config pointing at a binary that was never installed — exactly what broke
-v3.3.2 ([#1093](https://github.com/MemPalace/trimemo/issues/1093)).
+v3.3.2 ([#1093](https://github.com/XY4222/trimemo/issues/1093)).
 
 ```bash
 grep -r trimemo-mcp pyproject.toml .mcp.json .claude-plugin .codex-plugin
@@ -31,13 +31,13 @@ releaser time:
 
 - **`pyproject.toml` points at `mcp_proxy`, not `mcp_server`.** A proxied
   stdio session loads only the forwarding path and pulls in the full server
-  lazily ([#2312](https://github.com/MemPalace/trimemo/pull/2312)). A
+  lazily ([#2312](https://github.com/XY4222/trimemo/pull/2312)). A
   `mempalace.mcp_server:main` here means the branch predates that change.
 - **`.codex-plugin/plugin.json` is *supposed* to have no match.** It carries
   `"mcpServers": "./.mcp.json"`, a path resolved against the marketplace
   entry's `source.path` of `./` — the repo root — so the Codex command lives
   in the root `.mcp.json` above, not under `.codex-plugin/`. This is what
-  [#2178](https://github.com/MemPalace/trimemo/pull/2178) changed to make
+  [#2178](https://github.com/XY4222/trimemo/pull/2178) changed to make
   the marketplace plugin installable, and `tests/test_codex_plugin_manifest.py`
   pins it. A missing `.codex-plugin/.mcp.json` is not a bug.
 
@@ -58,7 +58,7 @@ pyproject.toml:trimemo-light-mcp = "mempalace.mcp_light_server:main"
 If `pyproject.toml` has no match at all, **stop** — the entry point is
 missing and any fresh `pip install` will ship a plugin config pointing at a
 binary that was never installed. Investigate whether the release branch was
-cut before [#340](https://github.com/MemPalace/trimemo/pull/340) landed on
+cut before [#340](https://github.com/XY4222/trimemo/pull/340) landed on
 `develop`.
 
 ## Publishing to PyPI

@@ -8,7 +8,7 @@ description: Create, hand off, claim, execute, and close agent tasks through the
 A quick-start workflow for active work moving between agents. Tasks belong in
 the logstream, not in memory drawers. The canonical lifecycle and watcher
 discipline live in the public
-[coordination protocol](https://github.com/MemPalace/trimemo/blob/main/integrations/shared/coordination-protocol.md).
+[coordination protocol](https://github.com/XY4222/trimemo/blob/main/integrations/shared/coordination-protocol.md).
 
 ## Verify the coordination seam
 

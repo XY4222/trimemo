@@ -12,8 +12,8 @@ Architecture:
 - Entities extracted and stamped on metadata for filterable search.
 
 Usage:
-    python -m mempalace.diary_ingest --dir ~/daily_summaries --palace ~/.mempalace/palace
-    python -m mempalace.diary_ingest --dir ~/daily_summaries --palace ~/.mempalace/palace --force
+    python -m trimemo.diary_ingest --dir ~/daily_summaries --palace ~/.mempalace/palace
+    python -m trimemo.diary_ingest --dir ~/daily_summaries --palace ~/.mempalace/palace --force
 """
 
 import hashlib

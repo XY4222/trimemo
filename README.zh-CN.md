@@ -242,7 +242,7 @@ TriMemo 内置带有效时间窗的时序实体关系图谱——支持添加、
 
 - Python 3.9+
 - 一个向量存储后端（默认 ChromaDB）
-- 嵌入模型约占 300 MB 磁盘。初始化引导（`python -m mempalace.onboarding`）可选 `embeddinggemma-300m`（多语言，100+ 语种，推荐）或 `all-MiniLM-L6-v2`（仅英文，约 30 MB）。细节与迁移说明见 [`trimemo/embedding.py`](trimemo/embedding.py) 的文档字符串。
+- 嵌入模型约占 300 MB 磁盘。初始化引导（`python -m trimemo.onboarding`）可选 `embeddinggemma-300m`（多语言，100+ 语种，推荐）或 `all-MiniLM-L6-v2`（仅英文，约 30 MB）。细节与迁移说明见 [`trimemo/embedding.py`](trimemo/embedding.py) 的文档字符串。
 - 可选 —— 在服务端而非本地计算嵌入。在 `~/.mempalace/config.json` 中设 `embedding_model: "openai-compat"`，并配置 `embedding_api_url` / `embedding_api_model`（若服务端需要鉴权再加 `embedding_api_key`），即可使用任意兼容 OpenAI 的 `/v1/embeddings` 端点——LM Studio、llama.cpp、vLLM、Ollama 的 OpenAI 兼容层，或自建服务（例如更大的多语言模型或 GPU 推理的嵌入模型）。每个键都可用对应的 `MEMPALACE_EMBEDDING_API_*` 环境变量覆盖。当端点位于本机或局域网内时，内容不会离开你的网络。切换到该模式后需要执行 `trimemo repair rebuild-index`（向量空间不同）。
 
 核心基准测试路径不需要任何 API key。

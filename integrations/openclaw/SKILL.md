@@ -2,7 +2,7 @@
 name: trimemo
 description: "TriMemo — Local AI memory with 96.6% recall. Semantic search, temporal knowledge graph, palace architecture (wings/rooms/drawers). Free, no cloud, no API keys."
 version: 3.10.0
-homepage: https://github.com/MemPalace/trimemo
+homepage: https://github.com/XY4222/trimemo
 user-invocable: true
 metadata:
   openclaw:
@@ -214,4 +214,4 @@ claude mcp add trimemo -- python -m mempalace.mcp_server
 
 ## License
 
-[TriMemo](https://github.com/MemPalace/trimemo) is MIT licensed. Created by Milla Jovovich, Ben Sigman, Igor Lins e Silva, and contributors.
+[TriMemo](https://github.com/XY4222/trimemo) is MIT licensed. Created by Milla Jovovich, Ben Sigman, Igor Lins e Silva, and contributors.
