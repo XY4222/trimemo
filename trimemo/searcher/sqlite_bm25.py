@@ -146,6 +146,13 @@ def _bm25_only_via_sqlite(
         return _search_error_result(f"sqlite open failed: {e}")
 
     window_active = since_dt is not None or before_dt is not None
+    # Over-fetch by one row so "the candidate pool was full" can be decided
+    # exactly. A plain ``LIMIT max_candidates`` cannot tell a pool that holds
+    # exactly ``max_candidates`` rows from one that was cut off, so the
+    # truncation flag below used to fire on both — claiming rows might exist
+    # beyond the pool when none did. The extra row is trimmed away after the
+    # pool is built, so the candidate set handed downstream is unchanged.
+    pool_probe = max_candidates + 1
     try:
         # FTS5 MATCH expects whitespace-separated tokens. Drop tokens
         # shorter than 3 chars (trigram tokenizer can't match them).
@@ -168,7 +175,7 @@ def _bm25_only_via_sqlite(
                     {filter_sql}
                     LIMIT ?
                     """,
-                    (fts_query, collection_name, *filter_params, max_candidates),
+                    (fts_query, collection_name, *filter_params, pool_probe),
                 ).fetchall()
                 candidate_ids = [r[0] for r in rows]
             except sqlite3.Error:
@@ -201,7 +208,7 @@ def _bm25_only_via_sqlite(
                     ORDER BY e.created_at DESC
                     LIMIT ?
                     """,
-                    (collection_name, *filter_params, max_candidates),
+                    (collection_name, *filter_params, pool_probe),
                 ).fetchall()
                 candidate_ids = [r[0] for r in rows]
             except sqlite3.Error:
@@ -222,17 +229,21 @@ def _bm25_only_via_sqlite(
                         ORDER BY e.id DESC
                         LIMIT ?
                         """,
-                        (collection_name, *filter_params, max_candidates),
+                        (collection_name, *filter_params, pool_probe),
                     ).fetchall()
                     candidate_ids = [r[0] for r in rows]
                 except sqlite3.Error:
                     logger.debug("id-ordered fallback also failed", exc_info=True)
                     candidate_ids = []
 
-        # A full candidate page means rows beyond it never got a chance to
-        # match the window — mirror the vector path's truncation honesty
-        # (``date_filter_pool_truncated``) instead of a silently thin result.
-        window_pool_truncated = window_active and len(candidate_ids) >= max_candidates
+        # The probe row survived, so the pool really was cut off and rows
+        # beyond it never got a chance to match the window — mirror the vector
+        # path's truncation honesty (``date_filter_pool_truncated``) instead of
+        # a silently thin result. Trim the probe back off either way.
+        pool_truncated = len(candidate_ids) > max_candidates
+        if pool_truncated:
+            candidate_ids = candidate_ids[:max_candidates]
+        window_pool_truncated = window_active and pool_truncated
 
         if not candidate_ids:
             return {

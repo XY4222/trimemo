@@ -153,13 +153,18 @@ def parse_claude_jsonl(path: str) -> Iterator[dict]:
 
 # ── Cursor resolution ────────────────────────────────────────────────
 
+# Rows fetched per cursor page. Every backend has its own implicit ``get()``
+# cap (ChromaDB stops at 10000), so the sweep walks the session in explicit
+# pages instead of trusting a default it cannot see.
+_CURSOR_PAGE = 1000
+
 
 def get_palace_cursor(collection, session_id: str) -> Optional[str]:
     """Return the max timestamp of drawers for this session_id, or None.
 
     ISO-8601 strings compare lexically in the right order, so we don't
     need to parse them. Query scans metadatas for the session via the
-    backend's where-filter, then reduces.
+    backend's where-filter in explicit pages, then reduces.
 
     Backend errors are logged at WARNING and surface as a `None` cursor —
     which makes the caller treat the session as empty and ingest every
@@ -167,11 +172,43 @@ def get_palace_cursor(collection, session_id: str) -> Optional[str]:
     the next run by deterministic drawer IDs, so a degraded cursor never
     causes silent data loss.
     """
+    latest: Optional[str] = None
+    offset = 0
+    previous_page: tuple = ()
     try:
-        data = collection.get(
-            where={"session_id": session_id},
-            include=["metadatas"],
-        )
+        while True:
+            # Walk the session's drawers explicitly instead of issuing one
+            # un-bounded ``get``. Without ``limit`` the result is capped at
+            # whatever the backend defaults to (ChromaDB silently stops at
+            # 10000), so a session longer than that had its cursor computed
+            # from a prefix of its own drawers — the highest timestamp could
+            # sit outside the page, leaving the cursor too low and the sweep
+            # re-ingesting the tail on every run.
+            data = collection.get(
+                where={"session_id": session_id},
+                include=["metadatas"],
+                limit=_CURSOR_PAGE,
+                offset=offset,
+            )
+            page = data.get("ids") or []
+            for meta in data.get("metadatas") or []:
+                ts = meta.get("timestamp") if meta else None
+                if ts and (latest is None or ts > latest):
+                    latest = ts
+            if len(page) < _CURSOR_PAGE:
+                break
+            if tuple(page) == previous_page:
+                # A full page identical to the previous one means the backend
+                # is ignoring ``offset``; advancing would spin forever.
+                logger.warning(
+                    "sweeper: cursor page for session_id=%s did not advance "
+                    "past offset %d; stopping pagination.",
+                    session_id,
+                    offset,
+                )
+                break
+            previous_page = tuple(page)
+            offset += len(page)
     except Exception as exc:
         logger.warning(
             "sweeper: cursor lookup failed for session_id=%s (%s); "
@@ -180,11 +217,7 @@ def get_palace_cursor(collection, session_id: str) -> Optional[str]:
             exc,
         )
         return None
-    metas = data.get("metadatas") or []
-    timestamps = [m.get("timestamp") for m in metas if m and m.get("timestamp")]
-    if not timestamps:
-        return None
-    return max(timestamps)
+    return latest
 
 
 # ── Sweep ────────────────────────────────────────────────────────────

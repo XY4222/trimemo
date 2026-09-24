@@ -792,6 +792,15 @@ class QdrantCollection(BaseCollection):
                 offset=offset,
                 with_vector=with_vector,
             )
+            # An empty page carrying a non-None cursor would spin forever:
+            # termination below depends on the cursor alone, and a backend (or
+            # proxy) that answers "no points, here is the same offset" pins it
+            # on a value that never reaches None. Treat an empty page as the
+            # end of the scroll — the cost of a premature stop is a short read
+            # the caller already tolerates for ``max_rows``-style scans, while
+            # the cost of looping is a hung search.
+            if not points:
+                return rows
             rows.extend(_payload_row(point) for point in points)
             if max_rows is not None and len(rows) >= max_rows:
                 return rows[:max_rows]

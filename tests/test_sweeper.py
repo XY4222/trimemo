@@ -417,3 +417,92 @@ class TestSweeperDuplicateMessageIds:
         assert repeated_document == "USER: second copy, same uuid"
         assert repeated_metadata["timestamp"] == "2020-01-01T00:00:02.000Z"
         assert by_id[assistant_id][0] == "ASSISTANT: ok"
+
+
+# ── cursor pagination ───────────────────────────────────────────────────────
+
+
+def test_cursor_walks_every_page_instead_of_a_backend_default_cap():
+    """The cursor must not be computed from a prefix of the session.
+
+    Issuing one un-bounded ``get`` lets each backend apply its own implicit cap
+    (ChromaDB silently stops at 10000), so the highest timestamp could sit
+    beyond the returned rows and the cursor came back too low — leaving the
+    sweep to re-ingest the tail on every run.
+    """
+    from trimemo import sweeper
+
+    full_page = [{"timestamp": "2026-01-01T00:00:00"} for _ in range(sweeper._CURSOR_PAGE)]
+    last_page = [{"timestamp": "2026-09-09T09:09:09"}]
+    pages = [full_page, last_page]
+
+    class _Col:
+        def __init__(self):
+            self.requests = []
+
+        def get(self, **kwargs):
+            self.requests.append(kwargs)
+            index = len(self.requests) - 1
+            metas = pages[index] if index < len(pages) else []
+            return {
+                "ids": [f"p{index}-{n}" for n in range(len(metas))],
+                "metadatas": metas,
+            }
+
+    col = _Col()
+    assert sweeper.get_palace_cursor(col, "s1") == "2026-09-09T09:09:09"
+
+    assert [req.get("offset") for req in col.requests] == [0, sweeper._CURSOR_PAGE]
+    assert all(req.get("limit") == sweeper._CURSOR_PAGE for req in col.requests), (
+        "the cursor query must carry an explicit limit instead of trusting a "
+        "backend default it cannot see"
+    )
+
+
+def test_cursor_stops_when_the_backend_ignores_offset(caplog):
+    """A backend that ignores ``offset`` would otherwise be walked forever."""
+    from trimemo import sweeper
+
+    full_page = [{"timestamp": "2026-01-01T00:00:00"} for _ in range(sweeper._CURSOR_PAGE)]
+
+    class _StuckCol:
+        def __init__(self):
+            self.calls = 0
+
+        def get(self, **kwargs):
+            self.calls += 1
+            if self.calls > 3:
+                raise AssertionError(
+                    "cursor pagination did not stop on a non-advancing page"
+                )
+            # Same rows every time, regardless of the offset asked for.
+            return {
+                "ids": [f"same{n}" for n in range(sweeper._CURSOR_PAGE)],
+                "metadatas": full_page,
+            }
+
+    col = _StuckCol()
+    assert sweeper.get_palace_cursor(col, "s1") == "2026-01-01T00:00:00"
+    assert col.calls == 2, "pagination should stop on the first repeated page"
+
+
+def test_cursor_multi_page_walk_uses_the_global_max():
+    """The cursor is the max across pages, not the max of the last page."""
+    from trimemo import sweeper
+
+    pages = [
+        [{"timestamp": "2026-05-05T05:05:05"} for _ in range(sweeper._CURSOR_PAGE)],
+        [{"timestamp": "2026-02-02T02:02:02"}],
+    ]
+
+    class _Col:
+        def __init__(self):
+            self.calls = 0
+
+        def get(self, **kwargs):
+            index = self.calls
+            self.calls += 1
+            metas = pages[index] if index < len(pages) else []
+            return {"ids": [f"x{index}-{n}" for n in range(len(metas))], "metadatas": metas}
+
+    assert sweeper.get_palace_cursor(_Col(), "s1") == "2026-05-05T05:05:05"

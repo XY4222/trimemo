@@ -8,7 +8,7 @@ the second upsert silently overwrites the first, losing content with no
 error raised. The styleguide's partial-scope-key-migration rule names this
 shape — every concat-into-hash site is a candidate that must be triaged.
 
-This module is the single source of truth for ID construction in mempalace.
+This module is the single source of truth for ID construction in TriMemo.
 All call sites use the named helpers below; no module should inline
 ``hashlib.sha256(a + b)`` patterns.
 """
@@ -23,6 +23,28 @@ import hashlib
 # are guaranteed collision-safe within the v2 generation. The constant is
 # exported so call sites use ``ids.ID_RECIPE`` rather than a magic string.
 ID_RECIPE: str = "v3"
+
+# KNOWN LIMITATION — tracked, deliberately NOT changed by the review round that
+# found it. The drawers produced by ``make_drawer_id_from_chunk`` and
+# ``make_convo_drawer_id`` are prefixed ``drawer_{wing}_{room}_`` with ``_`` as
+# the joiner, while their hashed input covers only ``source_file`` +
+# ``chunk_index`` (+ ``extract_mode``) — wing and room are absent from it. So
+# ``(wing="wing_a", room="b_c")`` and ``(wing="wing_a_b", room="c")`` yield
+# byte-identical IDs, and ChromaDB's primary-key constraint makes the second
+# upsert silently overwrite the first. ``make_drawer_id_from_content`` (the
+# ``add_drawer`` path) does not share the defect: it hashes wing and room too.
+#
+# This cannot be fixed as a local edit, because every candidate fix (hashing
+# wing/room, or escaping the joiner) changes the ID of every existing drawer.
+# The safety net that would normally absorb such a change is missing:
+# ``id_recipe`` is written into drawer metadata but never read back, and the
+# idempotency gate (``palace.mined.file_already_mined``) keys off
+# ``normalize_version`` alone. A silent recipe change would therefore leave a
+# palace holding two generations of IDs with nothing able to distinguish them.
+# The complete fix is a recipe bump (``ID_RECIPE = "v4"``) *plus* teaching
+# ``file_already_mined`` to treat a stale ``id_recipe`` as "re-mine this file",
+# with the pinned literal in ``tests/test_ids.py`` updated in the same commit.
+# Pinned as-is by ``test_known_wing_room_prefix_ambiguity_is_still_present``.
 
 # '|' is reserved in Windows filenames and cannot appear in source paths
 # on any supported platform, making it strictly safer than ':' (which

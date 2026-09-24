@@ -887,3 +887,64 @@ def test_a_full_disk_does_not_fall_back_to_writing_in_place(temp_registry, monke
         miner.add_to_known_entities({"people": ["Dana"]})
 
     assert temp_registry.read_bytes() == original
+
+
+# ── the substring pre-filter must not change what gets tagged ────────────────
+
+
+def test_absent_registry_names_never_reach_the_regex_engine(temp_registry, monkeypatch):
+    """The per-name regex is skipped for names the body cannot contain.
+
+    ``_extract_entities_for_metadata`` used to run one ``re.search`` per
+    registered name over the whole body — O(len(known) x len(content)), once per
+    drawer, so a large registry dominates the mine. A case-insensitive substring
+    scan is a NECESSARY condition for the word-boundary match, so names failing
+    it are skipped without touching the regex engine.
+    """
+    import re as re_module
+
+    miner.add_to_known_entities(
+        {
+            "people": ["Julia Grib", "Absent Name One", "Absent Name Two"],
+            "projects": ["trimemo"],
+        }
+    )
+
+    patterns: list[str] = []
+    real_search = re_module.search
+
+    def counting_search(pattern, string, flags=0):
+        patterns.append(str(pattern))
+        return real_search(pattern, string, flags)
+
+    monkeypatch.setattr(re_module, "search", counting_search)
+
+    result = miner._extract_entities_for_metadata("Met with Julia Grib about trimemo.")
+    tagged = set(result.split(";")) if result else set()
+
+    # Behaviour is unchanged for the names that ARE present.
+    assert "Julia Grib" in tagged, tagged
+    assert "trimemo" in tagged, tagged
+    # ...and the absent ones never cost a regex probe. Compare against the
+    # ESCAPED spelling: the helper builds ``re.escape(name)``, so a bare
+    # "Absent Name" never appears literally in the pattern and a naive
+    # substring check here would pass no matter what the code did.
+    absent = [re_module.escape(name) for name in ("Absent Name One", "Absent Name Two")]
+    probed = [pattern for pattern in patterns if any(name in pattern for name in absent)]
+    assert not probed, (
+        f"a name the body cannot contain still reached the regex engine: {probed}"
+    )
+
+
+def test_mixed_case_mention_survives_the_substring_prefilter(temp_registry):
+    """The pre-filter must not defeat case-insensitive matching.
+
+    ``re.IGNORECASE`` matched ``JULIA GRIB`` for the registered ``Julia Grib``;
+    the lowercased necessary-condition scan has to keep doing so.
+    """
+    miner.add_to_known_entities({"people": ["Julia Grib"]})
+
+    result = miner._extract_entities_for_metadata("we paged JULIA GRIB about the release.")
+    tagged = set(result.split(";")) if result else set()
+
+    assert "Julia Grib" in tagged, tagged

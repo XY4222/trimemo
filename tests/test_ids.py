@@ -186,3 +186,45 @@ def test_private_delimited_sha256_truncation_honoured():
     """Truncation argument actually shortens the hex output."""
     result = ids._delimited_sha256(("a", "b"), 8)
     assert len(result) == 8
+
+
+# ── known limitation: the wing/room prefix is ambiguous ──────────────────────
+
+
+def test_known_wing_room_prefix_ambiguity_is_still_present():
+    """Characterization test for the limitation documented in ``ids.py``.
+
+    ``drawer_{wing}_{room}_`` is joined with ``_`` while the hash covers only
+    ``source_file`` + ``chunk_index`` (+ ``extract_mode``), so two *different*
+    (wing, room) pairs mint byte-identical IDs: the "wing = wing_a, room = b_c"
+    drawer and the "wing = wing_a_b, room = c" drawer collide, and ChromaDB's
+    primary-key constraint makes the second upsert silently overwrite the first.
+
+    Fixing it changes the ID of every existing drawer, so it cannot ship as a
+    local edit — ``id_recipe`` is written but never read back and the
+    idempotency gate keys off ``normalize_version``, leaving no rebuild path.
+    This test pins the defect so it stays visible; when the recipe migration
+    lands it must be updated, not deleted.
+    """
+    chunk_collision = (
+        ids.make_drawer_id_from_chunk("wing_a", "b_c", "/x/source.md", 3)
+        == ids.make_drawer_id_from_chunk("wing_a_b", "c", "/x/source.md", 3)
+    )
+    convo_collision = (
+        ids.make_convo_drawer_id("wing_a", "b_c", "/x/session.jsonl", "exchange", 3)
+        == ids.make_convo_drawer_id("wing_a_b", "c", "/x/session.jsonl", "exchange", 3)
+    )
+
+    assert chunk_collision and convo_collision, (
+        "the wing/room prefix ambiguity looks fixed for at least one helper — "
+        "update this characterization test together with the recipe migration"
+    )
+
+
+def test_make_drawer_id_from_content_is_not_affected():
+    """The ``add_drawer`` helper already hashes wing and room, so it does not
+    share the defect above — a useful contrast that keeps the known limitation
+    scoped to the two chunk-index helpers."""
+    assert ids.make_drawer_id_from_content("wing_a", "b_c", "body") != (
+        ids.make_drawer_id_from_content("wing_a_b", "c", "body")
+    )

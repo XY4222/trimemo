@@ -17,6 +17,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
+from .backends import CollectionNotInitializedError, PalaceNotFoundError
 from .palace import get_collection
 
 
@@ -80,7 +81,16 @@ def export_palace(palace_path: str, output_dir: str, format: str = "markdown") -
     Returns:
         Stats dict: {"wings": N, "rooms": N, "drawers": N}
     """
-    col = get_collection(palace_path)
+    # ``create=False``: exporting must not conjure a palace — or an empty
+    # collection inside one — as a side effect of reporting that it holds
+    # nothing. Both "no palace directory" and "directory without an
+    # initialised collection" are reported as empty, which is the same answer
+    # the old ``create=True`` path reached, minus the write.
+    try:
+        col = get_collection(palace_path, create=False)
+    except (PalaceNotFoundError, CollectionNotInitializedError):
+        print("  Palace is empty -- nothing to export.")
+        return {"wings": 0, "rooms": 0, "drawers": 0}
     total = col.count()
 
     if total == 0:
@@ -98,6 +108,9 @@ def export_palace(palace_path: str, output_dir: str, format: str = "markdown") -
     opened_rooms: set[tuple[str, str]] = set()
     # Track which wing directories have been created and chmoded
     created_wing_dirs: set[str] = set()
+    # Relative ``<wing>/<room>.md`` paths written by *this* run, so a later
+    # export into the same directory can spot leftovers from an earlier one.
+    written_files: set[str] = set()
     # Track stats per wing: {wing: {room: count}}
     wing_stats: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total_drawers = 0
@@ -140,6 +153,7 @@ def export_palace(palace_path: str, output_dir: str, format: str = "markdown") -
             for room, drawers in rooms.items():
                 safe_room = _safe_path_component(room)
                 room_path = os.path.join(wing_dir, f"{safe_room}.md")
+                written_files.add(f"{safe_wing}/{safe_room}.md")
                 key = (wing, room)
                 is_new = key not in opened_rooms
 
@@ -195,6 +209,37 @@ def export_palace(palace_path: str, output_dir: str, format: str = "markdown") -
     index_path = os.path.join(output_dir, "index.md")
     with _safe_open_for_write(index_path, "w") as f:
         f.write("\n".join(index_lines))
+
+    # Leftovers from an earlier export into the same directory: a room that no
+    # longer exists (or was renamed) keeps its old ``.md``, so the tree silently
+    # mixes current drawers with retired ones and reads as authoritative. Only
+    # warn — the output directory is the caller's, and deleting files inside it
+    # is not ours to decide, especially since we cannot prove a given ``.md``
+    # came from a previous export.
+    stale_files: list[str] = []
+    for entry in sorted(os.listdir(output_dir)):
+        sub = os.path.join(output_dir, entry)
+        if not os.path.isdir(sub):
+            continue
+        # Only directories this run wrote into, or ones shaped like a wing
+        # directory, so unrelated user folders are never reported.
+        # ``created_wing_dirs`` holds the joined path, not the bare entry name.
+        if sub not in created_wing_dirs and not entry.startswith("wing_"):
+            continue
+        for candidate in sorted(os.listdir(sub)):
+            rel = f"{entry}/{candidate}"
+            if candidate.endswith(".md") and rel not in written_files:
+                stale_files.append(rel)
+    if stale_files:
+        print(
+            f"  ! {len(stale_files)} file(s) left from an earlier export are still "
+            f"present and are NOT part of this palace:"
+        )
+        for rel in stale_files[:10]:
+            print(f"      {rel}")
+        if len(stale_files) > 10:
+            print(f"      ... and {len(stale_files) - 10} more")
+        print("    Remove them by hand if you need the tree to mirror the palace exactly.")
 
     stats = {
         "wings": len(wing_stats),

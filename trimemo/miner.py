@@ -1356,13 +1356,31 @@ def _extract_entities_for_metadata(content: str) -> str:
     matched: set = set()
 
     known = _load_known_entities()
-    for name in known:
-        # Case-insensitive match — mirrors entity_detector.py's init-time
-        # behavior so a known entity like "Aya" tags drawers that mention
-        # "aya" / "AYA" / "Aya". Without re.IGNORECASE, lowercase mentions
-        # in chat transcripts and voice-typed content get silently untagged.
-        if re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", content, re.IGNORECASE):
-            matched.add(name)
+    if known:
+        # Running one ``re.search`` per known name over the whole body is
+        # O(len(known) x len(content)) and this function is called once per
+        # drawer, so a large registry dominates the mine. The word-boundary
+        # pattern can only match at a position where the literal name occurs,
+        # so a single case-insensitive substring scan is a NECESSARY condition
+        # for every hit — names failing it cannot match and skip their regex.
+        # Result set is unchanged; the content is scanned once instead of once
+        # per name.
+        #
+        # ``str.lower()`` is not bit-identical to ``re.IGNORECASE`` for a
+        # handful of Unicode special cases (Kelvin sign, dotless i, final
+        # sigma). The only possible divergence is a skipped name — i.e. an
+        # entity left un-tagged, which is the pre-existing behaviour for any
+        # miss — so this can never tag something the regex would not have.
+        haystack = content.lower()
+        for name in known:
+            if name.lower() not in haystack:
+                continue
+            # Case-insensitive match — mirrors entity_detector.py's init-time
+            # behavior so a known entity like "Aya" tags drawers that mention
+            # "aya" / "AYA" / "Aya". Without re.IGNORECASE, lowercase mentions
+            # in chat transcripts and voice-typed content get silently untagged.
+            if re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", content, re.IGNORECASE):
+                matched.add(name)
 
     coca_filter = _get_coca_filter()
     window = content[:_ENTITY_EXTRACT_WINDOW]

@@ -5,7 +5,9 @@ import sqlite3
 import subprocess
 import sys
 import threading
+import types
 
+import numpy as np
 import pytest
 
 from _chroma_palace_helper import make_minimal_chroma_sqlite, make_minimal_sqlite_exact_sqlite
@@ -1785,3 +1787,83 @@ def test_exact_query_retries_entire_batch_across_all_engines(
     finally:
         peer.close()
         backend.close()
+
+
+# ── scoped delete fetches ids only / mixed widths without a recorded dim ─────
+
+
+def test_sqlite_exact_scoped_delete_does_not_read_document_bodies(tmp_path):
+    """A ``delete(where=...)`` needs only the ids of the matching rows.
+
+    The default ``_IncludeSpec`` turns ``documents`` on, so the id lookup used
+    to drag every matching drawer's full verbatim body out of SQLite — and hold
+    it in memory — purely to throw it away. The scoped delete now asks for ids
+    only, which changes nothing about the outcome (the rows are still gone).
+    """
+    _backend, col = _collection(tmp_path)
+    _seed(col, 5)
+
+    result, selects = _doc_select_sql(col, lambda: col.delete(where={"wing": "w"}))
+
+    assert result is None
+    assert len(selects) == 1
+    assert "document" not in selects[0].split("FROM documents")[0], (
+        "the id-only purge still selected the document column"
+    )
+    assert col.count() == 0, "the scoped delete did not actually remove the rows"
+
+
+def _sqlite_collection_handle(locus_columns: bool = False):
+    """A collection object wired for ``_load_all_vectors`` without a real file."""
+    col = object.__new__(sqlite_exact_module.SQLiteExactCollection)
+    col._collection_name = "mempalace_drawers"
+    col._handle = types.SimpleNamespace(has_locus_columns=locus_columns)
+    return col
+
+
+def _rows_cursor(blobs: list[bytes]):
+    class _Cursor:
+        def execute(self, sql, params=()):
+            return types.SimpleNamespace(
+                fetchall=lambda: [
+                    (f"d{i}", blob, None, None, None) for i, blob in enumerate(blobs)
+                ]
+            )
+
+    return _Cursor()
+
+
+def test_sqlite_exact_mixed_widths_without_recorded_dimension_raise_backend_error():
+    """A width disagreement must surface as a ``BackendError``, not a bare
+    ``ValueError``.
+
+    With no recorded collection dimension (missing column, or NULL for a table
+    populated before the column existed) every blob is taken on trust, so only
+    ``np.stack`` noticed a disagreement — and it raised a bare ``ValueError``,
+    which is not a ``BackendError`` and therefore bypassed ``query()``'s retry
+    and the callers' error handling. The width of the first blob is now adopted
+    and a later disagreement fails loudly instead.
+    """
+    col = _sqlite_collection_handle()
+    two = np.array([1.0, 2.0], dtype=np.float32).tobytes()
+    three = np.array([1.0, 2.0, 3.0], dtype=np.float32).tobytes()
+
+    with pytest.raises(DimensionMismatchError, match="mixed width"):
+        col._load_all_vectors(_rows_cursor([two, three]), 1, None)
+
+
+def test_sqlite_exact_uniform_widths_without_recorded_dimension_still_load():
+    """The guard must not reject the legitimate case it sits next to.
+
+    A palace with no recorded dimension whose blobs all agree is exactly what
+    the backend has always supported; it has to keep loading.
+    """
+    col = _sqlite_collection_handle()
+    two = np.array([1.0, 2.0], dtype=np.float32).tobytes()
+
+    ids, mat, norms, metas = col._load_all_vectors(_rows_cursor([two, two]), 1, None)
+
+    assert ids == ["d0", "d1"]
+    assert mat.shape == (2, 2)
+    assert norms.shape == (2,)
+    assert len(metas) == 2

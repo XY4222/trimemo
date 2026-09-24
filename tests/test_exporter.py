@@ -235,3 +235,95 @@ def test_export_refuses_symlinked_index_file():
         assert Path(decoy_target).read_text(encoding="utf-8") == "untouched\n"
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+# ── no side-effect palace creation / stale-artifact reporting ────────────────
+
+
+def test_export_does_not_create_the_palace_it_reads():
+    """Exporting must not conjure a palace as a side effect.
+
+    ``export_palace`` opened the collection with the default ``create=True``, so
+    asking it to export a path that is not a palace *made* one on the way to
+    reporting that it held nothing — a read operation with a write side effect.
+    """
+    tmpdir = tempfile.mkdtemp()
+    try:
+        palace_path = os.path.join(tmpdir, "absent_palace")
+        output_dir = os.path.join(tmpdir, "export")
+
+        stats = export_palace(palace_path, output_dir)
+
+        assert stats == {"wings": 0, "rooms": 0, "drawers": 0}
+        assert not os.path.exists(palace_path), (
+            "export_palace created the palace it was asked to export"
+        )
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def test_export_reports_files_left_by_an_earlier_export(capsys):
+    """A retired room keeps its old ``.md``, so the tree silently mixes current
+    drawers with stale ones and still reads as authoritative.
+
+    The stale files are *reported*, never deleted: the output directory belongs
+    to the caller and we cannot prove a given ``.md`` came from a previous
+    export.
+    """
+    tmpdir = tempfile.mkdtemp()
+    try:
+        palace_path = _setup_palace(tmpdir)
+        output_dir = os.path.join(tmpdir, "export")
+        export_palace(palace_path, output_dir)
+
+        retired = os.path.join(output_dir, "alpha", "retired_room.md")
+        write_file(Path(retired), "# alpha / retired_room\n")
+        # A wing directory that no longer exists in the palace at all.
+        ghost_dir = os.path.join(output_dir, "wing_ghost")
+        os.makedirs(ghost_dir)
+        write_file(Path(ghost_dir) / "old.md", "# wing_ghost / old\n")
+
+        capsys.readouterr()  # drop the first export's chatter
+        export_palace(palace_path, output_dir)
+        out = capsys.readouterr().out
+
+        assert "NOT part of this palace" in out, out
+        assert "alpha/retired_room.md" in out or "alpha\\retired_room.md" in out, out
+        assert "old.md" in out, out
+        # Reported, not removed.
+        assert os.path.isfile(retired)
+        assert os.path.isfile(os.path.join(ghost_dir, "old.md"))
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def test_export_reports_no_stale_files_on_a_clean_directory(capsys):
+    """A single export into a fresh directory must not cry wolf."""
+    tmpdir = tempfile.mkdtemp()
+    try:
+        palace_path = _setup_palace(tmpdir)
+        output_dir = os.path.join(tmpdir, "export")
+
+        export_palace(palace_path, output_dir)
+        out = capsys.readouterr().out
+
+        assert "NOT part of this palace" not in out, out
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def test_export_reports_an_uninitialised_palace_directory_as_empty():
+    """A directory that exists but holds no initialised collection is reported
+    as empty — the same answer the old ``create=True`` path reached, minus the
+    write that made it true."""
+    tmpdir = tempfile.mkdtemp()
+    try:
+        palace_path = os.path.join(tmpdir, "empty_dir")
+        os.makedirs(palace_path)
+        output_dir = os.path.join(tmpdir, "export")
+
+        stats = export_palace(palace_path, output_dir)
+
+        assert stats == {"wings": 0, "rooms": 0, "drawers": 0}
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)

@@ -666,3 +666,76 @@ def test_qdrant_facet_counts_ignores_missing_metadata(tmp_path, fake_qdrant):
     assert collection.facet_counts("wing") == {
         "alpha": 1,
     }
+
+
+# ── _scroll_all termination ──────────────────────────────────────────────────
+
+
+def test_scroll_all_stops_on_an_empty_page_whose_cursor_never_ends():
+    """An empty page must end the scroll even when the cursor is not ``None``.
+
+    ``_scroll_all`` terminates on ``offset is None`` alone, so a backend — or a
+    proxy in front of one — that answers "no points, here is the same offset"
+    pins the cursor on a value that never reaches ``None`` and the loop spins
+    forever inside a read call. The guard treats an empty page as the end of
+    the pagination: the cost of stopping early is a short read, the cost of
+    looping is a hung search.
+    """
+    from trimemo.backends.qdrant import QdrantCollection
+
+    col = object.__new__(QdrantCollection)
+    col._collection_name = "mempalace_drawers"
+    col._remote_collection = "mempalace_drawers"
+
+    class _Client:
+        def __init__(self):
+            self.calls = 0
+
+        def scroll_points(self, *args, **kwargs):
+            self.calls += 1
+            if self.calls > 5:
+                raise AssertionError(
+                    "_scroll_all kept scrolling an empty page: termination "
+                    "depends on the empty-page guard, not on the cursor"
+                )
+            return [], "cursor-that-never-becomes-None"
+
+    col._client = _Client()
+    col._ensure_open = lambda: None
+    col._remote_exists = lambda: True
+    col._marker_exists = lambda: False
+
+    assert col._scroll_all() == []
+    assert col._client.calls == 1, "an empty page should end the scroll immediately"
+
+
+def test_scroll_all_still_walks_pages_that_carry_points():
+    """The empty-page guard must not cut a healthy multi-page scroll short."""
+    from trimemo.backends.qdrant import QdrantCollection
+
+    col = object.__new__(QdrantCollection)
+    col._collection_name = "mempalace_drawers"
+    col._remote_collection = "mempalace_drawers"
+
+    pages = [
+        ([{"id": "1", "payload": {"document": "one"}}, {"id": "2", "payload": {"document": "two"}}], "c1"),
+        ([{"id": "3", "payload": {"document": "three"}}], None),
+    ]
+
+    class _Client:
+        def __init__(self):
+            self.calls = 0
+
+        def scroll_points(self, *args, **kwargs):
+            self.calls += 1
+            return pages[self.calls - 1]
+
+    col._client = _Client()
+    col._ensure_open = lambda: None
+    col._remote_exists = lambda: True
+    col._marker_exists = lambda: False
+
+    rows = col._scroll_all()
+
+    assert [row["id"] for row in rows] == ["1", "2", "3"]
+    assert col._client.calls == 2

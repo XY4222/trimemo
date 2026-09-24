@@ -1107,12 +1107,31 @@ class SQLiteExactCollection(BaseCollection):
         ids: list[str] = []
         vecs: list[np.ndarray] = []
         metas: list[dict] = []
+        discovered_width: Optional[int] = None
         for doc_id, blob, wing, room, source_file in rows:
             vec = _decode_array(blob)
             if vec is None:
                 continue
-            if expected is not None and vec.size != expected:
-                continue
+            if expected is not None:
+                # A blob that disagrees with the recorded dimension is skipped,
+                # exactly as before.
+                if vec.size != expected:
+                    continue
+            else:
+                # The collection records no dimension (missing column, or NULL
+                # for an empty-then-populated table), so every blob is taken on
+                # trust and only ``np.stack`` notices a disagreement — as a bare
+                # ``ValueError``, which is NOT a ``BackendError`` and therefore
+                # slid past ``query()``'s retry and the callers' handling. Adopt
+                # the first blob's width and fail loudly on a later mismatch.
+                if discovered_width is None:
+                    discovered_width = int(vec.size)
+                elif vec.size != discovered_width:
+                    raise DimensionMismatchError(
+                        f"sqlite_exact collection {self._collection_name!r} stores "
+                        f"vectors of mixed width ({discovered_width} and {vec.size}) "
+                        f"and records no collection dimension to validate against"
+                    )
             ids.append(doc_id)
             vecs.append(vec)
             meta = {}
@@ -1246,7 +1265,17 @@ class SQLiteExactCollection(BaseCollection):
         with self._cursor(write=True) as cur:
             collection_id = self._collection_id(cur)
             if ids is None:
-                rows = self._rows(cur, where=where)
+                # Only the ids are needed here, so ask for nothing else. The
+                # default ``_IncludeSpec`` turns ``documents`` on, which made
+                # a scoped delete pull every matching drawer's full verbatim
+                # body into memory just to discard it.
+                id_only = _IncludeSpec(
+                    documents=False,
+                    metadatas=False,
+                    distances=False,
+                    embeddings=False,
+                )
+                rows = self._rows(cur, where=where, spec=id_only)
                 ids = [row["id"] for row in rows]
             for doc_id in ids or []:
                 cur.execute(
